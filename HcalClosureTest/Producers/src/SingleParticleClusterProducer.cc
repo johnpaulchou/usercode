@@ -8,7 +8,7 @@
 
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
-#include "HcalClosureTest/DataFormats/interface/SingleParticleCluster.h"
+#include "HcalClosureTest/DataFormat/interface/SingleParticleCluster.h"
 #include "HcalClosureTest/Producers/interface/SingleParticleClusterProducer.h"
 
 #include "TMath.h"
