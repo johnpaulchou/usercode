@@ -13,6 +13,12 @@
 
 #include "TMath.h"
 
+// hcal respcorr include files
+//#include "CondFormats/DataRecord/interface/HcalRespCorrsRcd.h"
+//#include "CalibCalorimetry/HcalAlgos/interface/HcalDbASCIIIO.h"
+//#include "FWCore/Framework/interface/EventSetup.h"
+//#include "FWCore/Framework/interface/ESHandle.h"
+
 //
 // constructors and destructor
 //
@@ -169,7 +175,7 @@ math::XYZTLorentzVector SingleParticleClusterProducer::getP4From3x3Towers(const 
 
 // ------------ method called once each job just before starting event loop  ------------
 void 
-SingleParticleClusterProducer::beginJob(const edm::EventSetup&)
+SingleParticleClusterProducer::beginJob(const edm::EventSetup& iSetup)
 {
 }
 

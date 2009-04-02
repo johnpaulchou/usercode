@@ -6,6 +6,8 @@
 <use name=DataFormats/Math>
 <use name=DataFormats/HepMCCandidate>
 <use name=HcalClosureTest/DataFormat>
+<use name=CondFormats/HcalObjects>
+<use name=CalibCalorimetry/HcalAlgos>
 <use name=root>
 <export>
    <lib name=HcalClosureTestProducers>
@@ -16,4 +18,6 @@
    <use name=DataFormats/Math>
    <use name=DataFormats/HepMCCandidate>
    <use name=HcalClosureTest/DataFormat>
+   <use name=CondFormats/HcalObjects>
+   <use name=CalibCalorimetry/HcalAlgos>
 </export>
