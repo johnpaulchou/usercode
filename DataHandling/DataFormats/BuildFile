@@ -1,0 +1,11 @@
+<use name=DataFormats/Common>
+<use name=FWCore/Framework>
+<use name=FWCore/PluginManager>
+<use name=root>
+<use name=rootrflx>
+<export>
+  <use name=DataFormats/Common>
+  <use name=FWCore/Framework>
+  <use name=FWCore/PluginManager>
+  <lib name=DataHandlingDataFormats>
+</export>
