@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
 
-singleparticleclusterproducer = cms.EDProducer(
+ParticleClustering = cms.EDProducer(
     'SingleParticleClusterProducer'
     )
