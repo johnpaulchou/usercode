@@ -1,0 +1,3 @@
+#!/bin/tcsh -f
+
+find . -regex '.+CVS/Root' | xargs perl -pi.bak -e 's|:pserver:anonymous\@cmscvs.cern.ch:/cvs_server/repositories/CMSSW|:gserver:cmscvs.cern.ch:/cvs_server/repositories/CMSSW|'
