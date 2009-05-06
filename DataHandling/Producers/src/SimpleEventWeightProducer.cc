@@ -15,13 +15,11 @@
 
 SimpleEventWeightProducer::SimpleEventWeightProducer(const edm::ParameterSet& iConfig)
 {
-  integratedLumi_      = iConfig.getParameter<double>("integratedLumi");
-  integratedLumiError_ = iConfig.getParameter<double>("integratedLumiError");
-  crossSection_        = iConfig.getParameter<double>("crossSection");
-  crossSectionError_   = iConfig.getParameter<double>("crossSectionError");
-  scaleFactor_         = iConfig.getParameter<double>("scaleFactor");
-  scaleFactorError_    = iConfig.getParameter<double>("scaleFactorError");
-  numEvents_           = iConfig.getParameter<int>("numEvents");
+  integratedLumi_      = iConfig.getUntrackedParameter<double>("integratedLumi");
+  integratedLumiError_ = iConfig.getUntrackedParameter<double>("integratedLumiError");
+  crossSection_        = iConfig.getUntrackedParameter<double>("crossSection");
+  crossSectionError_   = iConfig.getUntrackedParameter<double>("crossSectionError");
+  numEvents_           = iConfig.getUntrackedParameter<int>("numEvents");
 
   produces<EventWeight>();
 }
@@ -43,7 +41,6 @@ SimpleEventWeightProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   // create the EventWeight we're going to write
   EventWeight *ew = new EventWeight(static_cast<float>(integratedLumi_), static_cast<float>(integratedLumiError_),
 				    static_cast<float>(crossSection_), static_cast<float>(crossSectionError_),
-				    static_cast<float>(scaleFactor_), static_cast<float>(scaleFactorError_),
 				    numEvents_);
   
 

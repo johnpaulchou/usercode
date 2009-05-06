@@ -30,8 +30,6 @@ class SimpleEventWeightProducer : public edm::EDProducer
   double integratedLumiError_;
   double crossSection_;
   double crossSectionError_;
-  double scaleFactor_;
-  double scaleFactorError_;
   int numEvents_;  
 
   

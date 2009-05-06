@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
-simpleeventweightproducer = cms.EDProducer(
-    'simpleeventweightproducer',
+simpleEW = cms.EDProducer(
+    'SimpleEventWeightProducer',
     integratedLumi = cms.untracked.double(1000.),
     integratedLumiError = cms.untracked.double(0.),
     crossSection = cms.untracked.double(1.),

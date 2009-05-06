@@ -6,7 +6,7 @@
 //
 //    description: Object to determine how much to weight an event
 //                 Determined by assumed luminosity, cross section of the process,
-//                 other scale factors, and the number of events run over
+//                 and the number of events run over
 //                 Errors shown are all _absolute_
 //
 
@@ -14,15 +14,13 @@ class EventWeight
 {
  public:
   EventWeight();
-  EventWeight(float lumi, float lumie, float xs, float xse, float sf, float sfe, int numevents);
+  EventWeight(float lumi, float lumie, float xs, float xse, int numevents);
   ~EventWeight();
 
   inline float integratedLumi(void) const { return integratedLumi_; }
   inline float integratedLumiError(void) const { return integratedLumiError_; }
   inline float crossSection(void) const { return crossSection_; }
   inline float crossSectionError(void) const { return crossSectionError_; }
-  inline float scaleFactor(void) const { return scaleFactor_; }
-  inline float scaleFactorError(void) const { return scaleFactorError_; }
   inline int numEvents(void) const { return numEvents_; }
 
   float weight(void) const;
@@ -33,8 +31,6 @@ class EventWeight
   float integratedLumiError_;
   float crossSection_;
   float crossSectionError_;
-  float scaleFactor_;
-  float scaleFactorError_;
   int numEvents_;
 
   // these are transient types

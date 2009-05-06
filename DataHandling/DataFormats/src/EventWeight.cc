@@ -3,7 +3,7 @@
 //
 //    description: Object to determine how much to weight an event
 //                 Determined by assumed luminosity, cross section of the process,
-//                 other scale factors, and the number of events run over
+//                 and the number of events run over
 //
 
 #include "DataHandling/DataFormats/interface/EventWeight.h"
@@ -13,16 +13,14 @@
 EventWeight::EventWeight() :
   integratedLumi_(1000.), integratedLumiError_(0.),
   crossSection_(1.), crossSectionError_(0.),
-  scaleFactor_(1.), scaleFactorError_(0.),
   numEvents_(1),
   calcWeight_(false), weightTmp_(0.), weightErrorTmp_(0.)
 {
 }
 
-EventWeight::EventWeight(float lumi, float lumie, float xs, float xse, float sf, float sfe, int numevents) :
+EventWeight::EventWeight(float lumi, float lumie, float xs, float xse, int numevents) :
   integratedLumi_(lumi), integratedLumiError_(lumie),
   crossSection_(xs), crossSectionError_(xse),
-  scaleFactor_(sf), scaleFactorError_(sfe),
   numEvents_(numevents),
   calcWeight_(false), weightTmp_(0.), weightErrorTmp_(0.)
 {
@@ -48,11 +46,10 @@ float EventWeight::weight(void) const
   }
 
   // calculate both the weight and the uncertainty
-  weightTmp_ = integratedLumi_*crossSection_*scaleFactor_/numEvents_;
-  float lumiE = integratedLumiError_*crossSection_*scaleFactor_/numEvents_;
-  float xsE   = integratedLumi_*crossSectionError_*scaleFactor_/numEvents_;
-  float sfE   = integratedLumi_*crossSection_*scaleFactorError_/numEvents_;
-  weightErrorTmp_ = TMath::Sqrt(lumiE*lumiE + xsE*xsE + sfE*sfE);
+  weightTmp_ = integratedLumi_*crossSection_/numEvents_;
+  float lumiE = integratedLumiError_*crossSection_/numEvents_;
+  float xsE   = integratedLumi_*crossSectionError_/numEvents_;
+  weightErrorTmp_ = TMath::Sqrt(lumiE*lumiE + xsE*xsE);
 
   return weightTmp_;
 }
