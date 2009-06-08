@@ -1,0 +1,10 @@
+<flags EDM_PLUGIN=1>
+<use name=HcalClosureTest/DataFormat>
+<use name=FWCore/Framework>
+<use name=root>
+<export>
+   <lib name=HcalClosureTestAnalyzers>
+   <use name=HcalClosureTest/DataFormat>
+   <use name=FWCore/Framework>
+   <use name=root>
+</export>
