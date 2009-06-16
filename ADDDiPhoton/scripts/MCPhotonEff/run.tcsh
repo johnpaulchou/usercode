@@ -1,9 +1,8 @@
 #!/bin/tcsh -f
 
-setenv ANATYPE 1
-root -b -q makeplots.C+
-
-setenv ANATYPE 2
-root -b -q makeplots.C+
+foreach ana (1 2 3)
+  setenv ANATYPE $ana
+  root -b -q makeplots.C+
+end
 
 root drawplots.C

@@ -1,6 +1,6 @@
 TFile *rootfile=0;
 
-void drawplots(int whichplot=1)
+void drawplots(int whichplot=3)
 {
   switch(whichplot) {
   case 1:
@@ -18,9 +18,9 @@ void drawplots(int whichplot=1)
     c->cd(2);
     drawplots(1,2);
     c->cd(3);
-    drawplots(2,1);
+    drawplots(3,1);
     c->cd(4);
-    drawplots(2,2);
+    drawplots(3,2);
     break;
 
   case 3:
@@ -65,6 +65,8 @@ void drawplots(int anatype, int varnum, bool showmarkers=false, bool PAS=false)
     rootfile=new TFile("results/born_plots.root");
   if(anatype==2)
     rootfile=new TFile("results/add_plots.root");
+  if(anatype==3)
+    rootfile=new TFile("results/add_noled_plots.root");
 
   TH1D* hEff1 = dynamic_cast<TH1D*>(gROOT->FindObject("h"+var+"Eff1"));
   TH1D* hEff2 = dynamic_cast<TH1D*>(gROOT->FindObject("h"+var+"Eff2"));
@@ -113,7 +115,7 @@ void drawplots(int anatype, int varnum, bool showmarkers=false, bool PAS=false)
     hEff4->SetMarkerSize(1.0);
   }
 
-  hEff1->SetMinimum(0.5);
+  hEff1->SetMinimum(0.0);
   hEff1->SetMaximum(1.05);
 
   hEff1->GetXaxis()->SetTitle(vartitle);
@@ -124,6 +126,8 @@ void drawplots(int anatype, int varnum, bool showmarkers=false, bool PAS=false)
       hEff1->SetTitle("Leading Photon Efficiency in Pythia (Born) Sample");
     else if(anatype==2)
       hEff1->SetTitle("Leading Photon Efficiency in Sherpa (ADD) Sample");
+    else if(anatype==3)
+      hEff1->SetTitle("Leading Photon Efficiency in Sherpa (ADD, M_S=1e5 TeV) Sample");
   } else {
     hEff1->SetTitle("");
     TText* text=new TLatex(0,0, "CMS Preliminary");
@@ -153,6 +157,8 @@ TH1* GetPlot(int anatype, TString name)
     rootfile=new TFile("results/born_plots.root");
   else if(anatype==2)
     rootfile=new TFile("results/add_plots.root");
+  else if(anatype==3)
+    rootfile=new TFile("results/add_noled_plots.root");
   rootfile->cd();
   return dynamic_cast<TH1*>(gROOT->FindObject(name));
 }
@@ -190,12 +196,13 @@ void compIsol(int varnum)
   TH1D* hADD;
   if(varnum<=4) {
     TH2D* hBorn2d = dynamic_cast<TH2D*>(GetPlot(1, varname));
-    TH2D* hADD2d = dynamic_cast<TH2D*>(GetPlot(2, varname));
+    TH2D* hADD2d = dynamic_cast<TH2D*>(GetPlot(3, varname));
     hBorn = hBorn2d->ProjectionX(varname+"born");
     hADD = hADD2d->ProjectionX(varname+"add");
+    cout << "asdf" << endl;
   } else {
     hBorn = dynamic_cast<TH1D*>(GetPlot(1, varname));
-    hADD = dynamic_cast<TH1D*>(GetPlot(2, varname));
+    hADD = dynamic_cast<TH1D*>(GetPlot(3, varname));
   }
   
   hBorn->Scale(1/hBorn->GetSumOfWeights());

@@ -15,7 +15,9 @@ void makeplots(void)
   if(ANATYPE==1)
     ch->Add("/localscratch/johnpaul/ADDDiPhoton/ana_DiPhotonBorn*.root");
   else if(ANATYPE==2)
-    ch->Add("/localscratch/johnpaul/ADDDiPhoton/ana_ADDdiphoton*.root");
+    ch->Add("/localscratch/johnpaul/ADDDiPhoton/ana_ADDdiphoton_pixelMatch_MS1000_NED2_KK1_MASSCUT_200_10000_1.root");
+  else if(ANATYPE==3)
+    ch->Add("/localscratch/johnpaul/ADDDiPhoton/ana_ADDdiphoton_pixelMatch_MS100000_NED4_KK1_MASSCUT_200_10000_1.root");
   ADDdiphotonTree* t=new ADDdiphotonTree(ch);
   t->Loop();
   return;
@@ -30,13 +32,15 @@ void ADDdiphotonTree::Loop()
      rootfile = new TFile("results/born_plots.root","RECREATE");
    if(ANATYPE==2)
      rootfile = new TFile("results/add_plots.root","RECREATE");
+   if(ANATYPE==3)
+     rootfile = new TFile("results/add_noled_plots.root","RECREATE");
 
    const int netabins=25;
    const double maxeta=1.5;
    const double mineta=0.0;
    const int netbins=20;
-   const double minet=100;
-   const double maxet=500;
+   const double minet=0;
+   const double maxet=1000;
    TH1D* hEta=new TH1D("hEta","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
    TH1D* hEtaN1=new TH1D("hEtaN1","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
    TH1D* hEtaN2=new TH1D("hEtaN2","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
