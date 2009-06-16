@@ -5,6 +5,7 @@
 #include <TCanvas.h>
 
 #include <iostream>
+#include <cmath>
 
 const int ANATYPE = std::atoi(std::getenv("ANATYPE"));
 
@@ -32,6 +33,10 @@ void ADDdiphotonTree::Loop()
 
    const int netabins=25;
    const double maxeta=1.5;
+   const double mineta=0.0;
+   const int netbins=20;
+   const double minet=100;
+   const double maxet=500;
    TH1D* hEta=new TH1D("hEta","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
    TH1D* hEtaN1=new TH1D("hEtaN1","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
    TH1D* hEtaN2=new TH1D("hEtaN2","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
@@ -50,24 +55,24 @@ void ADDdiphotonTree::Loop()
    TH1D* hEtaEff6=new TH1D("hEtaEff6","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
    TH1D* hEtaEff7=new TH1D("hEtaEff7","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
    TH1D* hEtaEff8=new TH1D("hEtaEff8","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
-   TH1D* hEt=new TH1D("hEt","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtN1=new TH1D("hEtN1","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtN2=new TH1D("hEtN2","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtN3=new TH1D("hEtN3","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtN4=new TH1D("hEtN4","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtN5=new TH1D("hEtN5","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtN6=new TH1D("hEtN6","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtN7=new TH1D("hEtN7","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtN8=new TH1D("hEtN8","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtD=new TH1D("hEtD","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtEff1 = new TH1D("hEtEff1","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtEff2 = new TH1D("hEtEff2","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtEff3 = new TH1D("hEtEff3","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtEff4 = new TH1D("hEtEff4","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtEff5 = new TH1D("hEtEff5","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtEff6 = new TH1D("hEtEff6","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtEff7 = new TH1D("hEtEff7","E_T of un-reco'ed photons",20,50,550);
-   TH1D* hEtEff8 = new TH1D("hEtEff8","E_T of un-reco'ed photons",20,50,550);
+   TH1D* hEt=new TH1D("hEt","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtN1=new TH1D("hEtN1","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtN2=new TH1D("hEtN2","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtN3=new TH1D("hEtN3","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtN4=new TH1D("hEtN4","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtN5=new TH1D("hEtN5","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtN6=new TH1D("hEtN6","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtN7=new TH1D("hEtN7","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtN8=new TH1D("hEtN8","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtD=new TH1D("hEtD","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtEff1 = new TH1D("hEtEff1","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtEff2 = new TH1D("hEtEff2","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtEff3 = new TH1D("hEtEff3","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtEff4 = new TH1D("hEtEff4","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtEff5 = new TH1D("hEtEff5","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtEff6 = new TH1D("hEtEff6","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtEff7 = new TH1D("hEtEff7","E_T of un-reco'ed photons",netbins,minet,maxet);
+   TH1D* hEtEff8 = new TH1D("hEtEff8","E_T of un-reco'ed photons",netbins,minet,maxet);
 
    TH2D* hHEIsoPt = new TH2D("hHEIsoPt","H/E Isolation v. Pt",100,0,2,100,0,500);
    TH2D* hHcalIsoPt = new TH2D("hHcalIsoPt","Hcal Isolation v. Pt",100,0,50,100,0,500);
@@ -98,6 +103,7 @@ void ADDdiphotonTree::Loop()
       for(int i=0; i<nGenPho; i++) {
 	if(motherGenPdgId_pho[i]!=22) continue;
 	if(fabs(genEta_pho[i])>maxeta) continue;
+	if(fabs(genEta_pho[i])<mineta) continue;
 	if(genPt_pho[i]<50) continue;
 
 	if(leading<0 || genPt_pho[leading]<genPt_pho[i]) leading=i;
@@ -132,45 +138,57 @@ void ADDdiphotonTree::Loop()
 	  hTrkIsoPt->Fill(isolationHollowTrkCone[match],genPt_pho[leading]);
 	}
 
+	double filleta=genEta_pho[leading];
+	double fillet=genPt_pho[leading];
+	//	if(filleta>0.00 && filleta<0.02) continue;
+	//	if(filleta>0.43 && filleta<0.46) continue;
+	//	if(filleta>0.78 && filleta<0.81) continue;
+	//	if(filleta>1.13 && filleta<1.15) continue;
+	//	if(filleta>1.45 && filleta<1.58) continue;
+
+	double phi = static_cast<double>(genPhi_pho[leading]);
+	if(phi<0) phi += 6.29;
+	double phirelative = std::fmod(phi, static_cast<double>(20.*3.1415/180.)) - 10*3.1415/180;
+
 	if(!foundmatch) {
-	  hEta->Fill(genEta_pho[leading]);
-	  hEt->Fill(genPt_pho[leading]);
+	  hEta->Fill(filleta);
+	  hEt->Fill(fillet);
 	}
 	if(foundmatch) {
-	  hEtaN1->Fill(genEta_pho[leading]);
-	  hEtN1->Fill(genPt_pho[leading]);
+	  hEtaN1->Fill(filleta);
+	  hEtN1->Fill(fillet);
 	}
 	if(!hasSeed) {
-	  hEtaN2->Fill(genEta_pho[leading]);
-	  hEtN2->Fill(genPt_pho[leading]);
+	  hEtaN2->Fill(filleta);
+	  hEtN2->Fill(fillet);
 	}
 	if(passIso) {
-	  hEtaN3->Fill(genEta_pho[leading]);
-	  hEtN3->Fill(genPt_pho[leading]);
+	  hEtaN3->Fill(filleta);
+	  hEtN3->Fill(fillet);
 	}
 	if(!hasSeed && foundmatch && passIso) {
-	  hEtaN4->Fill(genEta_pho[leading]);
-	  hEtN4->Fill(genPt_pho[leading]);
+	  hEtaN4->Fill(filleta);
+	  hEtN4->Fill(fillet);
 	}
 	if(passHEIso) {
-	  hEtaN5->Fill(genEta_pho[leading]);
-	  hEtN5->Fill(genPt_pho[leading]);
+	  hEtaN5->Fill(filleta);
+	  hEtN5->Fill(fillet);
 	}
 	if(passHcalIso) {
-	  hEtaN6->Fill(genEta_pho[leading]);
-	  hEtN6->Fill(genPt_pho[leading]);
+	  hEtaN6->Fill(filleta);
+	  hEtN6->Fill(fillet);
 	}
 	if(passEcalIso) {
-	  hEtaN7->Fill(genEta_pho[leading]);
-	  hEtN7->Fill(genPt_pho[leading]);
+	  hEtaN7->Fill(filleta);
+	  hEtN7->Fill(fillet);
 	}
 	if(passTrkIso) {
-	  hEtaN8->Fill(genEta_pho[leading]);
-	  hEtN8->Fill(genPt_pho[leading]);
+	  hEtaN8->Fill(filleta);
+	  hEtN8->Fill(fillet);
 	}
 
-	hEtaD->Fill(genEta_pho[leading]);
-	hEtD->Fill(genPt_pho[leading]);
+	hEtaD->Fill(filleta);
+	hEtD->Fill(fillet);
       }
    }
 
