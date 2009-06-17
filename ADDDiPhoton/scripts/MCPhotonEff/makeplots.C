@@ -38,8 +38,8 @@ void ADDdiphotonTree::Loop()
    const int netabins=25;
    const double maxeta=1.5;
    const double mineta=0.0;
-   const int netbins=20;
-   const double minet=0;
+   const int netbins=19;
+   const double minet=50;
    const double maxet=1000;
    TH1D* hEta=new TH1D("hEta","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);
    TH1D* hEtaN1=new TH1D("hEtaN1","#eta of un-reco'ed photons",netabins,-maxeta,maxeta);

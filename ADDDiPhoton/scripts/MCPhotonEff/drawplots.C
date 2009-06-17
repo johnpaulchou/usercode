@@ -1,6 +1,6 @@
 TFile *rootfile=0;
 
-void drawplots(int whichplot=3)
+void drawplots(int whichplot=1)
 {
   switch(whichplot) {
   case 1:
@@ -18,9 +18,9 @@ void drawplots(int whichplot=3)
     c->cd(2);
     drawplots(1,2);
     c->cd(3);
-    drawplots(3,1);
+    drawplots(2,1);
     c->cd(4);
-    drawplots(3,2);
+    drawplots(2,2);
     break;
 
   case 3:
@@ -55,10 +55,10 @@ void drawplots(int anatype, int varnum, bool showmarkers=false, bool PAS=false)
   TString var, vartitle;
   if(varnum==1) {
     var="Eta";
-    vartitle="Gen Photon #eta";
+    vartitle="MC Photon #eta";
   } else if(varnum==2) {
     var="Et";
-    vartitle="Gen Photon E_{T} [GeV]";
+    vartitle="MC Photon E_{T} [GeV]";
   }
 
   if(anatype==1)
@@ -115,7 +115,7 @@ void drawplots(int anatype, int varnum, bool showmarkers=false, bool PAS=false)
     hEff4->SetMarkerSize(1.0);
   }
 
-  hEff1->SetMinimum(0.0);
+  hEff1->SetMinimum(0.5);
   hEff1->SetMaximum(1.05);
 
   hEff1->GetXaxis()->SetTitle(vartitle);
