@@ -4,7 +4,7 @@
 set PDGID = 211
 set ENERGY = 50
 set BASE = Single${PDGID}E${ENERGY}_HcalRespCorrs200mc
-set TEST = false
+set TEST = true
 #set MAXEVENTS = 100000
 set MAXEVENTS = 500
 #set EVENTS_PER_JOB = 5000
@@ -21,10 +21,10 @@ set PYTHONNAME = "${BASE}.py"
 set OUTPUTNAME = "${BASE}.root"
 
 # setup cms production
-unsetenv CMS_PATH
-source /uscmst1/prod/sw/cms/cshrc prod
+# unsetenv CMS_PATH
+# source /uscmst1/prod/sw/cms/cshrc prod
 
-cmsenv
+#cmsenv
 
 ############################################################################
 
@@ -117,7 +117,7 @@ process.output = cms.OutputModule(
 
 
 # Other statements
-process.GlobalTag.globaltag = 'IDEAL_V9::All'
+process.GlobalTag.globaltag = 'IDEAL_31X::All'
 
 # new HCAL tag
 process.newHcalRes = cms.ESSource("PoolDBESSource",
@@ -127,7 +127,7 @@ process.newHcalRes = cms.ESSource("PoolDBESSource",
         record = cms.string('HcalRespCorrsRcd'),
         tag = cms.string('HcalRespCorrs_v2.00_mc')
     )),
-    connect = cms.string('frontier://cmsfrontier.cern.ch:8000/FrontierProd/CMS_COND_21X_HCAL'),
+    connect = cms.string('frontier://cmsfrontier.cern.ch:8000/FrontierProd/CMS_COND_31X_HCAL'),
     authenticationMethod = cms.untracked.uint32(0)
 )
 process.es_prefer_newHcalRes = cms.ESPrefer("PoolDBESSource","newHcalRes")
