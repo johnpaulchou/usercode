@@ -53,7 +53,7 @@ process.load('Configuration/StandardSequences/Generator_cff')
 process.load('Configuration/StandardSequences/Sim_cff')
 
 # L1
-process.load('Configuration/StandardSequences/SimL1Emulator_cff')
+process.load('Configuration/StandardSequences/L1Emulator_cff')
 process.load('L1TriggerConfig/L1GtConfigProducers/Luminosity/lumi1030.L1Menu2008_2E30_Unprescaled_cff')
 
 # reconstruction
@@ -79,21 +79,21 @@ process.options = cms.untracked.PSet(
     )
 
 # Input source
-process.source = cms.Source(
-    "FlatRandomEGunSource",
-    PGunParameters = cms.untracked.PSet(
-    PartID = cms.untracked.vint32(${PDGID}),
-    MaxEta = cms.untracked.double(5.0),
-    MaxPhi = cms.untracked.double(3.14159265359),
-    MinEta = cms.untracked.double(-5.0),
-    MinE = cms.untracked.double(${ENERGY}-0.001),
-    MinPhi = cms.untracked.double(-3.14159265359),
-    MaxE = cms.untracked.double(${ENERGY}+0.001)
+process.RandomNumberGeneratorService.generator.initialSeed = 314
+process.source = cms.Source("EmptySource")
+process.generator = cms.EDProducer("FlatRandomEGunProducer",
+    PGunParameters = cms.PSet(
+    PartID = cms.vint32(${PDGID}),
+    MaxEta = cms.double(5.1),
+    MaxPhi = cms.double(3.14159265359),
+    MinEta = cms.double(-5.1),
+    MinE = cms.double(${ENERGY}-0.001),
+    MinPhi = cms.double(-3.14159265359),
+    MaxE = cms.double(${ENERGY}+0.001)
     ),
-    Verbosity = cms.untracked.int32(1),
     psethack = cms.string('single pi E 50 HCAL'),
-    AddAntiParticle = cms.untracked.bool(False),
-    firstRun = cms.untracked.uint32(1)
+    AddAntiParticle = cms.bool(False),
+    firstRun = cms.uint32(1)
     )
 
 # Output definition
@@ -134,10 +134,10 @@ process.es_prefer_newHcalRes = cms.ESPrefer("PoolDBESSource","newHcalRes")
 
 
 # Path and EndPath definitions
-process.generation_step = cms.Path(process.pgen)
+process.generation_step = cms.Path(process.generator*process.pgen)
 process.simulation_step = cms.Path(process.psim)
 process.digitisation_step = cms.Path(process.pdigi)
-process.L1simulation_step = cms.Path(process.SimL1Emulator)
+process.L1simulation_step = cms.Path(process.L1Emulator)
 process.digi2raw_step = cms.Path(process.DigiToRaw)
 process.raw2digi_step = cms.Path(process.RawToDigi)
 process.reconstruction_step = cms.Path(process.reconstruction*process.ParticleClustering)
