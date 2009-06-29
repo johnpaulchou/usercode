@@ -71,7 +71,9 @@ class CalcRespCorrDiJets : public edm::EDAnalyzer {
   TH1D* hProbeJetPhi_;
   TH1D* hProbeJetEMF_;
 
-  // response corrections as a function if ieta
+  TH1D* hPassSel_;
+
+  // response corrections as a function if ieta 
   TH2D* hRespIeta_;
   
 };

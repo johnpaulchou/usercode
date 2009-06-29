@@ -68,39 +68,56 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   // Event Selection
   //////////////////////////////
 
-  if(handle->size()<2) return; // require at least two jets
+  // determine which cut results in failure
+  int passSel=0;
+
+  // find highest two et jets
+  const reco::CaloJet* tag=0;
+  const reco::CaloJet* probe=0;
+  for(reco::CaloJetCollection::const_iterator it=handle->begin(); it!=handle->end(); ++it) {
+    const reco::CaloJet* jet=&(*it);
+    if(!tag)                       tag=jet;
+    else if(!probe)                probe=jet;
+    else if(tag->et()<jet->et())   tag=jet;
+    else if(probe->et()<jet->et()) probe=jet;
+  }
+  if(!tag || !probe) return;
 
   // require that the first two jets are above some minimum,
   // and the rest are below some maximum
-  int cntr=0;
-  int passSel=0;
+  if(tag->et()<minJetEt_)   passSel |= 0x1;
+  if(probe->et()<minJetEt_) passSel |= 0x2;
+
   for(reco::CaloJetCollection::const_iterator it=handle->begin(); it!=handle->end(); ++it) {
-    reco::CaloJet jet=(*it);
-    ++cntr;
-    if((cntr==1 || cntr==2) && jet.et()<minJetEt_) passSel |= 0x1;
-    if(cntr>=2 && jet.et()>maxThirdJetEt_) passSel |= 0x2;
+    const reco::CaloJet *jet=&(*it);
+    if(jet!=tag && jet!=probe && jet->et()>maxThirdJetEt_) passSel |= 0x4;
   }
 
-  // make jet pairs
-  const reco::CaloJet* tag=&(*(handle->begin()+0));
-  const reco::CaloJet* probe=&(*(handle->begin()+1));
+  // find out if the tag/probe are in the calibration regions
+  bool tagincalib=true;
+  bool probeincalib=true;
   std::vector<CaloTowerPtr> tagconst = tag->getCaloConstituents();
   std::vector<CaloTowerPtr> probeconst = probe->getCaloConstituents();
 
-  // require that the tag jet is completely in the calibrated region
   for(std::vector<CaloTowerPtr>::const_iterator ctp_it=tagconst.begin();
       ctp_it!=tagconst.end(); ++ctp_it) {
-    const CaloTower* twr=&(**ctp_it);
-    if(std::abs(twr->id().ieta())>maxCalibratedIEta_) passSel |= 0x4;
+    if((*ctp_it)->id().ietaAbs()>maxCalibratedIEta_) tagincalib=false;
   }
-  
-  // require that the probe jet is _not_ completely in the calibrated region
   for(std::vector<CaloTowerPtr>::const_iterator ctp_it=probeconst.begin();
       ctp_it!=probeconst.end(); ++ctp_it) {
     const CaloTower* twr=&(**ctp_it);
-    if(std::abs(twr->id().ieta())<=maxCalibratedIEta_) passSel |= 0x8;
+    if((*ctp_it)->id().ietaAbs()>maxCalibratedIEta_) probeincalib=false;
+  }  // if the probe is in the calibration region, and the tag is not, swap them
+  if(probeincalib && !tagincalib) {
+    const reco::CaloJet* temp=tag;
+    tag=probe;
+    probe=temp;
+    probeincalib=false;
+    tagincalib=true;
   }
-  
+  // require that the tag is in the calib region and the probe is not
+  if(!(tagincalib && !probeincalib)) passSel |= 0x08;
+
   // require that the delta-eta is small, and the delta-phi is large
   if(std::fabs(tag->eta()-probe->eta())>maxDeltaEta_) passSel |= 0x10;
   double dphi = std::fabs(tag->phi()-probe->phi());
@@ -118,6 +135,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   if(pemf>maxModifiedEMF_) passSel |= 0x40;
 
   // make the cuts
+  hPassSel_->Fill(passSel);
   if(passSel) return;
   
   //////////////////////////////
@@ -141,6 +159,7 @@ CalcRespCorrDiJets::beginJob(const edm::EventSetup&)
   // book histograms
   rootfile_ = new TFile(rootHistFilename_.c_str(), "RECREATE");
 
+  hPassSel_ = new TH1D("hPassSelection", "Selection Pass Failures",200,-0.5,199.5);
   hRespIeta_ = new TH2D("hRespIeta","Response Corrections versus ieta",100,0,5,59,-29.5,29.5);
 }
 
@@ -151,6 +170,7 @@ CalcRespCorrDiJets::endJob() {
   // write histograms
   rootfile_->cd();
 
+  hPassSel_->Write();
   hRespIeta_->Write();
   rootfile_->Close();
 }

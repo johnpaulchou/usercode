@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process('MyReco')
+process = cms.Process('MyRec')
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
 
@@ -16,7 +16,12 @@ process.calcrespcorrdijets.respCorr = cms.vdouble(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
 readFiles = cms.untracked.vstring()
 process.source = cms.Source ("PoolSource",fileNames = readFiles)
 readFiles.extend( [
-    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDDiJetPt800to1000/QCDDiJetPt800to1000_1.root'
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDDiJetPt800to1000/QCDDiJetPt800to1000_1.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDDiJetPt800to1000/QCDDiJetPt800to1000_2.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDDiJetPt800to1000/QCDDiJetPt800to1000_3.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDDiJetPt800to1000/QCDDiJetPt800to1000_4.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDDiJetPt800to1000/QCDDiJetPt800to1000_5.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDDiJetPt800to1000/QCDDiJetPt800to1000_6.root'
     ] );
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
