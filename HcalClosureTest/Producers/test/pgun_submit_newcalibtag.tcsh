@@ -4,11 +4,11 @@
 set PDGID = 211
 set ENERGY = 50
 set BASE = Single${PDGID}E${ENERGY}_HcalRespCorrs200mc
-set TEST = true
-#set MAXEVENTS = 100000
-set MAXEVENTS = 500
-#set EVENTS_PER_JOB = 5000
-set EVENTS_PER_JOB = 500
+set TEST = false
+set MAXEVENTS = 100000
+#set MAXEVENTS = 500
+set EVENTS_PER_JOB = 5000
+#set EVENTS_PER_JOB = 500
 
 # set the location we're going to store the output
 # this is appended to the pnfs or ~/nobackup directory
@@ -21,10 +21,10 @@ set PYTHONNAME = "${BASE}.py"
 set OUTPUTNAME = "${BASE}.root"
 
 # setup cms production
-# unsetenv CMS_PATH
-# source /uscmst1/prod/sw/cms/cshrc prod
+unsetenv CMS_PATH
+source /uscmst1/prod/sw/cms/cshrc prod
 
-#cmsenv
+cmsenv
 
 ############################################################################
 

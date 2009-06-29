@@ -18,9 +18,19 @@ process.calcrespcorr.respCorr = cms.vdouble(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1
 
 # run over files
 readFiles = cms.untracked.vstring()
-process.source = cms.Source ("PoolSource",fileNames = readFiles)
+process.source = cms.Source ("PoolSource",
+                             fileNames = readFiles,
+                             duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
+                             )
+
 readFiles.extend( [
-    'file:/afs/cern.ch/user/j/johnpaul/data/Single211E50_1.root'
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/Single211E50_HcalRespCorrs200mc/Single211E50_HcalRespCorrs200mc_1.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/Single211E50_HcalRespCorrs200mc/Single211E50_HcalRespCorrs200mc_2.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/Single211E50_HcalRespCorrs200mc/Single211E50_HcalRespCorrs200mc_3.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/Single211E50_HcalRespCorrs200mc/Single211E50_HcalRespCorrs200mc_4.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/Single211E50_HcalRespCorrs200mc/Single211E50_HcalRespCorrs200mc_5.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/Single211E50_HcalRespCorrs200mc/Single211E50_HcalRespCorrs200mc_6.root',
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/Single211E50_HcalRespCorrs200mc/Single211E50_HcalRespCorrs200mc_7.root'
     ] );
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )

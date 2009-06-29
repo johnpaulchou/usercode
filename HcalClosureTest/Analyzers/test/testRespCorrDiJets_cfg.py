@@ -16,7 +16,7 @@ process.calcrespcorrdijets.respCorr = cms.vdouble(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
 readFiles = cms.untracked.vstring()
 process.source = cms.Source ("PoolSource",fileNames = readFiles)
 readFiles.extend( [
-    'file:/afs/cern.ch/user/j/johnpaul/data/Single211E50_1.root'
+    'dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDDiJetPt800to1000/QCDDiJetPt800to1000_1.root'
     ] );
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
