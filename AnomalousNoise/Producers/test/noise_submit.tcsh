@@ -2,14 +2,14 @@
 
 # these are the basic parameters
 set RUNNUMBER = 68288
-set BASE = CaloCommissioning08R${RUNNUMBER}
+set BASE = CaloCommissioning08_R${RUNNUMBER}
 set DATASETPATH = /Calo/Commissioning08-v1/RAW
-set TEST = true
+set TEST = false
 set EVENTS_PER_JOB = 20000
 
 # set the # of events to run over
 if($TEST == true) then
-    set MAXEVENTS = 10
+    set MAXEVENTS = 1000
 else
     set MAXEVENTS = -1
 endif
@@ -70,8 +70,8 @@ process.hcalnoise.fillJets = cms.bool(False)
 readFiles = cms.untracked.vstring()
 readFiles.append('/store/data/Commissioning08/Calo/RAW/v1/000/068/288/FE92951A-3CA8-DD11-8981-001D09F23A4D.root')
 readFiles.append('/store/data/Commissioning08/Calo/RAW/v1/000/068/288/FCEA0CB3-3FA8-DD11-82E6-001D09F28D4A.root')
-process.source = cms.Source ("PoolSource",fileNames = readFiles, run = cms.untracked.int32(${RUNNUMBER}) )
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(${MAXEVENTS}) )
+process.source = cms.Source ("PoolSource",fileNames = readFiles )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(${MAXEVENTS}), run = cms.untracked.int32(${RUNNUMBER}) )
 
 # Tone down the logging messages, MessageLogger!
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
@@ -114,7 +114,7 @@ echo "==========================================================================
 
 # run it either locally or with crab
 if($TEST == false) then
-    crabsubmit.tcsh ${PYTHONNAME} ${OUTPUTNAME} ${MAXEVENTS} ${EVENTS_PER_JOB} ${DATASETPATH} ${STORAGEDIRNAME}
+    crabsubmit.tcsh ${PYTHONNAME} ${OUTPUTNAME} ${MAXEVENTS} ${EVENTS_PER_JOB} ${DATASETPATH} ${STORAGEDIRNAME} ${RUNNUMBER} ${RUNNUMBER}
 else
     cmsRun ${PYTHONNAME}
 endif
