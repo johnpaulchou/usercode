@@ -92,7 +92,7 @@ echo "==========================================================================
 
 # run it either locally or with crab
 if($TEST == false) then
-    crabsubmit.tcsh ${PYTHONNAME} ${OUTPUTNAME} ${MAXEVENTS} ${EVENTS_PER_JOB} ${DATASETPATH} ${STORAGEDIRNAME}
+    crabsubmit.tcsh ${PYTHONNAME} ${MAXEVENTS} ${EVENTS_PER_JOB} ${DATASETPATH} ${STORAGEDIRNAME}
 else
     cmsRun ${PYTHONNAME}
 endif

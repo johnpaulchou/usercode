@@ -65,7 +65,7 @@ process.load('Configuration/EventContent/EventContent_cff')
 process.load('HcalClosureTest/Producers/singleparticleclusterproducer_cfi')
 
 process.configurationMetadata = cms.untracked.PSet(
-    version = cms.untracked.string('\$Revision: 1.1 \$'),
+    version = cms.untracked.string('\$Revision: 1.1 $'),
     annotation = cms.untracked.string('PGunSource'),
     name = cms.untracked.string('PyReleaseValidation')
     )
@@ -149,7 +149,7 @@ echo "==========================================================================
 
 # run it either locally or with crab
 if($TEST == false) then
-    crabsubmit.tcsh ${PYTHONNAME} ${OUTPUTNAME} ${MAXEVENTS} ${EVENTS_PER_JOB} None ${STORAGEDIRNAME}
+    crabsubmit.tcsh ${PYTHONNAME} ${MAXEVENTS} ${EVENTS_PER_JOB} None ${STORAGEDIRNAME}
 else
     cmsRun ${PYTHONNAME}
 endif

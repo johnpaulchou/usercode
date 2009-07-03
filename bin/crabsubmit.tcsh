@@ -3,23 +3,22 @@
 #============== Input parameters =================
 set NUMARGS = $#argv
 set PYTHONFILENAME = $1
-set OUTPUTFILENAME = $2
-set NUMBER_OF_EVENTS = $3
-set EVENTS_PER_JOB = $4
-set DATASETPATH = $5
-set OUTPUTDIR = $6
-set MINRUN = $7
-set MAXRUN = $8
+set NUMBER_OF_EVENTS = $2
+set EVENTS_PER_JOB = $3
+set DATASETPATH = $4
+set OUTPUTDIR = $5
+set MINRUN = $6
+set MAXRUN = $7
 
-if ($NUMARGS<6) then
-	echo "Usage: `basename $0` pythonfile outputfile nevents events_per_job dataset_path output_dir minrun maxrun"
+if ($NUMARGS<5) then
+	echo "Usage: `basename $0` pythonfile nevents events_per_job dataset_path output_dir minrun maxrun"
 	exit
 endif
 
 set WORKINGDIR = /uscms_data/d1/johnpaul/crab/${OUTPUTDIR}/
 set RESILIENTDIR = /${OUTPUTDIR}/
 set RUNSELECTION = ""
-if ($NUMARGS>7) then
+if ($NUMARGS>6) then
     if ($MINRUN == $MAXRUN) then
 	set RUNSELECTION = "runselection            = ${MINRUN}"
     else
@@ -35,7 +34,7 @@ unsetenv CMS_PATH
 source /uscmst1/prod/sw/cms/cshrc prod
 
 # setup crab
-source /uscmst1/prod/grid/CRAB_2_5_1/crab.csh
+source /uscmst1/prod/grid/CRAB_2_6_0/crab.csh
 
 #============== Create crab config file ==========
 
@@ -53,7 +52,7 @@ datasetpath		= ${DATASETPATH}
 pset			= ${PYTHONFILENAME}
 total_number_of_events	= ${NUMBER_OF_EVENTS}
 events_per_job		= ${EVENTS_PER_JOB}
-output_file		= ${OUTPUTFILENAME}
+get_edm_output          = 1
 ${RUNSELECTION}
 
 [USER]
@@ -69,7 +68,7 @@ use_boss_rt		= 0
 thresholdLevel		= 100
 eMail			= johnpaul@fnal.gov
 
-[EDG]
+[GRID]
 rb			= CERN
 proxy_server		= myproxy.cern.ch
 virtual_organization	= cms
