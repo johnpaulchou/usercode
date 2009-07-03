@@ -54,6 +54,8 @@ class CalcRespCorrDiJets : public edm::EDAnalyzer {
   double minJetEt_;              // minimum Jet Et
   double maxThirdJetEt_;         // maximum 3rd jet Et
   int maxCalibratedIEta_;        // maximum calibrated ieta tower
+  double minTagCalibFrac_;       // minimum fraction of E_T the tag jet must have in the calibrated region
+  double maxProbeCalibFrac_;     // maximum fraction of E_T the probe jet must have in the calibrated region
   std::vector<double> respCorr_; // response corrections ordered by ieta (-29 to 29)
 
   // root file/histograms
