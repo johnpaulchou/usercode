@@ -8,14 +8,25 @@ set NUMBER_OF_EVENTS = $3
 set EVENTS_PER_JOB = $4
 set DATASETPATH = $5
 set OUTPUTDIR = $6
+set MINRUN = $7
+set MAXRUN = $8
 
 if ($NUMARGS<6) then
-	echo "Usage: `basename $0` pythonfile outputfile nevents events_per_job dataset_path output_dir"
+	echo "Usage: `basename $0` pythonfile outputfile nevents events_per_job dataset_path output_dir minrun maxrun"
 	exit
 endif
 
 set WORKINGDIR = /uscms_data/d1/johnpaul/crab/${OUTPUTDIR}/
 set RESILIENTDIR = /${OUTPUTDIR}/
+set RUNSELECTION = ""
+if ($NUMARGS>7) then
+    if ($MINRUN == $MAXRUN) then
+	set RUNSELECTION = "runselection            = ${MINRUN}"
+    else
+	set RUNSELECTION = "runselection            = ${MINRUN}-${MAXRUN}"
+    endif
+endif
+
 
 #============== Setup environment ================
 
@@ -43,6 +54,7 @@ pset			= ${PYTHONFILENAME}
 total_number_of_events	= ${NUMBER_OF_EVENTS}
 events_per_job		= ${EVENTS_PER_JOB}
 output_file		= ${OUTPUTFILENAME}
+${RUNSELECTION}
 
 [USER]
 return_data		= 0
@@ -68,8 +80,8 @@ lfc_home		= /grid/cms
 
 +EOF
 
-echo "=========================================================================="
 echo "Using the following crab config file:"
+echo "=========================================================================="
 cat $CFGFILENAME
 echo "=========================================================================="
 
