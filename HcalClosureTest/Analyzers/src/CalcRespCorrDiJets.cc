@@ -129,7 +129,8 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   if(!tagincalib || probeincalib) passSel |= 0x08;
 
   // require that the delta-|eta| is small, and the delta-phi is large
-  if(std::fabs(std::fabs(tag->eta())-std::fabs(probe->eta()))>maxDeltaEta_) passSel |= 0x10;
+  double deta=std::fabs(std::fabs(tag->eta())-std::fabs(probe->eta()));
+  if(deta>maxDeltaEta_) passSel |= 0x10;
   double dphi = std::fabs(tag->phi()-probe->phi());
   if(dphi>3.1416) dphi = 2.0*3.14156-dphi;
   if(dphi<minDeltaPhi_) passSel |= 0x20;
@@ -149,11 +150,28 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   // calculate response corrs
   //////////////////////////////
   
-  double respcorr=(tag->et()-probe->et())/(tag->et()+probe->et());
+  double respcorr=2*(tag->et()-probe->et())/(tag->et()+probe->et());
   for(std::vector<CaloTowerPtr>::const_iterator ctp_it=probeconst.begin();
       ctp_it!=probeconst.end(); ++ctp_it) {
     const CaloTower* twr=&(**ctp_it);
-    hRespIeta_->Fill(respcorr, twr->id().ieta());
+
+    if(deta<0.5) hRespIeta_->Fill(respcorr, twr->id().ieta());
+
+    if(tag->et()<50 && probe->et()<50) {
+      if(deta<0.5) hRespIetaLowEtLowDEta_->Fill(respcorr, twr->id().ieta());
+      else if(deta<1.0) hRespIetaLowEtMidDEta_->Fill(respcorr, twr->id().ieta());
+      else if(deta<1.5) hRespIetaLowEtTopDEta_->Fill(respcorr, twr->id().ieta());
+    }
+    else if(tag->et()<80 && probe->et()<80) {
+      if(deta<0.5) hRespIetaMidEtLowDEta_->Fill(respcorr, twr->id().ieta());
+      else if(deta<1.0) hRespIetaMidEtMidDEta_->Fill(respcorr, twr->id().ieta());
+      else if(deta<1.5) hRespIetaMidEtTopDEta_->Fill(respcorr, twr->id().ieta());
+    }
+    else {
+      if(deta<0.5) hRespIetaTopEtLowDEta_->Fill(respcorr, twr->id().ieta());
+      else if(deta<1.0) hRespIetaTopEtMidDEta_->Fill(respcorr, twr->id().ieta());
+      else if(deta<1.5) hRespIetaTopEtTopDEta_->Fill(respcorr, twr->id().ieta());
+    }
   }
 
   return;
@@ -169,6 +187,15 @@ CalcRespCorrDiJets::beginJob(const edm::EventSetup&)
 
   hPassSel_ = new TH1D("hPassSelection", "Selection Pass Failures",200,-0.5,199.5);
   hRespIeta_ = new TH2D("hRespIeta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaLowEtLowDEta_ = new TH2D("hRespIetaLowEtLowDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaMidEtLowDEta_ = new TH2D("hRespIetaMidEtLowDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaTopEtLowDEta_ = new TH2D("hRespIetaTopEtLowDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaLowEtMidDEta_ = new TH2D("hRespIetaLowEtMidDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaMidEtMidDEta_ = new TH2D("hRespIetaMidEtMidDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaTopEtMidDEta_ = new TH2D("hRespIetaTopEtMidDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaLowEtTopDEta_ = new TH2D("hRespIetaLowEtTopDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaMidEtTopDEta_ = new TH2D("hRespIetaMidEtTopDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
+  hRespIetaTopEtTopDEta_ = new TH2D("hRespIetaTopEtTopDEta","Response Corrections versus ieta",100,-1,1,83,-41.5,41.5);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
@@ -180,6 +207,15 @@ CalcRespCorrDiJets::endJob() {
 
   hPassSel_->Write();
   hRespIeta_->Write();
+  hRespIetaLowEtLowDEta_->Write();
+  hRespIetaMidEtLowDEta_->Write();
+  hRespIetaTopEtLowDEta_->Write();
+  hRespIetaLowEtMidDEta_->Write();
+  hRespIetaMidEtMidDEta_->Write();
+  hRespIetaTopEtMidDEta_->Write();
+  hRespIetaLowEtTopDEta_->Write();
+  hRespIetaMidEtTopDEta_->Write();
+  hRespIetaTopEtTopDEta_->Write();
   rootfile_->Close();
 }
 

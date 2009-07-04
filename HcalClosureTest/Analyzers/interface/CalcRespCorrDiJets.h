@@ -77,6 +77,15 @@ class CalcRespCorrDiJets : public edm::EDAnalyzer {
 
   // response corrections as a function if ieta 
   TH2D* hRespIeta_;
+  TH2D* hRespIetaLowEtLowDEta_;
+  TH2D* hRespIetaMidEtLowDEta_;
+  TH2D* hRespIetaTopEtLowDEta_;
+  TH2D* hRespIetaLowEtMidDEta_;
+  TH2D* hRespIetaMidEtMidDEta_;
+  TH2D* hRespIetaTopEtMidDEta_;
+  TH2D* hRespIetaLowEtTopDEta_;
+  TH2D* hRespIetaMidEtTopDEta_;
+  TH2D* hRespIetaTopEtTopDEta_;
   
 };
 
