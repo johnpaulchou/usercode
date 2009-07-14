@@ -1,70 +1,80 @@
-TFile* rootfile=0;
+#include "HcalClosureTest/DataFormat/interface/DijetRespCorrData.h"
+#include <iostream>
+#include "TFile.h"
+#include "TROOT.h"
+#include "TH1D.h"
+#include "TCanvas.h"
 
-TH1* h[20];
+TFile* rootfile=0;
+TCanvas *c=0;
+
+class fitter
+{
+  static void doFit(DijetRespCorrData* data, int maxFixedIeta);
+
+private:
+  fitter() {}
+  virtual ~fitter() {}
+  
+  static void FCN(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t flag);
+  static DijetRespCorrData* data_;
+  static int maxFixedIeta_;
+};
+
+DijetRespCorrData* fitter::data_;
+int fitter::maxFixedIeta_=23;
+
+void fitter::FCN(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t flag)
+{
+  double total=0;
+  for(int i=0; i<respcorrdata->GetSize(); i++) {
+    DijetRespCorrDatum d=respcorrdata->GetAt(i);
+    total -= TMath::Log(d.GetResolution()) - 
+  }
+
+}
+
+void fitter::doFit(DijetRespCorrData* data, int maxFixedIeta)
+{
+  data_ = data;
+  maxFixedIeta_ = maxFixedIeta;
+
+  TMinuit *gMinuit=new TMinuit(83);
+  gMinuit->SetPrintLevel(-1);
+  gMinuit->SetErrorDef(0.5); // for a likelihood
+  gMinuit->SetFCN(FCN);
+
+  // define the background parameters
+  for(int i=0; i<83; i++) {
+    int ieta=i-41;
+    std::ostringstream oss;
+    oss << "ieta=" << ieta;
+    gMinuit->DefineParameter(i, oss.str().c_str(), 1.0, .01, 0.0, 0.0);
+    if(abs(ieta)<=maxFixedIeta_) gMinuit->FixParameter(i);
+  }
+
+  // Minimize
+  gMinuit->Migrad();
+
+  // get fitted values (assume there are less than 100 backgrounds...)
+  for(int i=0; i<83; i++) {
+    double scale, err;
+    gMinuit->GetParameter(i, scale, err);
+    std::cout << i << " " << scale << " " << err << std::endl;
+  }
+  return;
+}
+
 
 void drawplots(void)
 {
   rootfile = new TFile("plots.root");
-  
-  h[0]=hRespIetaLowEtLowDEta->ProfileY("_0");
-  h[1]=hRespIetaLowEtMidDEta->ProfileY("_1");
-  h[2]=hRespIetaLowEtTopDEta->ProfileY("_2");
-  h[3]=hRespIetaMidEtLowDEta->ProfileY("_3");
-  h[4]=hRespIetaMidEtMidDEta->ProfileY("_4");
-  h[5]=hRespIetaMidEtTopDEta->ProfileY("_5");
-  h[6]=hRespIetaTopEtLowDEta->ProfileY("_6");
-  h[7]=hRespIetaTopEtMidDEta->ProfileY("_7");
-  h[8]=hRespIetaTopEtTopDEta->ProfileY("_8");
+  c=new TCanvas();
 
-  TH1* ha=h[0];
-  TH1* hb=h[3];
-  TH1* hc=h[6];
+  TH1D* hResolution=new TH1D("Resolution","Resolution",100,0,100);
 
-  ha->SetLineColor(kBlue+2);
-  hb->SetLineColor(kCyan+2);
-  hc->SetLineColor(kRed+2);
-  ha->SetLineWidth(2);
-  hb->SetLineWidth(2);
-  hc->SetLineWidth(2);
-  ha->SetMarkerStyle(21);
-  hb->SetMarkerStyle(22);
-  hc->SetMarkerStyle(23);
-  ha->SetMarkerSize(0.3);
-  hb->SetMarkerSize(0.3);
-  hc->SetMarkerSize(0.3);
-  ha->SetMarkerColor(kBlue+2);
-  hb->SetMarkerColor(kCyan+2);
-  hc->SetMarkerColor(kRed+2);
+  DijetRespCorrData* respcorrdata = dynamic_cast<DijetRespCorrData*>(gROOT->FindObject("respcorrdata"));
 
-  ha->Draw();
-  ha->GetXaxis()->SetTitle("|#eta_{i}|");
-  ha->GetYaxis()->SetTitle("E_{T}^{T}-E_{T}^{P} / E_{T}^{T}+E_{T}^{P}");
-  hb->Draw("same");
-  hc->Draw("same");
-  ha->SetStats(0);
 
-  ha->SetMinimum(-.3);
-  ha->SetMaximum(.5);
-  
-  TLegend *leg=new TLegend(.25,.6,.75,.85);
-  leg->SetFillColor(0);
-  leg->SetBorderSize(0);
-
-  for(int i=0; i<=8; i++) {
-    TString str;
-    if(i==0) str="50 GeV > E_{T} > 20 GeV; #Delta|#eta|<0.5";
-    if(i==1) str="50 GeV > E_{T} > 20 GeV; 0.5<#Delta|#eta|<1.0";
-    if(i==2) str="50 GeV > E_{T} > 20 GeV; 1.0<#Delta|#eta|<1.5";
-    if(i==3) str="80 GeV > E_{T} > 50 GeV; #Delta|#eta|<0.5";
-    if(i==4) str="80 GeV > E_{T} > 50 GeV; 0.5<#Delta|#eta|<1.0";
-    if(i==5) str="80 GeV > E_{T} > 50 GeV; 1.0<#Delta|#eta|<1.5";
-    if(i==6) str="E_{T} > 80 GeV; #Delta|#eta|<0.5";
-    if(i==7) str="E_{T} > 80 GeV; 0.5<#Delta|#eta|<1.0";
-    if(i==8) str="E_{T} > 80 GeV; 1.0<#Delta|#eta|<1.5";
-    if(ha==h[i])   leg->AddEntry(ha, str, "lp");
-    if(hb==h[i])   leg->AddEntry(hb, str, "lp");
-    if(hc==h[i])   leg->AddEntry(hc, str, "lp");
-  }
-  leg->Draw();
-
+  hResolution->Draw();
 }

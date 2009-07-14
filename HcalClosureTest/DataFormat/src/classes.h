@@ -1,4 +1,5 @@
 #include "HcalClosureTest/DataFormat/interface/SingleParticleCluster.h"
+#include "HcalClosureTest/DataFormat/interface/DijetRespCorrData.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 
 namespace {
@@ -7,5 +8,9 @@ namespace {
     SingleParticleCluster dummy1;
     SingleParticleClusterCollection dummy2;
     edm::Wrapper<SingleParticleClusterCollection> dummy3;
+
+    DijetRespCorrDatum dummy4;
+    DijetRespCorrData dummy5;
+
   };
 }
