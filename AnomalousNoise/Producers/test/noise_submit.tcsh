@@ -5,7 +5,7 @@ set RUNNUMBER = 68288
 set BASE = CaloCommissioning08_R${RUNNUMBER}
 set DATASETPATH = /Calo/Commissioning08-v1/RAW
 set TEST = false
-set EVENTS_PER_JOB = 20000
+set EVENTS_PER_JOB = 50000
 
 # set the # of events to run over
 if($TEST == true) then
@@ -89,7 +89,7 @@ process.output = cms.OutputModule(
                                            'keep HcalNoiseSummary_*_*_*',
                                            'keep L1GlobalTriggerRecord_*_*_*'
                                            ),
-    fileName = cms.untracked.string('file:${OUTPUTNAME}')
+    fileName = cms.untracked.string('${OUTPUTNAME}')
     )
 
 
