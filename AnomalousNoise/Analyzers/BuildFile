@@ -1,0 +1,12 @@
+<flags EDM_PLUGIN=1>
+<use name=DataFormats/METReco>
+<use name=FWCore/Framework>
+<use name=L1Trigger/GlobalTriggerAnalyzer>
+<use name=root>
+<export>
+   <lib name=AnomalousNoiseAnalyzers>
+   <use name=DataFormats/METReco>
+   <use name=FWCore/Framework>
+   <use name=L1Trigger/GlobalTriggerAnalyzer>
+   <use name=root>
+</export>
