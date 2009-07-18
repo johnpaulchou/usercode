@@ -117,7 +117,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
     int ietaAbs=(*ctp_it)->id().ietaAbs();
     double hadet=(*ctp_it)->hadEnergy()*tagecorr;
     if(ietaAbs>29) hadet += (*ctp_it)->emEnergy()*tagecorr;
-    datum.SetTagHcalEt(hadet, ieta);
+    datum.AddTagHcalEt(hadet, ieta);
   }
 
   std::vector<CaloTowerPtr> probeconst=probe->getCaloConstituents();
@@ -126,7 +126,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
     int ietaAbs=(*ctp_it)->id().ietaAbs();
     double hadet=(*ctp_it)->hadEnergy()*tagecorr;
     if(ietaAbs>29) hadet += (*ctp_it)->emEnergy()*tagecorr;
-    datum.SetProbeHcalEt(hadet, ieta);
+    datum.AddProbeHcalEt(hadet, ieta);
   }
 
   respcorrdata_.push_back(datum);

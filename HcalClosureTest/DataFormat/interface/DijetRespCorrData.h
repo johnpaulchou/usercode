@@ -11,14 +11,16 @@
 #include "TObject.h"
 #include "Rtypes.h"
 #include "TArrayD.h"
+
+#include <map>
 #include <vector>
 
 //
 // numerical constants
 //
 
-const int MAXIETA = 41;
-const int NUMTOWERS = 83;
+const Int_t MAXIETA = 41;
+const Int_t NUMTOWERS = 83;
 
 //
 // class definitions
@@ -28,29 +30,33 @@ const int NUMTOWERS = 83;
 // includes the resolution, tag/probe hcal et, and tag/probe ecal et
 class DijetRespCorrDatum : public TObject
 {
-  public:
+ public:
   DijetRespCorrDatum();
   ~DijetRespCorrDatum();
-
+  
   Double_t GetResolution(void) const;
-  Double_t GetTagHcalEt(Int_t ieta) const;
+  Double_t GetTagHcalEt(Int_t ieta);
+  void     GetTagHcalEt(std::map<Int_t, Double_t>&) const;
   Double_t GetTagEcalEt(void) const;
-  Double_t GetProbeHcalEt(Int_t ieta) const;
+  Double_t GetProbeHcalEt(Int_t ieta);
+  void     GetProbeHcalEt(std::map<Int_t, Double_t>&) const;
   Double_t GetProbeEcalEt(void) const;
-
+  
   void SetResolution(Double_t);
   void SetTagHcalEt(Double_t, Int_t ieta);
+  void AddTagHcalEt(Double_t, Int_t ieta);
   void SetTagEcalEt(Double_t);
   void SetProbeHcalEt(Double_t, Int_t ieta);
+  void AddProbeHcalEt(Double_t, Int_t ieta);
   void SetProbeEcalEt(Double_t);
-
+  
  private:
   Double_t fResolution;
-  TArrayD fTagHcalEt;
+  std::map<Int_t, Double_t> fTagHcalEt;
   Double_t fTagEcalEt;
-  TArrayD fProbeHcalEt;
+  std::map<Int_t, Double_t> fProbeHcalEt;
   Double_t fProbeEcalEt;
-
+  
   ClassDef(DijetRespCorrDatum, 1);
 };
 

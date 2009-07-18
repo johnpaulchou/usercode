@@ -12,8 +12,6 @@ ClassImp(DijetRespCorrData)
 
 DijetRespCorrDatum::DijetRespCorrDatum() {
   fResolution=fTagEcalEt=fProbeEcalEt=0.0;
-  fTagHcalEt.Set(NUMTOWERS);
-  fProbeHcalEt.Set(NUMTOWERS);
 }
 
 DijetRespCorrDatum::~DijetRespCorrDatum() {}
@@ -23,11 +21,16 @@ Double_t DijetRespCorrDatum::GetResolution(void) const
   return fResolution;
 }
 
-Double_t DijetRespCorrDatum::GetTagHcalEt(Int_t ieta) const
+Double_t DijetRespCorrDatum::GetTagHcalEt(Int_t ieta)
 {
-  assert(ieta<=MAXIETA && ieta>=-MAXIETA && ieta!=0);
-  Int_t index = ieta+MAXIETA;
-  return fTagHcalEt.GetAt(index);
+  Double_t v=fTagHcalEt[ieta];
+  return v;
+}
+
+void DijetRespCorrDatum::GetTagHcalEt(std::map<Int_t, Double_t>& m) const
+{
+  m=fTagHcalEt;
+  return;
 }
 
 Double_t DijetRespCorrDatum::GetTagEcalEt(void) const
@@ -35,11 +38,16 @@ Double_t DijetRespCorrDatum::GetTagEcalEt(void) const
   return fTagEcalEt;
 }
 
-Double_t DijetRespCorrDatum::GetProbeHcalEt(Int_t ieta) const
+Double_t DijetRespCorrDatum::GetProbeHcalEt(Int_t ieta)
 {
-  assert(ieta<=MAXIETA && ieta>=-MAXIETA && ieta!=0);
-  Int_t index = ieta+MAXIETA;
-  return fProbeHcalEt.GetAt(index);
+  Double_t v=fProbeHcalEt[ieta];
+  return v;
+}
+
+void DijetRespCorrDatum::GetProbeHcalEt(std::map<Int_t, Double_t>& m) const
+{
+  m=fProbeHcalEt;
+  return;
 }
 
 Double_t DijetRespCorrDatum::GetProbeEcalEt(void) const
@@ -56,8 +64,14 @@ void DijetRespCorrDatum::SetResolution(Double_t v)
 void DijetRespCorrDatum::SetTagHcalEt(Double_t v, Int_t ieta)
 {
   assert(ieta<=MAXIETA && ieta>=-MAXIETA && ieta!=0);
-  Int_t index = ieta+MAXIETA;
-  fTagHcalEt.SetAt(v, index);
+  fTagHcalEt[ieta] = v;
+  return;
+}
+
+void DijetRespCorrDatum::AddTagHcalEt(Double_t v, Int_t ieta)
+{
+  assert(ieta<=MAXIETA && ieta>=-MAXIETA && ieta!=0);
+  fTagHcalEt[ieta] += v;
   return;
 }
 
@@ -70,8 +84,14 @@ void DijetRespCorrDatum::SetTagEcalEt(Double_t v)
 void DijetRespCorrDatum::SetProbeHcalEt(Double_t v, Int_t ieta)
 {
   assert(ieta<=MAXIETA && ieta>=-MAXIETA && ieta!=0);
-  Int_t index = ieta+MAXIETA;
-  fProbeHcalEt.SetAt(v, index);
+  fProbeHcalEt[ieta] = v;
+  return;
+}
+
+void DijetRespCorrDatum::AddProbeHcalEt(Double_t v, Int_t ieta)
+{
+  assert(ieta<=MAXIETA && ieta>=-MAXIETA && ieta!=0);
+  fProbeHcalEt[ieta] += v;
   return;
 }
 
@@ -118,12 +138,12 @@ Double_t DijetRespCorrData::GetLikelihoodDistance(const TArrayD& respcorr) const
     Double_t te=it->GetTagEcalEt();
     Double_t pe=it->GetProbeEcalEt();
     Double_t th=0.0, ph=0.0;
-    for(int i=0; i<NUMTOWERS; i++) {
-      int ieta = -MAXIETA+i;
-      if(ieta==0) continue;
-      th += respcorr[i]*it->GetTagHcalEt(ieta);
-      ph += respcorr[i]*it->GetProbeHcalEt(ieta);
-    }
+    std::map<Int_t,Double_t> tagmap, probemap;
+    it->GetTagHcalEt(tagmap);
+    it->GetProbeHcalEt(probemap);
+    for(std::map<Int_t, Double_t>::const_iterator mapit=tagmap.begin(); mapit!=tagmap.end(); ++mapit) th += respcorr[mapit->first]*mapit->second;
+    for(std::map<Int_t, Double_t>::const_iterator mapit=probemap.begin(); mapit!=probemap.end(); ++mapit) ph += respcorr[mapit->first]*mapit->second;
+
     Double_t x=ph+pe-th-te;
     total += TMath::Log(sigma)-x*x/2/sigma/sigma;
   }
