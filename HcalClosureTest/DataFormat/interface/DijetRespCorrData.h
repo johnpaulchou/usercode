@@ -14,9 +14,18 @@
 #include <vector>
 
 //
+// numerical constants
+//
+
+const int MAXIETA = 41;
+const int NUMTOWERS = 83;
+
+//
 // class definitions
 //
 
+// container class for a dijet event
+// includes the resolution, tag/probe hcal et, and tag/probe ecal et
 class DijetRespCorrDatum : public TObject
 {
   public:
@@ -35,12 +44,7 @@ class DijetRespCorrDatum : public TObject
   void SetProbeHcalEt(Double_t, Int_t ieta);
   void SetProbeEcalEt(Double_t);
 
-  inline Int_t GetMaxIeta(void) const { return MAXIETA; }
-  inline Int_t GetNumTowers(void) const { return MAXIETA*2+1; }
-
  private:
-  static const Int_t MAXIETA=41;
-
   Double_t fResolution;
   TArrayD fTagHcalEt;
   Double_t fTagEcalEt;
@@ -50,6 +54,9 @@ class DijetRespCorrDatum : public TObject
   ClassDef(DijetRespCorrDatum, 1);
 };
 
+// vector of DijetRespCorrDatum
+// uses ROOT style accessors, since ROOT doesn't like the STD
+// provide a fitting tool to determine the response corrections
 class DijetRespCorrData : public TObject
 {
  public:
@@ -60,8 +67,32 @@ class DijetRespCorrData : public TObject
   const DijetRespCorrDatum& GetAt(Int_t) const;
   Int_t GetSize(void) const;
 
+  // calculate the total distance between the tag and probe jets
+  // given a set of response corrections
+  Double_t GetLikelihoodDistance(const TArrayD& respcorr) const;
+
+  // fit for the response corrections
+  TArrayD doFit(const TArrayD& respCorrInit, Int_t maxIetaFixed);
+  TArrayD doFit(void); // use default resp corrections
+
+  // fitting parameters
+  inline void SetPrintLevel(Int_t p) { fPrintLevel=p; }
+  void SetParStep(Double_t p) { fParStep=p; }
+  void SetParMin(Double_t p) { fParMin=p; }
+  void SetParMax(Double_t p) { fParMax=p; }
+
  private:
+  // actual data
   std::vector<DijetRespCorrDatum> fData;
+
+  // this is where the magic happens
+  static void FCN(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t flag);
+
+  // fit parameters
+  Int_t fPrintLevel;
+  Double_t fParStep;
+  Double_t fParMin;
+  Double_t fParMax;
 
   ClassDef(DijetRespCorrData, 1);
 };

@@ -53,8 +53,6 @@ class CalcRespCorrDiJets : public edm::EDAnalyzer {
   double minDeltaPhi_;           // minimum delta-Phi between Jets
   double minJetEt_;              // minimum Jet Et
   double maxThirdJetEt_;         // maximum 3rd jet Et
-  int maxCalibratedIEta_;        // maximum calibrated ieta tower
-  std::vector<double> respCorr_; // response corrections ordered by ieta (-29 to 29)
 
   // root file/histograms
   TFile* rootfile_;

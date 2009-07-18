@@ -30,17 +30,8 @@ CalcRespCorrDiJets::CalcRespCorrDiJets(const edm::ParameterSet& iConfig)
   minDeltaPhi_       = iConfig.getParameter<double>("minDeltaPhi");
   minJetEt_          = iConfig.getParameter<double>("minJetEt");
   maxThirdJetEt_     = iConfig.getParameter<double>("maxThirdJetEt");
-  maxCalibratedIEta_ = iConfig.getParameter<int>("maxCalibratedIEta");
-  respCorr_          = iConfig.getParameter<std::vector<double> >("respCorr");
-
-  if(respCorr_.size()!=83) {
-    throw edm::Exception(edm::errors::ProductNotFound)
-      << " respCorr has " << respCorr_.size() << " elements.  We want 83.";
-  }
-  
 }
-  
-  
+
 CalcRespCorrDiJets::~CalcRespCorrDiJets()
 {
 }
@@ -97,16 +88,6 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
     probe=temp;
   }
 
-  // make sure the probe has at least one tower outside the calibrated region
-  std::vector<CaloTowerPtr> tagconst = tag->getCaloConstituents();
-  std::vector<CaloTowerPtr> probeconst = probe->getCaloConstituents();
-  bool goodprobe=false;
-  for(std::vector<CaloTowerPtr>::const_iterator ctp_it=probeconst.begin(); ctp_it!=probeconst.end(); ++ctp_it) {
-    int ietaabs=(*ctp_it)->id().ietaAbs();
-    if(ietaabs>maxCalibratedIEta_) goodprobe=true;
-  }
-  if(!goodprobe) passSel |= 0x8;
-
   // make the cuts
   hPassSel_->Fill(passSel);
   if(passSel) return;
@@ -130,6 +111,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
 			   1.15*1.15*(tagHBHEE+probeHBHEE) +
 			   1.35*1.35*(tagHFE+probeHFE)));
   
+  std::vector<CaloTowerPtr> tagconst=tag->getCaloConstituents();
   for(std::vector<CaloTowerPtr>::const_iterator ctp_it=tagconst.begin(); ctp_it!=tagconst.end(); ++ctp_it) {
     int ieta=(*ctp_it)->id().ieta();
     int ietaAbs=(*ctp_it)->id().ietaAbs();
@@ -138,6 +120,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
     datum.SetTagHcalEt(hadet, ieta);
   }
 
+  std::vector<CaloTowerPtr> probeconst=probe->getCaloConstituents();
   for(std::vector<CaloTowerPtr>::const_iterator ctp_it=probeconst.begin(); ctp_it!=probeconst.end(); ++ctp_it) {
     int ieta=(*ctp_it)->id().ieta();
     int ietaAbs=(*ctp_it)->id().ietaAbs();
