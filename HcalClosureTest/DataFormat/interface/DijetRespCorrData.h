@@ -16,11 +16,18 @@
 #include <vector>
 
 //
+// forward declarations
+//
+
+class TH1D;
+
+//
 // numerical constants
 //
 
-const Int_t MAXIETA = 41;
-const Int_t NUMTOWERS = 83;
+const int MAXIETA = 41;
+const int NUMTOWERS = 83;
+  
 
 //
 // class definitions
@@ -33,29 +40,35 @@ class DijetRespCorrDatum : public TObject
  public:
   DijetRespCorrDatum();
   ~DijetRespCorrDatum();
+
+  Double_t GetTagEta(void) const;
+  Double_t GetTagHcalE(Int_t ieta);
+  void     GetTagHcalE(std::map<Int_t, Double_t>&) const;
+  Double_t GetTagEcalE(void) const;
+  Double_t GetProbeEta(void) const;
+  Double_t GetProbeHcalE(Int_t ieta);
+  void     GetProbeHcalE(std::map<Int_t, Double_t>&) const;
+  Double_t GetProbeEcalE(void) const;
   
-  Double_t GetResolution(void) const;
-  Double_t GetTagHcalEt(Int_t ieta);
-  void     GetTagHcalEt(std::map<Int_t, Double_t>&) const;
-  Double_t GetTagEcalEt(void) const;
-  Double_t GetProbeHcalEt(Int_t ieta);
-  void     GetProbeHcalEt(std::map<Int_t, Double_t>&) const;
-  Double_t GetProbeEcalEt(void) const;
-  
-  void SetResolution(Double_t);
-  void SetTagHcalEt(Double_t, Int_t ieta);
-  void AddTagHcalEt(Double_t, Int_t ieta);
-  void SetTagEcalEt(Double_t);
-  void SetProbeHcalEt(Double_t, Int_t ieta);
-  void AddProbeHcalEt(Double_t, Int_t ieta);
-  void SetProbeEcalEt(Double_t);
-  
+  void SetTagEta(Double_t);
+  void SetTagHcalE(Double_t, Int_t ieta);
+  void AddTagHcalE(Double_t, Int_t ieta);
+  void SetTagEcalE(Double_t);
+  void SetProbeEta(Double_t);
+  void SetProbeHcalE(Double_t, Int_t ieta);
+  void AddProbeHcalE(Double_t, Int_t ieta);
+  void SetProbeEcalE(Double_t);
+
  private:
-  Double_t fResolution;
-  std::map<Int_t, Double_t> fTagHcalEt;
-  Double_t fTagEcalEt;
-  std::map<Int_t, Double_t> fProbeHcalEt;
-  Double_t fProbeEcalEt;
+  // tag jet info
+  Double_t fTagEta;
+  std::map<Int_t, Double_t> fTagHcalE;
+  Double_t fTagEcalE;
+
+  // probe jet info
+  Double_t fProbeEta;
+  std::map<Int_t, Double_t> fProbeHcalE;
+  Double_t fProbeEcalE;
   
   ClassDef(DijetRespCorrDatum, 1);
 };
@@ -78,14 +91,18 @@ class DijetRespCorrData : public TObject
   Double_t GetLikelihoodDistance(const TArrayD& respcorr) const;
 
   // fit for the response corrections
-  TArrayD doFit(const TArrayD& respCorrInit, Int_t maxIetaFixed);
-  TArrayD doFit(void); // use default resp corrections
+  //  TArrayD doFit(const TArrayD& respCorrInit, Int_t maxIetaFixed);
+  void doFit(TArrayD& respcorr, TArrayD& respcorre); // use default resp corrections
+  TH1D* doFit(const char* name, const char* title); // use default resp corrections
 
   // fitting parameters
   inline void SetPrintLevel(Int_t p) { fPrintLevel=p; }
-  void SetParStep(Double_t p) { fParStep=p; }
-  void SetParMin(Double_t p) { fParMin=p; }
-  void SetParMax(Double_t p) { fParMax=p; }
+  inline void SetParStep(Double_t p) { fParStep=p; }
+  inline void SetParMin(Double_t p) { fParMin=p; }
+  inline void SetParMax(Double_t p) { fParMax=p; }
+  inline void SetEcalRes(Double_t p=0.07) { fEcalRes=p; }
+  inline void SetHcalRes(Double_t p=1.15) { fHcalRes=p; }
+  inline void SetHfRes(Double_t p=1.35) { fHfRes=p; }
 
  private:
   // actual data
@@ -99,6 +116,7 @@ class DijetRespCorrData : public TObject
   Double_t fParStep;
   Double_t fParMin;
   Double_t fParMax;
+  Double_t fEcalRes, fHcalRes, fHfRes;
 
   ClassDef(DijetRespCorrData, 1);
 };

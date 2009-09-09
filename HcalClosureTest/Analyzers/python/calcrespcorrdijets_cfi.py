@@ -4,8 +4,10 @@ calcrespcorrdijets = cms.EDProducer(
     'CalcRespCorrDiJets',
     jetCollName = cms.string('iterativeCone5CaloJets'),
     rootHistFilename = cms.string('respcorrdijetplots.root'),
-    maxDeltaEta = cms.double(0.6),
+    maxDeltaEta = cms.double(0.5),
     minDeltaPhi = cms.double(2.0),
+    minTagJetEta = cms.double(1.0),
     minJetEt = cms.double(30),
-    maxThirdJetEt = cms.double(10)
+    maxThirdJetEt = cms.double(10),
+    maxJetEMF = cms.double(0.9)
     )

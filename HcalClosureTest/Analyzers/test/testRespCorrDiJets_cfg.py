@@ -8,6 +8,10 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('HcalClosureTest.Analyzers.calcrespcorrdijets_cfi')
 
 process.calcrespcorrdijets.rootHistFilename = cms.string('plots.root')
+process.calcrespcorrdijets.maxThirdJetEt    = cms.double(5.0)
+process.calcrespcorrdijets.maxDeltaEta      = cms.double(0.5)
+process.calcrespcorrdijets.minDeltaPhi      = cms.double(2.5)
+process.calcrespcorrdijets.debug            = cms.untracked.bool(False)
 
 # particle gun; all |eta|
 #process.calcrespcorrdijets.maxCalibratedIEta = cms.int32(23)
@@ -21,14 +25,14 @@ process.calcrespcorrdijets.rootHistFilename = cms.string('plots.root')
 readFiles = cms.untracked.vstring()
 process.source = cms.Source ("PoolSource",fileNames = readFiles)
 
-readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_1.root')
-readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_2.root')
-readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_3.root')
+#readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_1.root')
+#readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_2.root')
+#readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_3.root')
 
-#for i in range (1, 60):
-#    if i==28:
-#        continue
-#    readFiles.append('dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDpt80/QCDpt80_'+str(i)+'.root')
+for i in range (1, 60):
+    if i==28:
+        continue
+    readFiles.append('dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDpt80/QCDpt80_'+str(i)+'.root')
 print readFiles
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
