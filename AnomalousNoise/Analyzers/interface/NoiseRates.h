@@ -48,6 +48,7 @@ class NoiseRates : public edm::EDAnalyzer {
 
   // parameters
   std::string rbxCollName_;            // label for the rbx collection
+  std::string metCollName_;            // label for the MET collection
   std::string rootHistFilename_;       // name of the histogram file
   std::vector<std::string> trigNames_; // trigger names
   double minRBXEnergy_;                // RBX energy threshold
@@ -61,7 +62,14 @@ class NoiseRates : public edm::EDAnalyzer {
   TH2D* hRBXEnergyType1_;
   TH2D* hRBXEnergyType2_;
   TH2D* hRBXEnergyType3_;
+  TH2D* hRBXEnergyAfterCut1_;
+  TH2D* hRBXEnergyAfterCut2_;
+  TH2D* hRBXEnergyAfterCut3_;
   TH2D* hRBXNHits_;
+  TH2D* hMET_;
+  TH2D* hMETAfterCut1_;
+  TH2D* hMETAfterCut2_;
+  TH2D* hMETAfterCut3_;
 
   // count lumi segments
   std::map<int, int> lumiCountMap_;
