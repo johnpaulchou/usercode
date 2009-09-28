@@ -25,6 +25,7 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "Geometry/CaloTopology/interface/HcalTopology.h"
 
 // forward declarations
 class TH1D;
@@ -47,32 +48,57 @@ class NoiseRates : public edm::EDAnalyzer {
   virtual void endJob();
 
   // parameters
-  std::string rbxCollName_;            // label for the rbx collection
-  std::string metCollName_;            // label for the MET collection
-  std::string rootHistFilename_;       // name of the histogram file
-  std::vector<std::string> trigNames_; // trigger names
-  double minRBXEnergy_;                // RBX energy threshold
-  double minHitEnergy_;                // RecHit energy threshold
+  std::string rbxCollName_;          // label for the rbx collection
+  std::string metCollName_;          // label for the MET collection
+  std::string hbheRecHitCollName_;   // label for the HBHE RecHit collection
+  std::string caloTowerCollName_;    // label for the caloTower collection
+  std::string rootHistFilename_;     // name of the histogram file
+  bool findTrigger_;                 // whether or not to look for a L1 trigger
+  std::string trigName_;             // trigger name
+  double minRBXEnergy_;              // RBX energy threshold
+  double minHitEnergy_;              // RecHit energy threshold
+
+  // geometry
+  HcalTopology theTopology;
 
   // root file/histograms
   TFile* rootfile_;  
-  TH1D* hL1Cntr_;
   TH1D* hLumiBlockCount_;
-  TH2D* hRBXEnergy_;
-  TH2D* hRBXEnergyType1_;
-  TH2D* hRBXEnergyType2_;
-  TH2D* hRBXEnergyType3_;
-  TH2D* hRBXEnergyAfterCut1_;
-  TH2D* hRBXEnergyAfterCut2_;
-  TH2D* hRBXEnergyAfterCut3_;
-  TH2D* hRBXNHits_;
-  TH2D* hMET_;
-  TH2D* hMETAfterCut1_;
-  TH2D* hMETAfterCut2_;
-  TH2D* hMETAfterCut3_;
+  TH1D* hRBXEnergy_;
+  TH1D* hRBXEnergyType1_;
+  TH1D* hRBXEnergyType2_;
+  TH1D* hRBXEnergyType3_;
+  TH1D* hRBXEnergyAfterCut1_;
+  TH1D* hRBXEnergyAfterCut2_;
+  TH1D* hRBXEnergyAfterCut3_;
+  TH1D* hRBXNHits_;
+
+  TH1D* hMET_;
+  TH1D* hMETAfterCut1_;
+  TH1D* hMETAfterCut2_;
+  TH1D* hMETAfterCut3_;
+
+  TH1D* hMin10GeVHitTime_;
+  TH1D* hMax10GeVHitTime_;
+  TH1D* hMin25GeVHitTime_;
+  TH1D* hMax25GeVHitTime_;
+  TH1D* hMinE2Over10TS_;
+  TH1D* hMaxZeros_;
+  TH1D* hMaxHPDHits_;
+  TH1D* hMaxRBXHits_;
+  TH1D* hMinHPDEMF_;
+  TH1D* hMinRBXEMF_;
+
+  TH1D* hTrigTowersEnergy_;
+  TH1D* hTrigTowersEnergyType1_;
+  TH1D* hTrigTowersEnergyType2_;
+  TH1D* hTrigTowersEnergyType3_;
 
   // count lumi segments
   std::map<int, int> lumiCountMap_;
+
+  // trigger tower list
+  std::set<std::pair<int, int> > triggerlist_;
 
 };
 
