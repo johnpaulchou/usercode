@@ -30,6 +30,7 @@ CalcRespCorrDiJets::CalcRespCorrDiJets(const edm::ParameterSet& iConfig)
   maxDeltaEta_       = iConfig.getParameter<double>("maxDeltaEta");
   minDeltaPhi_       = iConfig.getParameter<double>("minDeltaPhi");
   minTagJetEta_      = iConfig.getParameter<double>("minTagJetEta");
+  maxTagJetEta_      = iConfig.getParameter<double>("maxTagJetEta");
   minJetEt_          = iConfig.getParameter<double>("minJetEt");
   maxThirdJetEt_     = iConfig.getParameter<double>("maxThirdJetEt");
   maxJetEMF_         = iConfig.getParameter<double>("maxJetEMF");
@@ -99,6 +100,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   if(dAbsEta>maxDeltaEta_) passSel |= 0x8;
   if(dPhi<minDeltaPhi_) passSel |= 0x10;
   if(fabs(tag->eta())<minTagJetEta_) passSel |= 0x20;
+  if(fabs(tag->eta())>maxTagJetEta_) passSel |= 0x20;
 
   // emf cuts
   if(tag->emEnergyFraction()>maxJetEMF_) passSel |= 0x40;
@@ -157,7 +159,15 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
 
   hTagEta_->Fill(tag->eta());
   hProbeEta_->Fill(probe->eta());
-  hRatioTagEta_->Fill(tag->et()/probe->et(),tag->eta());
+  double B = 2*(tag->p()-probe->p())/(tag->p()+probe->p());
+  hBEta_->Fill(B,probe->eta());
+  hBE_->Fill(B,probe->p()+tag->p());
+  double teme=tag->emEnergyInEB()+tag->emEnergyInEE();
+  double thade=tag->hadEnergyInHB()+tag->hadEnergyInHE()+tag->hadEnergyInHF()+tag->emEnergyInHF();
+  double peme=probe->emEnergyInEB()+probe->emEnergyInEE();
+  double phade=probe->hadEnergyInHB()+probe->hadEnergyInHE()+probe->hadEnergyInHF()+probe->emEnergyInHF();
+  double emf=(teme+peme)/(teme+thade+peme+phade);
+  hBEmf_->Fill(B,emf);
 
   respcorrdata_.push_back(datum);
   return;
@@ -174,7 +184,11 @@ CalcRespCorrDiJets::beginJob(const edm::EventSetup&)
   hPassSel_ = new TH1D("hPassSelection", "Selection Pass Failures",200,-0.5,199.5);
   hTagEta_ = new TH1D("hTagEta","Tag Eta",100,-5,5);
   hProbeEta_ = new TH1D("hProbeEta","Probe Eta",100,-5,5);
-  hRatioTagEta_ = new TH2D("hRatioTagEta","Ratio",100,-5,5,100,-5,5);
+  hBEta_ = new TH2D("hBEta","B versus eta",100,-3,3,100,-5,5);
+  hBE_ = new TH2D("hBE","B versus sum E",100,-3,3,100,0,2000);
+  hBEmf_ = new TH2D("hBEmf","B versus EMF",100,-3,3,100,0,1);
+
+  
 
 }
 
@@ -187,7 +201,9 @@ CalcRespCorrDiJets::endJob() {
   hPassSel_->Write();
   hTagEta_->Write();
   hProbeEta_->Write();
-  hRatioTagEta_->Write();
+  hBEta_->Write();
+  hBE_->Write();
+  hBEmf_->Write();
   respcorrdata_.Write("respcorrdata");
   rootfile_->Close();
 }

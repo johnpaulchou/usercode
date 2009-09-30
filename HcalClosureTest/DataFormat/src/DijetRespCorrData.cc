@@ -3,7 +3,9 @@
 #include "TMinuit.h"
 #include "TMath.h"
 #include "TH1D.h"
+#include "TH2D.h"
 
+#include <iostream>
 #include <sstream>
 #include <cassert>
 #include <cmath>
@@ -113,6 +115,52 @@ void DijetRespCorrDatum::SetProbeEcalE(Double_t v)
   return;
 }
 
+void DijetRespCorrDatum::GetTagEnergies(const TArrayD& respcorr, Double_t& ecal, Double_t& hcal, Double_t& hf) const
+{
+  ecal=GetTagEcalE();
+  hcal=0.0;
+  hf=0.0;
+
+  std::map<Int_t,Double_t> tagmap;
+  GetTagHcalE(tagmap);
+  for(std::map<Int_t, Double_t>::const_iterator mapit=tagmap.begin(); mapit!=tagmap.end(); ++mapit) {
+    int ieta=mapit->first;
+    double energy=mapit->second;
+    int index=ieta+MAXIETA;
+    if(std::abs(ieta)>29)
+      hf += respcorr[index]*energy;
+    else
+      hcal += respcorr[index]*energy;
+  }
+  return;
+}
+
+void DijetRespCorrDatum::GetProbeEnergies(const TArrayD& respcorr, Double_t& ecal, Double_t& hcal, Double_t& hf) const
+{
+  // calculate the ecal, hcal, and HF energy
+  // scale the hcal and hf energy by the response corrections
+  ecal=GetProbeEcalE();
+  hcal=0.0;
+  hf=0.0;
+
+  std::map<Int_t,Double_t> probemap;
+  GetProbeHcalE(probemap);
+  for(std::map<Int_t, Double_t>::const_iterator mapit=probemap.begin(); mapit!=probemap.end(); ++mapit) {
+    int ieta=mapit->first;
+    double energy=mapit->second;
+    int index=ieta+MAXIETA;
+    if(std::abs(ieta)>29)
+      hf += respcorr[index]*energy;
+    else
+      hcal += respcorr[index]*energy;
+  }
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
 DijetRespCorrData::DijetRespCorrData()
 {
   fData.clear();
@@ -152,42 +200,39 @@ Double_t DijetRespCorrData::GetLikelihoodDistance(const TArrayD& respcorr) const
   // loop over each jet pair
   for(std::vector<DijetRespCorrDatum>::const_iterator it=fData.begin(); it!=fData.end(); ++it) {
 
-    // calculate the ecal, hcal, and HF energy for the tag and probe jets
-    // scale the hcal and hf energy by the response corrections
-    Double_t te=it->GetTagEcalE();
-    Double_t pe=it->GetProbeEcalE();
-    Double_t th=0.0, ph=0.0;
-    Double_t thf=0.0, phf=0.0;
+    // calculate the balance and resolution for each jet pair
+    Double_t B, dB;
+    GetBalance(*it, respcorr, B, dB);
 
-    std::map<Int_t,Double_t> tagmap, probemap;
-    it->GetTagHcalE(tagmap);
-    it->GetProbeHcalE(probemap);
-    for(std::map<Int_t, Double_t>::const_iterator mapit=tagmap.begin(); mapit!=tagmap.end(); ++mapit) {
-      int ieta=mapit->first;
-      double energy=mapit->second;
-      int index=ieta+MAXIETA;
-      if(std::abs(ieta)>29)
-	thf += respcorr[index]*energy;
-      else
-	th += respcorr[index]*energy;
-    }
-    for(std::map<Int_t, Double_t>::const_iterator mapit=probemap.begin(); mapit!=probemap.end(); ++mapit) {
-      int ieta=mapit->first;
-      double energy=mapit->second;
-      int index=ieta+MAXIETA;
-      if(std::abs(ieta)>29)
-	phf += respcorr[index]*energy;
-      else
-	ph += respcorr[index]*energy;
-    }
-
-    // calculate the resolution and balance in E_T, not E
-    Double_t sigma2 = fEcalRes*fEcalRes*(te+pe) + fHcalRes*fHcalRes*(th+ph) + fHfRes*fHfRes*(thf+phf);
-    Double_t x=(te+th+thf)/std::cosh(it->GetTagEta())-(pe+ph+phf)/std::cosh(it->GetProbeEta());
-    //    total += 0.5*(std::log(sigma2)+x*x/sigma2);
-    total += x*x/sigma2;
+    // this is the total likelihood
+    total += 0.5*(std::log(dB*dB)+B*B/dB/dB);
   }
   return total;
+}
+
+TH2D* DijetRespCorrData::DrawBalance(const char* name, const char* title) const
+{
+  Double_t array[NUMTOWERS] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+				1.151630, 1.148890, 1.144870, 1.161240, 1.195630, 1.190690, 1.162400, 1.130190, 1.128810, 1.114070, 1.109850, 1.098620, 1.099950, 1.096140, 1.087350, 1.076980, 1.095540, 1.092960, 1.091500, 1.087100, 1.0, 1.085640, 1.094110, 1.089310, 1.089260, 1.079420, 1.089310, 1.093900, 1.104690, 1.098890, 1.109600, 1.115400, 1.144240, 1.125160, 1.148010, 1.204180, 1.197330, 1.150100, 1.154010, 1.143610, 1.159000,
+				1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
+  TArrayD respcorr;
+  respcorr.Set(NUMTOWERS, array);
+
+  TH2D* hB=new TH2D(name, title, 100,-2,2,10,0,5);
+
+  // loop over each jet pair
+  for(std::vector<DijetRespCorrDatum>::const_iterator it=fData.begin(); it!=fData.end(); ++it) {
+
+    // calculate the balance and resolution for each jet pair
+    Double_t B, dB;
+    GetBalance(*it, respcorr, B, dB);
+    Double_t te, th, thf;
+    Double_t pe, ph, phf;
+    it->GetTagEnergies(respcorr, te, th, thf);
+    it->GetProbeEnergies(respcorr, pe, ph, phf);
+    hB->Fill(B, fabs(it->GetProbeEta()));
+  }
+  return hB;
 }
 
 TH1D* DijetRespCorrData::doFit(const char* name, const char* title)
@@ -199,6 +244,7 @@ TH1D* DijetRespCorrData::doFit(const char* name, const char* title)
     h->SetBinContent(i, respcorr[i-1]);
     h->SetBinError(i, respcorre[i-1]);
   }
+
   return h;
 }
 
@@ -245,6 +291,27 @@ void DijetRespCorrData::doFit(TArrayD& respcorr, TArrayD& respcorre)
   respcorr=results;
   respcorre=errors;
 
+  return;
+}
+
+void DijetRespCorrData::GetBalance(const DijetRespCorrDatum& datum, const TArrayD& respcorr, Double_t& balance_, Double_t& resolution_) const
+{
+  Double_t te, th, thf;
+  Double_t pe, ph, phf;
+  datum.GetTagEnergies(respcorr, te, th, thf);
+  datum.GetProbeEnergies(respcorr, pe, ph, phf);
+  
+  // calculate the resolution and balance in E_T, not E
+  Double_t t=(te+th+thf)/std::cosh(datum.GetTagEta());
+  Double_t p=(pe+ph+phf)/std::cosh(datum.GetProbeEta());
+  //  Double_t dt=fEcalRes*fEcalRes*te+fHcalRes*fHcalRes*th+fHfRes*fHfRes*thf;
+  //  Double_t dp=fEcalRes*fEcalRes*pe+fHcalRes*fHcalRes*ph+fHfRes*fHfRes*phf;
+  Double_t dt = te+th+thf;
+  Double_t dp = pe+ph+phf;
+  
+  balance_ = 2*(t-p)/(t+p);
+  resolution_ = 4*t*p/(t+p)/(t+p)*sqrt(dt/t/t+dp/p/p);
+  //  resolution_ = 1.0;
   return;
 }
 

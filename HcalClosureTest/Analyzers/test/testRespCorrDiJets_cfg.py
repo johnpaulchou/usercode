@@ -8,9 +8,11 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('HcalClosureTest.Analyzers.calcrespcorrdijets_cfi')
 
 process.calcrespcorrdijets.rootHistFilename = cms.string('plots.root')
+process.calcrespcorrdijets.minTagJetEta     = cms.double(0.0)
+process.calcrespcorrdijets.maxTagJetEta     = cms.double(5.0)
 process.calcrespcorrdijets.maxThirdJetEt    = cms.double(5.0)
 process.calcrespcorrdijets.maxDeltaEta      = cms.double(0.5)
-process.calcrespcorrdijets.minDeltaPhi      = cms.double(2.5)
+process.calcrespcorrdijets.minDeltaPhi      = cms.double(2.0)
 process.calcrespcorrdijets.debug            = cms.untracked.bool(False)
 
 # particle gun; all |eta|

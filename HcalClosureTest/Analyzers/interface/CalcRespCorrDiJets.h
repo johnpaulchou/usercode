@@ -53,6 +53,7 @@ class CalcRespCorrDiJets : public edm::EDAnalyzer {
   double maxDeltaEta_;           // maximum delta-|Eta| between Jets
   double minDeltaPhi_;           // minimum delta-Phi between Jets
   double minTagJetEta_;          // minimum |eta| of the tag jet
+  double maxTagJetEta_;          // maximum |eta| of the tag jet
   double minJetEt_;              // minimum Jet Et
   double maxThirdJetEt_;         // maximum 3rd jet Et
   double maxJetEMF_;             // maximum EMF of the tag and probe jets
@@ -66,7 +67,9 @@ class CalcRespCorrDiJets : public edm::EDAnalyzer {
   TH1D* hPassSel_;
   TH1D* hTagEta_;
   TH1D* hProbeEta_;
-  TH2D* hRatioTagEta_;
+  TH2D* hBEta_;
+  TH2D* hBE_;
+  TH2D* hBEmf_;
 };
 
 

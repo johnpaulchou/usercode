@@ -20,6 +20,7 @@
 //
 
 class TH1D;
+class TH2D;
 
 //
 // numerical constants
@@ -59,6 +60,11 @@ class DijetRespCorrDatum : public TObject
   void AddProbeHcalE(Double_t, Int_t ieta);
   void SetProbeEcalE(Double_t);
 
+  // calculate the ecal, hcal, and HF energy in the tag and probe jets
+  // scale the hcal and hf energy by the response corrections
+  void GetTagEnergies(const TArrayD& respcorr, Double_t& ecal, Double_t& hcal, Double_t& hf) const;
+  void GetProbeEnergies(const TArrayD& respcorr, Double_t& ecal, Double_t& hcal, Double_t& hf) const;
+
  private:
   // tag jet info
   Double_t fTagEta;
@@ -90,6 +96,8 @@ class DijetRespCorrData : public TObject
   // given a set of response corrections
   Double_t GetLikelihoodDistance(const TArrayD& respcorr) const;
 
+  TH2D* DrawBalance(const char* name, const char* title) const;
+
   // fit for the response corrections
   //  TArrayD doFit(const TArrayD& respCorrInit, Int_t maxIetaFixed);
   void doFit(TArrayD& respcorr, TArrayD& respcorre); // use default resp corrections
@@ -105,6 +113,9 @@ class DijetRespCorrData : public TObject
   inline void SetHfRes(Double_t p=1.35) { fHfRes=p; }
 
  private:
+  // calculate the balance parameter and its resolution for a given dijet pair
+  void GetBalance(const DijetRespCorrDatum& datum, const TArrayD& respcorr, Double_t& balance_, Double_t& resolution_) const;
+
   // actual data
   std::vector<DijetRespCorrDatum> fData;
 
