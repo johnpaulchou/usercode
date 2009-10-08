@@ -25,22 +25,29 @@ process.load("Configuration.StandardSequences.Geometry_cff")
 #raw-to-digi
 if dataset <= 2:
     process.load('Configuration.StandardSequences.RawToDigi_Data_cff')
-    process.RawToDigi = cms.Sequence(process.gctDigis+process.gtDigis+process.gtEvmDigis+process.ecalDigis+process.ecalPreshowerDigis+process.hcalDigis)
+    process.RawToDigi = cms.Sequence(process.gctDigis+process.gtDigis+process.gtEvmDigis+process.siPixelDigis+process.siStripDigis+process.ecalDigis+process.ecalPreshowerDigis+process.hcalDigis)
 elif dataset ==3:
     process.load('Configuration.StandardSequences.RawToDigi_cff')
 
 #reco for cosmics
 process.load('EventFilter.L1GlobalTriggerRawToDigi.l1GtRecord_cfi')
 process.load('RecoLocalCalo.Configuration.RecoLocalCalo_cff')
+process.load('RecoLocalTracker.Configuration.RecoLocalTracker_Cosmics_cff')
+process.load('RecoTracker.Configuration.RecoTrackerP5_cff')
+process.load('RecoVertex.BeamSpotProducer.BeamSpot_cff')
+process.load('RecoTracker.Configuration.RecoTrackerBHM_cff')
+process.load('RecoVertex.Configuration.RecoVertexCosmicTracks_cff')
 process.load('RecoJets.Configuration.RecoCaloTowersGR_cff')
+process.load('RecoJets.Configuration.RecoJetsGR_cff')
 process.load('RecoMET.METProducers.HTMET_cfi')
 process.load('RecoMET.METProducers.CaloMET_cfi')
 process.load('RecoMET.METProducers.hcalnoiseinfoproducer_cfi')
 process.metreco = cms.Sequence(process.metNoHF)
-process.reconstructionCosmics = cms.Sequence(process.l1GtRecord*process.calolocalreco*process.recoCaloTowersGR*process.hcalnoise)
+process.trackerCosmics = cms.Sequence(process.offlineBeamSpot*process.trackerlocalreco*process.tracksP5)
+process.reconstructionCosmics = cms.Sequence(process.l1GtRecord*process.trackerCosmics*process.calolocalreco*process.vertexrecoCosmics*process.recoCaloTowersGR*process.recoJetsGR*process.hcalnoise)
 
 # set special threshold for ECAL energy, since Run 68288 has a hot tower
-if dataset==1:
+if dataset<=2:
     process.towerMaker.EBThreshold = cms.double(9999999.)
     process.towerMaker.EEThreshold = cms.double(9999999.)
 
@@ -110,7 +117,7 @@ process.output = cms.OutputModule(
                                            'keep recoHcalNoiseRBXs_*_*_*',
                                            'keep HcalNoiseSummary_*_*_*',
                                            'keep recoCaloMETs_*_*_*', 
-                                           'keep recoMETs_*_*_*',
+                                           'keep recoCaloJets_*_*_*',
                                            'keep L1GlobalTriggerRecord_*_*_*'
                                            ),
     fileName = cms.untracked.string('out.root')

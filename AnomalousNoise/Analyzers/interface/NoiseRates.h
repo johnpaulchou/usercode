@@ -50,6 +50,7 @@ class NoiseRates : public edm::EDAnalyzer {
   // parameters
   std::string rbxCollName_;          // label for the rbx collection
   std::string metCollName_;          // label for the MET collection
+  std::string jetCollName_;          // label for the Calo jet collection
   std::string hbheRecHitCollName_;   // label for the HBHE RecHit collection
   std::string caloTowerCollName_;    // label for the caloTower collection
   std::string rootHistFilename_;     // name of the histogram file
@@ -77,6 +78,13 @@ class NoiseRates : public edm::EDAnalyzer {
   TH1D* hMETAfterCut1_;
   TH1D* hMETAfterCut2_;
   TH1D* hMETAfterCut3_;
+  TH1D* hMETAfterCut4_;
+
+  TH1D* hJetEt_;
+  TH1D* hJetEtAfterCut1_;
+  TH1D* hJetEtAfterCut2_;
+  TH1D* hJetEtAfterCut3_;
+  TH1D* hJetEtAfterCut4_;
 
   TH1D* hMin10GeVHitTime_;
   TH1D* hMax10GeVHitTime_;

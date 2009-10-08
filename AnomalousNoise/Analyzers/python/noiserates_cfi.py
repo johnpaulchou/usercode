@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 noiserates = cms.EDAnalyzer(
     'NoiseRates',
     rbxCollName = cms.string('hcalnoise'),
+    jetCollName = cms.string('sisCone5CaloJets'),
     metCollName = cms.string('metNoHF'),
     hbheRecHitCollName = cms.string('hbhereco'),
     caloTowerCollName = cms.string('towerMaker'),

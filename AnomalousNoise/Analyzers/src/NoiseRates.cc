@@ -12,6 +12,7 @@
 #include "DataFormats/METReco/interface/CaloMETCollection.h"
 #include "DataFormats/METReco/interface/CaloMET.h"
 #include "DataFormats/METReco/interface/HcalNoiseSummary.h"
+#include "DataFormats/JetReco/interface/CaloJetCollection.h"
 #include "DataFormats/CaloTowers/interface/CaloTower.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 
@@ -37,6 +38,7 @@ NoiseRates::NoiseRates(const edm::ParameterSet& iConfig)
 {
   // set parameters
   rbxCollName_      = iConfig.getParameter<std::string>("rbxCollName");
+  jetCollName_      = iConfig.getParameter<std::string>("jetCollName");
   metCollName_      = iConfig.getParameter<std::string>("metCollName");
   hbheRecHitCollName_ = iConfig.getParameter<std::string>("hbheRecHitCollName");
   caloTowerCollName_ = iConfig.getParameter<std::string>("caloTowerCollName");
@@ -94,6 +96,15 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
   }
   const reco::CaloMET &calomet = *(met_h->begin());
 
+  // get the Jets
+  edm::Handle<reco::CaloJetCollection> jets_h;
+  iEvent.getByLabel(jetCollName_, jets_h);
+  if(!jets_h.isValid()) {
+    throw edm::Exception(edm::errors::ProductNotFound)
+      << " could not find CaloJet collection name " << jetCollName_ << ".\n";
+    return;
+  }
+
   // get the RBX Noise collection
   edm::Handle<reco::HcalNoiseRBXCollection> rbxs_h;
   iEvent.getByLabel(rbxCollName_,rbxs_h);
@@ -111,9 +122,27 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
     return;
   }
   const HcalNoiseSummary summary = *summary_h;
-  //  bool passLoose = summary.passLooseNoiseFilter();
-  //  bool passTight = summary.passTightNoiseFilter();
-  bool passLoose=true;
+  bool passLoose = summary.passLooseNoiseFilter();
+  bool passTight = summary.passTightNoiseFilter();
+  bool passTriggerFilter = true;
+
+  // determine if we pass the trigger filter
+  for(reco::HcalNoiseRBXCollection::const_iterator it=rbxs_h->begin(); it!=rbxs_h->end(); ++it) {
+    const reco::HcalNoiseRBX &rbx=(*it);
+    int rbxhits=rbx.numRecHits(minHitEnergy_);
+    double rbxemf=rbx.caloTowerEmFraction();
+    if(rbxhits>=50 && rbxemf<=0.01) passTriggerFilter=false;
+    else {
+      std::vector<reco::HcalNoiseHPD> hpds=rbx.HPDs();
+      for(std::vector<reco::HcalNoiseHPD>::const_iterator hit=hpds.begin(); hit!=hpds.end(); ++hit) {
+	int hpdhits=hit->numRecHits(minHitEnergy_);
+	double hpdemf=hit->caloTowerEmFraction();
+	if(hpdhits>=17 && hpdemf<=0.01) passTriggerFilter=false;
+      }
+    }
+  }
+
+  /*  bool passLoose=true;
   bool passTight=true;
   if(summary.minE2Over10TS()<0.7 ||
      summary.min25GeVHitTime()<18. ||
@@ -126,7 +155,8 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
      summary.maxZeros()>7 ||
      summary.maxHPDHits()>16)
     passTight=false;
-
+  */
+    
   // get the rechits
   edm::Handle<HBHERecHitCollection> rechits_h;
   iEvent.getByLabel(hbheRecHitCollName_,rechits_h);
@@ -180,10 +210,12 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
   // fill met
   double met = calomet.pt();
   hMET_->Fill(met);
-  if(passFlag)  hMETAfterCut1_->Fill(met);
-  if(passLoose) hMETAfterCut2_->Fill(met);
-  if(passTight) hMETAfterCut3_->Fill(met);
+  if(passFlag)          hMETAfterCut1_->Fill(met);
+  if(passLoose)         hMETAfterCut2_->Fill(met);
+  if(passTight)         hMETAfterCut3_->Fill(met);
+  if(passTriggerFilter) hMETAfterCut4_->Fill(met);
 
+  // fill distributions
   if(summary.maxHPDHits()>=1) {
     hMin10GeVHitTime_->Fill(summary.min10GeVHitTime());
     hMax10GeVHitTime_->Fill(summary.max10GeVHitTime());
@@ -196,6 +228,18 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
     hMinHPDEMF_->Fill(summary.minHPDEMF());
     hMinRBXEMF_->Fill(summary.minRBXEMF());
   }
+
+  // fill jets
+  double maxJetEt=-999;
+  for(CaloJetCollection::const_iterator it=jets_h->begin(); it!=jets_h->end(); ++it) {
+    const CaloJet &jet=(*it);
+    if(jet.pt()>maxJetEt) maxJetEt=jet.pt();
+  }
+  hJetEt_->Fill(maxJetEt);
+  if(passFlag)  hJetEtAfterCut1_->Fill(maxJetEt);
+  if(passLoose) hJetEtAfterCut2_->Fill(maxJetEt);
+  if(passTight) hJetEtAfterCut3_->Fill(maxJetEt);
+  if(passTriggerFilter) hJetEtAfterCut4_->Fill(maxJetEt);
 
   // fill "trigger towers"
   std::map<std::pair<int, int>, double> hcalenergymap;
@@ -249,10 +293,16 @@ NoiseRates::beginJob(const edm::EventSetup&)
   hRBXEnergyAfterCut1_ = new TH1D("hRBXEnergyAfterCut1","hRBXEnergy After Cut 1",100,0,1000);
   hRBXEnergyAfterCut2_ = new TH1D("hRBXEnergyAfterCut2","hRBXEnergy After Cut 1",100,0,1000);
   hRBXEnergyAfterCut3_ = new TH1D("hRBXEnergyAfterCut3","hRBXEnergy After Cut 1",100,0,1000);
-  hMET_ = new TH1D("hMET","hMET",100,0,1000);
-  hMETAfterCut1_ = new TH1D("hMETAfterCut1","hMETAfterCut1",100,0,1000);
-  hMETAfterCut2_ = new TH1D("hMETAfterCut2","hMETAfterCut2",100,0,1000);
-  hMETAfterCut3_ = new TH1D("hMETAfterCut3","hMETAfterCut3",100,0,1000);
+  hMET_ = new TH1D("hMET","hMET",1000,0,1000);
+  hMETAfterCut1_ = new TH1D("hMETAfterCut1","hMETAfterCut1",1000,0,1000);
+  hMETAfterCut2_ = new TH1D("hMETAfterCut2","hMETAfterCut2",1000,0,1000);
+  hMETAfterCut3_ = new TH1D("hMETAfterCut3","hMETAfterCut3",1000,0,1000);
+  hMETAfterCut4_ = new TH1D("hMETAfterCut4","hMETAfterCut4",1000,0,1000);
+  hJetEt_ = new TH1D("hJetEt","hJetEt",1000,0,1000);
+  hJetEtAfterCut1_ = new TH1D("hJetEtAfterCut1","hJetEtAfterCut1",1000,0,1000);
+  hJetEtAfterCut2_ = new TH1D("hJetEtAfterCut2","hJetEtAfterCut2",1000,0,1000);
+  hJetEtAfterCut3_ = new TH1D("hJetEtAfterCut3","hJetEtAfterCut3",1000,0,1000);
+  hJetEtAfterCut4_ = new TH1D("hJetEtAfterCut4","hJetEtAfterCut4",1000,0,1000);
   hMin10GeVHitTime_ = new TH1D("hMin10GeVHitTime","Min10GeVHitTime",100,-50,50);
   hMax10GeVHitTime_ = new TH1D("hMax10GeVHitTime","Max10GeVHitTime",100,-50,50);
   hMin25GeVHitTime_ = new TH1D("hMin25GeVHitTime","Min25GeVHitTime",100,-50,50);
@@ -289,6 +339,12 @@ NoiseRates::endJob() {
   hMETAfterCut1_->Write();
   hMETAfterCut2_->Write();
   hMETAfterCut3_->Write();
+  hMETAfterCut4_->Write();
+  hJetEt_->Write();
+  hJetEtAfterCut1_->Write();
+  hJetEtAfterCut2_->Write();
+  hJetEtAfterCut3_->Write();
+  hJetEtAfterCut4_->Write();
   hRBXNHits_->Write();
 
   hMin10GeVHitTime_->Write();
