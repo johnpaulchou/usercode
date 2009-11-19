@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process("RECO")
 
 # define the dataset here
-dataset = 1 # 1=R68288, 2=R109049, 3=QCDpt3000
+dataset = 1 # 1=R68288, 2=R109049, 3=R67141, 4=QCDpt3000
 
 # Conditions
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
@@ -12,6 +12,8 @@ if dataset == 1:
 elif dataset == 2:
     process.GlobalTag.globaltag = "CRAFT0831X_V1::All"
 elif dataset == 3:
+    process.GlobalTag.globaltag = "CRAFT0831X_V1::All"
+elif dataset == 4:
     process.GlobalTag.globaltag = "MC_31X_V3::All"
 
 process.prefer("GlobalTag")
@@ -23,10 +25,10 @@ process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 process.load("Configuration.StandardSequences.Geometry_cff")
 
 #raw-to-digi
-if dataset <= 2:
+if dataset <= 3:
     process.load('Configuration.StandardSequences.RawToDigi_Data_cff')
     process.RawToDigi = cms.Sequence(process.gctDigis+process.gtDigis+process.gtEvmDigis+process.siPixelDigis+process.siStripDigis+process.ecalDigis+process.ecalPreshowerDigis+process.hcalDigis)
-elif dataset ==3:
+elif dataset ==4:
     process.load('Configuration.StandardSequences.RawToDigi_cff')
 
 #reco for cosmics
@@ -47,7 +49,7 @@ process.trackerCosmics = cms.Sequence(process.offlineBeamSpot*process.trackerloc
 process.reconstructionCosmics = cms.Sequence(process.l1GtRecord*process.trackerCosmics*process.calolocalreco*process.vertexrecoCosmics*process.recoCaloTowersGR*process.recoJetsGR*process.hcalnoise)
 
 # set special threshold for ECAL energy, since Run 68288 has a hot tower
-if dataset<=2:
+if dataset<=3:
     process.towerMaker.EBThreshold = cms.double(9999999.)
     process.towerMaker.EEThreshold = cms.double(9999999.)
 
@@ -80,6 +82,9 @@ elif dataset==2:
     process.noiserates.rootHistFilename = cms.string('R109049.root')
 elif dataset==3:
     process.noiserates.findTrigger = cms.bool(False)
+    process.noiserates.rootHistFilename = cms.string('R67141.root')
+elif dataset==4:
+    process.noiserates.findTrigger = cms.bool(False)
     process.noiserates.rootHistFilename = cms.string('QCDpt3000.root')
 
 # run over files
@@ -94,6 +99,8 @@ if dataset==1:
 elif dataset==2:
     readFiles.append('/store/data/CRAFT09/Calo/RAW/v1/000/109/049/002E7792-257C-DE11-8719-001D09F2426D.root')
 elif dataset==3:
+    readFiles.append('/store/data/Commissioning08/Calo/RAW/v1/000/067/141/0217F4A9-B9A0-DD11-B273-000423D94C68.root')
+elif dataset==4:
     readFiles.append('/store/mc/Summer09/QCD_Pt3000/GEN-SIM-RAW/MC_31X_V3-v1/0007/003C3B4C-6380-DE11-B9A3-00E0813008AA.root')
     readFiles.append('/store/mc/Summer09/QCD_Pt3000/GEN-SIM-RAW/MC_31X_V3-v1/0007/0417F486-6380-DE11-B697-00188B7AC621.root')
     readFiles.append('/store/mc/Summer09/QCD_Pt3000/GEN-SIM-RAW/MC_31X_V3-v1/0007/06244359-6080-DE11-B527-00E081300892.root')
