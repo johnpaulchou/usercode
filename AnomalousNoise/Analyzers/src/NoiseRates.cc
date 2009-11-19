@@ -142,8 +142,8 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
     }
   }
 
-  /*  bool passLoose=true;
-  bool passTight=true;
+  passLoose=true;
+  passTight=true;
   if(summary.minE2Over10TS()<0.7 ||
      summary.min25GeVHitTime()<18. ||
      summary.max25GeVHitTime()>31. ||
@@ -155,8 +155,7 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
      summary.maxZeros()>7 ||
      summary.maxHPDHits()>16)
     passTight=false;
-  */
-    
+
   // get the rechits
   edm::Handle<HBHERecHitCollection> rechits_h;
   iEvent.getByLabel(hbheRecHitCollName_,rechits_h);
@@ -181,17 +180,20 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
     const HBHERecHit &rechit=(*it);
     if(rechit.flags() & 0x3) {
       passFlag=false;
-      break;
     }
+    hHitEnergy_->Fill(rechit.energy());
   }
 
+  double met = calomet.pt();
+
   // loop over the RBXs and fill the histograms
+  int cnt=0;
   for(reco::HcalNoiseRBXCollection::const_iterator it=rbxs_h->begin(); it!=rbxs_h->end(); ++it) {
     const reco::HcalNoiseRBX &rbx=(*it);
     double energy=rbx.recHitEnergy(minHitEnergy_);
     int nhits=rbx.numRecHits(minHitEnergy_);
     if(energy < minRBXEnergy_) continue;
-
+    ++cnt;
     hRBXEnergy_->Fill(energy);
     if(nhits<=9)
       hRBXEnergyType1_->Fill(energy);
@@ -205,11 +207,22 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
     if(passTight) hRBXEnergyAfterCut3_->Fill(energy);
     
     hRBXNHits_->Fill(nhits);
+
+    hRBXEnergyMET_->Fill(met);
+    if (nhits<=9)
+      hRBXEnergyType1MET_->Fill(met);
+    else if (nhits<=18)
+      hRBXEnergyType2MET_->Fill(met);
+    else
+      hRBXEnergyType3MET_->Fill(met);
+
+
   }   // done looping over RBXs
+  if(cnt>1) std::cout << "count = " << cnt << std::endl;
 
   // fill met
-  double met = calomet.pt();
   hMET_->Fill(met);
+
   if(passFlag)          hMETAfterCut1_->Fill(met);
   if(passLoose)         hMETAfterCut2_->Fill(met);
   if(passTight)         hMETAfterCut3_->Fill(met);
@@ -289,6 +302,11 @@ NoiseRates::beginJob(const edm::EventSetup&)
   hRBXEnergyType1_ = new TH1D("hRBXEnergyType1","hRBXEnergyType1",100,0,1000);
   hRBXEnergyType2_ = new TH1D("hRBXEnergyType2","hRBXEnergyType2",100,0,1000);
   hRBXEnergyType3_ = new TH1D("hRBXEnergyType3","hRBXEnergyType3",100,0,1000);
+  hRBXEnergyMET_ = new TH1D("hRBXEnergyMET","hRBXEnergy",100,0,1000);
+  hRBXEnergyType1MET_ = new TH1D("hRBXEnergyType1MET","hRBXEnergyType1 vs MET",100,0,1000);
+  hRBXEnergyType2MET_ = new TH1D("hRBXEnergyType2MET","hRBXEnergyType2 vs MET",100,0,1000);
+  hRBXEnergyType3MET_ = new TH1D("hRBXEnergyType3MET","hRBXEnergyType3 vs MET",100,0,1000);
+
   hRBXNHits_ = new TH1D("hRBXNHits","hRBXNHits",73,-0.5,72.5);
   hRBXEnergyAfterCut1_ = new TH1D("hRBXEnergyAfterCut1","hRBXEnergy After Cut 1",100,0,1000);
   hRBXEnergyAfterCut2_ = new TH1D("hRBXEnergyAfterCut2","hRBXEnergy After Cut 1",100,0,1000);
@@ -314,6 +332,8 @@ NoiseRates::beginJob(const edm::EventSetup&)
   hMinHPDEMF_       = new TH1D("hMinHPDEMF","MinHPDEMF",100,0,1.);
   hMinRBXEMF_       = new TH1D("hMinRBXEMF","MinRBXEMF",100,0,1.);
 
+  hHitEnergy_ = new TH1D("hHitEnergy","Hit Energy",100,0,1000);
+
   hTrigTowersEnergy_ = new TH1D("hTrigTowersEnergy","TrigTowersEnergy",100,0,1000);
   hTrigTowersEnergyType1_ = new TH1D("hTrigTowersEnergyType1","TrigTowersEnergy",100,0,1000);
   hTrigTowersEnergyType2_ = new TH1D("hTrigTowersEnergyType2","TrigTowersEnergy",100,0,1000);
@@ -332,6 +352,12 @@ NoiseRates::endJob() {
   hRBXEnergyType1_->Write();
   hRBXEnergyType2_->Write();
   hRBXEnergyType3_->Write();
+  
+  hRBXEnergyMET_->Write();
+  hRBXEnergyType1MET_->Write();
+  hRBXEnergyType2MET_->Write();
+  hRBXEnergyType3MET_->Write();
+
   hRBXEnergyAfterCut1_->Write();
   hRBXEnergyAfterCut2_->Write();
   hRBXEnergyAfterCut3_->Write();
@@ -357,6 +383,8 @@ NoiseRates::endJob() {
   hMaxRBXHits_->Write();
   hMinHPDEMF_->Write();
   hMinRBXEMF_->Write();
+  
+  hHitEnergy_->Write();
 
   hTrigTowersEnergy_->Write();
   hTrigTowersEnergyType1_->Write();

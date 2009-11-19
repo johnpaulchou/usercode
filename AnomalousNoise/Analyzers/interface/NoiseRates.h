@@ -69,6 +69,12 @@ class NoiseRates : public edm::EDAnalyzer {
   TH1D* hRBXEnergyType1_;
   TH1D* hRBXEnergyType2_;
   TH1D* hRBXEnergyType3_;
+  TH1D* hRBXEnergyMET_;
+  TH1D* hRBXEnergyType1MET_;
+  TH1D* hRBXEnergyType2MET_;
+  TH1D* hRBXEnergyType3MET_;
+
+
   TH1D* hRBXEnergyAfterCut1_;
   TH1D* hRBXEnergyAfterCut2_;
   TH1D* hRBXEnergyAfterCut3_;
@@ -96,6 +102,8 @@ class NoiseRates : public edm::EDAnalyzer {
   TH1D* hMaxRBXHits_;
   TH1D* hMinHPDEMF_;
   TH1D* hMinRBXEMF_;
+
+  TH1D* hHitEnergy_;
 
   TH1D* hTrigTowersEnergy_;
   TH1D* hTrigTowersEnergyType1_;
