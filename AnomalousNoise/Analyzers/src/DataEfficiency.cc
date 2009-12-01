@@ -12,6 +12,7 @@
 #include "DataFormats/METReco/interface/CaloMETCollection.h"
 #include "DataFormats/METReco/interface/CaloMET.h"
 #include "DataFormats/METReco/interface/HcalNoiseRBX.h"
+#include "DataFormats/HcalRecHit/interface/HcalRecHitCollections.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "FWCore/Utilities/interface/EDMException.h"
@@ -46,35 +47,6 @@ DataEfficiency::~DataEfficiency()
 void
 DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
 {
-  // get the MET
-  edm::Handle<reco::CaloMETCollection> met_h;
-  iEvent.getByLabel(metCollName_,met_h);
-  if(!met_h.isValid()) {
-    throw edm::Exception(edm::errors::ProductNotFound)
-      << " could not find CaloMET named " << metCollName_ << ".\n";
-    return;
-  }
-  const reco::CaloMET &calomet = *(met_h->begin());
-  double met = calomet.pt();
-
-  // get the Jets
-  edm::Handle<reco::CaloJetCollection> jets_h;
-  iEvent.getByLabel(jetCollName_, jets_h);
-  if(!jets_h.isValid()) {
-    throw edm::Exception(edm::errors::ProductNotFound)
-      << " could not find CaloJet collection name " << jetCollName_ << ".\n";
-    return;
-  }
-
-  // get the tracks
-  edm::Handle<reco::TrackCollection> tracks_h;
-  iEvent.getByLabel(trackCollName_, tracks_h);
-  if(!tracks_h.isValid()) {
-    throw edm::Exception(edm::errors::ProductNotFound)
-      << " could not find TrackCollection name " << trackCollName_ << ".\n";
-    return;
-  }
-
   // get the RBX Noise collection
   edm::Handle<reco::HcalNoiseRBXCollection> rbxs_h;
   iEvent.getByLabel(rbxCollName_,rbxs_h);
@@ -84,6 +56,43 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
     return;
   }
 
+  // get the hits
+  edm::Handle<HBHERecHitCollection> hits_h;
+  iEvent.getByLabel(hbheRecHitCollName_, hits_h);
+  if(!hits_h.isValid()) {
+    throw edm::Exception(edm::errors::ProductNotFound)
+      << " could not find HBHERecHitCollection named " << hbheRecHitCollName_ << ".\n";
+    return;
+  }
+  
+  // get the MET
+  edm::Handle<reco::CaloMETCollection> met_h;
+  iEvent.getByLabel(metCollName_,met_h);
+  if(!met_h.isValid()) {
+    throw edm::Exception(edm::errors::ProductNotFound)
+      << " could not find CaloMET named " << metCollName_ << ".\n";
+    return;
+  }
+  const reco::CaloMET &calomet = *(met_h->begin());
+  
+  // get the Jets
+  edm::Handle<reco::CaloJetCollection> jets_h;
+  iEvent.getByLabel(jetCollName_, jets_h);
+  if(!jets_h.isValid()) {
+    throw edm::Exception(edm::errors::ProductNotFound)
+      << " could not find CaloJet collection name " << jetCollName_ << ".\n";
+    return;
+  }
+  
+  // get the tracks
+  edm::Handle<reco::TrackCollection> tracks_h;
+  iEvent.getByLabel(trackCollName_, tracks_h);
+  //    if(!tracks_h.isValid()) {
+  //      throw edm::Exception(edm::errors::ProductNotFound)
+  //	<< " could not find TrackCollection name " << trackCollName_ << ".\n";
+  //      return;
+  //    }
+  
   // get the Noise summary object
   edm::Handle<HcalNoiseSummary> summary_h;
   iEvent.getByType(summary_h);
@@ -92,105 +101,102 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
     return;
   }
   const HcalNoiseSummary summary = *summary_h;
-  bool passLoose = summary.passLooseNoiseFilter();
-  bool passTight = summary.passTightNoiseFilter();
-  bool passTrigger = true;
-
-  // determine if we pass the trigger filter
-  for(reco::HcalNoiseRBXCollection::const_iterator it=rbxs_h->begin(); it!=rbxs_h->end(); ++it) {
-    const reco::HcalNoiseRBX &rbx=(*it);
-    int rbxhits=rbx.numRecHits(1.0);
-    double rbxemf=rbx.caloTowerEmFraction();
-    if(rbxhits>=50 && rbxemf<=0.01) passTrigger=false;
-    else {
-      std::vector<reco::HcalNoiseHPD> hpds=rbx.HPDs();
-      for(std::vector<reco::HcalNoiseHPD>::const_iterator hit=hpds.begin(); hit!=hpds.end(); ++hit) {
-	int hpdhits=hit->numRecHits(1.0);
-	double hpdemf=hit->caloTowerEmFraction();
-	if(hpdhits>=17 && hpdemf<=0.01) passTrigger=false;
-      }
-    }
-  }
 
   // fill distributions
-  float energy = summary.eventEMEnergy()+summary.eventHadEnergy();
-  if(energy>10) {
-    hCHF_->Fill(summary.eventChargeFraction());
-    hCHE_->Fill(summary.eventTrackEnergy());
-    hCalE_->Fill(summary.eventEMEnergy()+summary.eventHadEnergy());
-  }
-  if(summary.maxHPDHits()>=1) {
-    hMin10GeVHitTime_->Fill(summary.min10GeVHitTime());
-    hMax10GeVHitTime_->Fill(summary.max10GeVHitTime());
-    hMin25GeVHitTime_->Fill(summary.min25GeVHitTime());
-    hMax25GeVHitTime_->Fill(summary.max25GeVHitTime());
-    hMinE2Over10TS_->Fill(summary.minE2Over10TS());
-    hMaxZeros_->Fill(summary.maxZeros());
-    hMaxHPDHits_->Fill(summary.maxHPDHits());
-    hMaxRBXHits_->Fill(summary.maxRBXHits());
-    hMinHPDEMF_->Fill(summary.minHPDEMF());
-    hMinRBXEMF_->Fill(summary.minRBXEMF());
+  nhits_=0;
+  for(HBHERecHitCollection::const_iterator it=hits_h->begin(); it!=hits_h->end(); ++it) {
+    const HBHERecHit &hit=(*it);
+    if(hit.energy()<25) continue;
+    hitieta_[nhits_] = hit.id().ieta();
+    hitiphi_[nhits_] = hit.id().iphi();
+    hitenergy_[nhits_] = hit.energy();
+    hittime_[nhits_] = hit.time();
+
+    ++nhits_;
   }
 
-  int njets=0;
-  for(CaloJetCollection::const_iterator it=jets_h->begin(); it!=jets_h->end(); ++it) {
-    const CaloJet &jet=(*it);
-    if(!(jet.pt()>5 && fabs(jet.eta())<3.0)) continue;
-    ++njets;
-    hJetPt_->Fill(jet.pt());
-    hJetEta_->Fill(jet.eta());
-    if(passLoose) {
-      hJetPtLoose_->Fill(jet.pt());
-      hJetEtaLoose_->Fill(jet.eta());
-    }
-    if(passTight) {
-      hJetPtTight_->Fill(jet.pt());
-      hJetEtaTight_->Fill(jet.eta());
-    }
-    if(passTrigger) {
-      hJetPtTrigger_->Fill(jet.pt());
-      hJetEtaTrigger_->Fill(jet.eta());
-    }
-  }
-  hNJets_->Fill(njets);
-  hMET_->Fill(met);
-  if(passLoose) {
-    hNJetsLoose_->Fill(njets);
-    hMETLoose_->Fill(met);
-  }
-  if(passTight) {
-    hNJetsTight_->Fill(njets);
-    hMETTight_->Fill(met);
-  }
-  if(passTrigger) {
-    hNJetsTrigger_->Fill(njets);
-    hMETTrigger_->Fill(met);
-  }
+  nrbxs_=0;
+  for(reco::HcalNoiseRBXCollection::const_iterator it=rbxs_h->begin(); it!=rbxs_h->end(); ++it) {
+    const reco::HcalNoiseRBX &rbx=(*it);
+    rbxnhits_[nrbxs_]    = rbx.numRecHits(1.5);
+    rbxidnum_[nrbxs_]    = rbx.idnumber();
+    rbxnadc0s_[nrbxs_]   = rbx.totalZeros();
+    rbxenergy_[nrbxs_]   = rbx.recHitEnergy(1.5);
+    rbxcalohade_[nrbxs_] = rbx.caloTowerHadE();
+    rbxcaloeme_[nrbxs_]  = rbx.caloTowerEmE();
+    float totalq = rbx.allChargeTotal();
+    rbxratio_[nrbxs_] = totalq>0 ? rbx.allChargeHighest2TS()/totalq : 0.0;
 
-  ntracks_=0;
-  sumtrkp_=0;
-  for(reco::TrackCollection::const_iterator iTrack = tracks_h->begin(); iTrack!=tracks_h->end(); ++iTrack) {
-    reco::Track trk=*iTrack;
-    if(trk.pt()<1.0) continue;
-    trkpt_[ntracks_]=trk.pt();
-    trkp_[ntracks_]=trk.p();
-    trketa_[ntracks_]=trk.eta();
-    trkphi_[ntracks_]=trk.phi();
-    sumtrkp_ += trk.p();
-    ++ntracks_;
+    rbxnhpds_[nrbxs_] = 0;
+    int cnt=0;
+    std::vector<reco::HcalNoiseHPD> hpds = rbx.HPDs();
+    for(std::vector<reco::HcalNoiseHPD>::const_iterator hpdit=hpds.begin(); hpdit!=hpds.end(); ++hpdit) {
+      int nhpdhits = hpdit->numRecHits(1.5);
+      if(nhpdhits>0) ++rbxnhpds_[nrbxs_];
+      if(cnt==0) rbxnhitshpd0_[nrbxs_]=nhpdhits;
+      if(cnt==1) rbxnhitshpd1_[nrbxs_]=nhpdhits;
+      if(cnt==2) rbxnhitshpd2_[nrbxs_]=nhpdhits;
+      if(cnt==3) rbxnhitshpd3_[nrbxs_]=nhpdhits;
+      ++cnt;
+    }
+
+    std::vector<float> charge=rbx.allCharge();
+    rbx0ts_[nrbxs_] = charge[0];
+    rbx1ts_[nrbxs_] = charge[1];
+    rbx2ts_[nrbxs_] = charge[2];
+    rbx3ts_[nrbxs_] = charge[3];
+    rbx4ts_[nrbxs_] = charge[4];
+    rbx5ts_[nrbxs_] = charge[5];
+    rbx6ts_[nrbxs_] = charge[6];
+    rbx7ts_[nrbxs_] = charge[7];
+    rbx8ts_[nrbxs_] = charge[8];
+    rbx9ts_[nrbxs_] = charge[9];
+
+    ++nrbxs_;
   }
 
   njets_=0;
+  ntracks_=0;
+  sumtrkp_=0;
+  met_ =0;
+  hade_=0;
+  eme_=0;
+
+  if(tracks_h.isValid()) {
+    for(reco::TrackCollection::const_iterator iTrack = tracks_h->begin(); iTrack!=tracks_h->end(); ++iTrack) {
+      reco::Track trk=*iTrack;
+      if(trk.pt()<1.0) continue;
+      trkpt_[ntracks_]=trk.pt();
+      trkp_[ntracks_]=trk.p();
+      trketa_[ntracks_]=trk.eta();
+      trkphi_[ntracks_]=trk.phi();
+      sumtrkp_ += trk.p();
+      ++ntracks_;
+    }
+  }
+  
   for(CaloJetCollection::const_iterator it=jets_h->begin(); it!=jets_h->end(); ++it) {
     const CaloJet &jet=(*it);
     jetpt_[njets_] = jet.pt();
     jeteta_[njets_] = jet.eta();
     jetphi_[njets_] = jet.phi();
+    jetHBhade_[njets_] = jet.hadEnergyInHB();
+    jetHEhade_[njets_] = jet.hadEnergyInHE();
+    jetEBeme_[njets_] = jet.emEnergyInEB();
+    jetEEeme_[njets_] = jet.emEnergyInEE();
+    ++njets_;
   }
-
+  
+  met_ = calomet.pt();
   hade_=summary.eventHadEnergy();
   eme_=summary.eventEMEnergy();
+  
   tree_->Fill();
+
+  // count stuff
+  hEventCount_->Fill(0.0);
+  int lumiSection = iEvent.luminosityBlock();
+  lumiCountMap_[lumiSection]++;
 
   return;
 }
@@ -202,7 +208,39 @@ DataEfficiency::beginJob(const edm::EventSetup&)
 {
   // book histograms
   rootfile_ = new TFile(rootHistFilename_.c_str(), "RECREATE");
+
+  hEventCount_ = new TH1D("hEventCount","Event Count", 1, -0.5, 0.5);
+  hLumiBlockCount_ = new TH1D("hLumiBlockCount","Lumi Block Count", 1, -0.5, 0.5);
+
   tree_ = new TTree("tree","tree");
+  tree_->Branch("nrbxs",&nrbxs_, "nrbxs/I");
+  tree_->Branch("rbxnhits",rbxnhits_,"rbxnhits[nrbxs]/I");
+  tree_->Branch("rbxnhpds",rbxnhpds_,"rbxnhpds[nrbxs]/I");
+  tree_->Branch("rbxnhitshpd0",rbxnhitshpd0_,"rbxnhitshpd0[nrbxs]/I");
+  tree_->Branch("rbxnhitshpd1",rbxnhitshpd1_,"rbxnhitshpd1[nrbxs]/I");
+  tree_->Branch("rbxnhitshpd2",rbxnhitshpd2_,"rbxnhitshpd2[nrbxs]/I");
+  tree_->Branch("rbxnhitshpd3",rbxnhitshpd3_,"rbxnhitshpd3[nrbxs]/I");
+  tree_->Branch("rbxidnum",rbxidnum_,"rbxidnum[nrbxs]/I");
+  tree_->Branch("rbxnadc0s",rbxnadc0s_,"rbxnadc0s[nrbxs]/I");
+  tree_->Branch("rbxenergy",rbxenergy_,"rbxenergy[nrbxs]/F");
+  tree_->Branch("rbxcalohade",rbxcalohade_,"rbxcalohade[nrbxs]/F");
+  tree_->Branch("rbxcaloeme",rbxcaloeme_,"rbxcaloeme[nrbxs]/F");
+  tree_->Branch("rbxratio",rbxratio_,"rbxratio[nrbxs]/F");
+  tree_->Branch("rbx0ts",rbx0ts_,"rbx0ts[nrbxs]/F");
+  tree_->Branch("rbx1ts",rbx1ts_,"rbx1ts[nrbxs]/F");
+  tree_->Branch("rbx2ts",rbx2ts_,"rbx2ts[nrbxs]/F");
+  tree_->Branch("rbx3ts",rbx3ts_,"rbx3ts[nrbxs]/F");
+  tree_->Branch("rbx4ts",rbx4ts_,"rbx4ts[nrbxs]/F");
+  tree_->Branch("rbx5ts",rbx5ts_,"rbx5ts[nrbxs]/F");
+  tree_->Branch("rbx6ts",rbx6ts_,"rbx6ts[nrbxs]/F");
+  tree_->Branch("rbx7ts",rbx7ts_,"rbx7ts[nrbxs]/F");
+  tree_->Branch("rbx8ts",rbx8ts_,"rbx8ts[nrbxs]/F");
+  tree_->Branch("rbx9ts",rbx9ts_,"rbx9ts[nrbxs]/F");
+  tree_->Branch("nhits",&nhits_, "nhits/I");
+  tree_->Branch("hitieta",hitieta_, "hitieta[nhits]/I");
+  tree_->Branch("hitiphi",hitiphi_, "hitiphi[nhits]/I");
+  tree_->Branch("hitenergy",hitenergy_, "hitenergy[nhits]/F");
+  tree_->Branch("hittime",hittime_, "hittime[nhits]/F");
   tree_->Branch("ntracks",&ntracks_, "ntracks/I");
   tree_->Branch("trkpt",trkpt_, "trkpt[ntracks]/F");
   tree_->Branch("trkp",trkp_, "trkp[ntracks]/F");
@@ -213,44 +251,14 @@ DataEfficiency::beginJob(const edm::EventSetup&)
   tree_->Branch("jetpt",jetpt_,"jetpt[njets]/F");
   tree_->Branch("jeteta",jeteta_,"jeteta[njets]/F");
   tree_->Branch("jetphi",jetphi_,"jetphi[njets]/F");
+  tree_->Branch("jetHBhade",jetHBhade_,"jetHBhade[njets]/F");
+  tree_->Branch("jetHEhade",jetHEhade_,"jetHEhade[njets]/F");
+  tree_->Branch("jetEBeme",jetEBeme_,"jetEBeme[njets]/F");
+  tree_->Branch("jetEEeme",jetEEeme_,"jetEEeme[njets]/F");
   tree_->Branch("hade",&hade_, "hade/F");
   tree_->Branch("eme",&eme_, "eme/F");
+  tree_->Branch("met",&met_, "met/F");
 
-
-  hMin10GeVHitTime_ = new TH1D("hMin10GeVHitTime","Min10GeVHitTime",100,-50,50);
-  hMax10GeVHitTime_ = new TH1D("hMax10GeVHitTime","Max10GeVHitTime",100,-50,50);
-  hMin25GeVHitTime_ = new TH1D("hMin25GeVHitTime","Min25GeVHitTime",100,-50,50);
-  hMax25GeVHitTime_ = new TH1D("hMax25GeVHitTime","Max25GeVHitTime",100,-50,50);
-  hMinE2Over10TS_   = new TH1D("hMinE2Over10TS","MinE2Over10TS",100,0,1.5);
-  hMaxZeros_        = new TH1D("hMaxZeros","MaxZeros",25,0,25);
-  hMaxHPDHits_      = new TH1D("hMaxHPDHits","MaxHPDHits",19,0,19);
-  hMaxRBXHits_      = new TH1D("hMaxRBXHits","MaxRBXHits",73,0,73);
-  hMinHPDEMF_       = new TH1D("hMinHPDEMF","MinHPDEMF",100,0,1.);
-  hMinRBXEMF_       = new TH1D("hMinRBXEMF","MinRBXEMF",100,0,1.);
-  
-  hMET_        = new TH1D("hMET","MET",100,0,1000);
-  hMETLoose_   = new TH1D("hMETLoose","METLoose",100,0,1000);
-  hMETTight_   = new TH1D("hMETTight","METTight",100,0,1000);
-  hMETTrigger_ = new TH1D("hMETTrigger","METTrigger",100,0,1000);
-
-  hNJets_        = new TH1D("hNJets","NJets",10,-0.5,9.5);
-  hNJetsLoose_   = new TH1D("hNJetsLoose","NJetsLoose",10,-0.5,9.5);
-  hNJetsTight_   = new TH1D("hNJetsTight","NJetsTight",10,-0.5,9.5);
-  hNJetsTrigger_ = new TH1D("hNJetsTrigger","NJetsTrigger",10,-0.5,9.5);
-
-  hJetPt_        = new TH1D("hJetPt","JetPt",100,0,100);
-  hJetPtLoose_   = new TH1D("hJetPtLoose","JetPtLoose",100,0,100);
-  hJetPtTight_   = new TH1D("hJetPtTight","JetPtTight",100,0,100);
-  hJetPtTrigger_ = new TH1D("hJetPtTrigger","JetPtTrigger",100,0,100);
-
-  hJetEta_        = new TH1D("hJetEta","JetEta",60,-3,3);
-  hJetEtaLoose_   = new TH1D("hJetEtaLoose","JetEtaLoose",60,-3,3);
-  hJetEtaTight_   = new TH1D("hJetEtaTight","JetEtaTight",60,-3,3);
-  hJetEtaTrigger_ = new TH1D("hJetEtaTrigger","JetEtaTrigger",60,-3,3);
-
-  hCHF_           = new TH1D("hCHF","CHF",100,0,2);
-  hCHE_           = new TH1D("hCHE","CHE",100,0,1000);
-  hCalE_          = new TH1D("hCalE","CalE",100,0,1000);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
@@ -260,37 +268,9 @@ DataEfficiency::endJob() {
   // write histograms
   rootfile_->cd();
 
-  hMin10GeVHitTime_->Write();
-  hMax10GeVHitTime_->Write();
-  hMin25GeVHitTime_->Write();
-  hMax25GeVHitTime_->Write();
-  hMinE2Over10TS_->Write();
-  hMaxZeros_->Write();
-  hMaxHPDHits_->Write();
-  hMaxRBXHits_->Write();
-  hMinHPDEMF_->Write();
-  hMinRBXEMF_->Write();
-  
-  hMET_->Write();
-  hMETLoose_->Write();
-  hMETTight_->Write();
-  hMETTrigger_->Write();
-  hNJets_->Write();
-  hNJetsLoose_->Write();
-  hNJetsTight_->Write();
-  hNJetsTrigger_->Write();
-  hJetPt_->Write();
-  hJetPtLoose_->Write();
-  hJetPtTight_->Write();
-  hJetPtTrigger_->Write();
-  hJetEta_->Write();
-  hJetEtaLoose_->Write();
-  hJetEtaTight_->Write();
-  hJetEtaTrigger_->Write();
-  hCHF_->Write();
-  hCHE_->Write();
-  hCalE_->Write();
-
+  hEventCount_->Write();
+  hLumiBlockCount_->Fill(0.0, lumiCountMap_.size());
+  hLumiBlockCount_->Write();
   tree_->Write();
 
   rootfile_->Close();

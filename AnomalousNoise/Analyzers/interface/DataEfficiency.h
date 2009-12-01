@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -56,45 +57,33 @@ class DataEfficiency : public edm::EDAnalyzer {
 
   // root file/histograms
   TFile* rootfile_;  
-  TH1D* hMin10GeVHitTime_;
-  TH1D* hMax10GeVHitTime_;
-  TH1D* hMin25GeVHitTime_;
-  TH1D* hMax25GeVHitTime_;
-  TH1D* hMinE2Over10TS_;
-  TH1D* hMaxZeros_;
-  TH1D* hMaxHPDHits_;
-  TH1D* hMaxRBXHits_;
-  TH1D* hMinHPDEMF_;
-  TH1D* hMinRBXEMF_;
 
-  TH1D* hMET_;
-  TH1D* hMETLoose_;
-  TH1D* hMETTight_;
-  TH1D* hMETTrigger_;
-  TH1D* hNJets_;
-  TH1D* hNJetsLoose_;
-  TH1D* hNJetsTight_;
-  TH1D* hNJetsTrigger_;
-  TH1D* hJetPt_;
-  TH1D* hJetPtLoose_;
-  TH1D* hJetPtTight_;
-  TH1D* hJetPtTrigger_;
-  TH1D* hJetEta_;
-  TH1D* hJetEtaLoose_;
-  TH1D* hJetEtaTight_;
-  TH1D* hJetEtaTrigger_;
-  TH1D* hCHF_;
-  TH1D* hCHE_;
-  TH1D* hCalE_;
-  
+  // event counting stuff
+  TH1D* hEventCount_;
+  std::map<int, int> lumiCountMap_;
+  TH1D* hLumiBlockCount_;
+
   // tree
   TTree* tree_;
+  int nrbxs_;
+  int rbxnhits_[100], rbxnhpds_[100], rbxidnum_[100], rbxnadc0s_[100];
+  int rbxnhitshpd0_[100], rbxnhitshpd1_[100], rbxnhitshpd2_[100], rbxnhitshpd3_[100];
+  float rbxenergy_[100], rbxcalohade_[100], rbxcaloeme_[100], rbxratio_[100];
+  float rbx0ts_[100], rbx1ts_[100], rbx2ts_[100], rbx3ts_[100], rbx4ts_[100], rbx5ts_[100], rbx6ts_[100], rbx7ts_[100], rbx8ts_[100], rbx9ts_[100];
+  
+  int nhits_;
+  int hitieta_[100], hitiphi_[100];
+  float hitenergy_[100], hittime_[100];
+
   int ntracks_;
-  float trkpt_[100], trkp_[100], trketa_[100], trkphi_[100];
+  float trkpt_[1000], trkp_[1000], trketa_[1000], trkphi_[1000];
   float sumtrkp_;
+
   int njets_;
-  float jetpt_[100], jeteta_[100], jetphi_[100];
+  float jetpt_[100], jeteta_[100], jetphi_[100], jetHBhade_[100], jetHEhade_[100], jetEBeme_[100], jetEEeme_[100];
+
   float hade_, eme_;
+  float met_;
 
 };
 
