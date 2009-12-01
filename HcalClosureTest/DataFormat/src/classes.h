@@ -9,8 +9,5 @@ namespace {
     SingleParticleClusterCollection dummy2;
     edm::Wrapper<SingleParticleClusterCollection> dummy3;
 
-    DijetRespCorrDatum dummy4;
-    DijetRespCorrData dummy5;
-
   };
 }

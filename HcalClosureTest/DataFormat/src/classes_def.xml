@@ -4,6 +4,4 @@
   <class name="SingleParticleClusterCollection"/>
   <class name="edm::Wrapper<SingleParticleClusterCollection>"/>
 
-  <class name="DijetRespCorrDatum"/>
-  <class name="DijetRespCorrData"/>
 </lcgdict>

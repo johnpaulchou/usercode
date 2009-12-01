@@ -9,8 +9,10 @@
 
 #include "HcalClosureTest/Analyzers/interface/CalcRespCorrDiJets.h"
 #include "DataFormats/JetReco/interface/CaloJetCollection.h"
+#include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 
+#include "TTree.h"
 #include "TFile.h"
 #include "TH1D.h"
 #include "TH2D.h"
@@ -26,11 +28,12 @@ CalcRespCorrDiJets::CalcRespCorrDiJets(const edm::ParameterSet& iConfig)
 {
   // set parameters
   jetCollName_       = iConfig.getParameter<std::string>("jetCollName");
+  genJetCollName_    = iConfig.getParameter<std::string>("genJetCollName");
   rootHistFilename_  = iConfig.getParameter<std::string>("rootHistFilename");
   maxDeltaEta_       = iConfig.getParameter<double>("maxDeltaEta");
-  minDeltaPhi_       = iConfig.getParameter<double>("minDeltaPhi");
   minTagJetEta_      = iConfig.getParameter<double>("minTagJetEta");
   maxTagJetEta_      = iConfig.getParameter<double>("maxTagJetEta");
+  minSumJetEt_       = iConfig.getParameter<double>("minSumJetEt");
   minJetEt_          = iConfig.getParameter<double>("minJetEt");
   maxThirdJetEt_     = iConfig.getParameter<double>("maxThirdJetEt");
   maxJetEMF_         = iConfig.getParameter<double>("maxJetEMF");
@@ -50,13 +53,22 @@ CalcRespCorrDiJets::~CalcRespCorrDiJets()
 void
 CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
 { 
-  edm::Handle<reco::CaloJetCollection> handle;
-  iEvent.getByLabel(jetCollName_,handle);
-  if(!handle.isValid()) {
+  edm::Handle<reco::CaloJetCollection> calojets;
+  iEvent.getByLabel(jetCollName_,calojets);
+  if(!calojets.isValid()) {
     throw edm::Exception(edm::errors::ProductNotFound)
       << " could not find CaloJetCollection named " << jetCollName_ << ".\n";
     return;
   }
+
+  edm::Handle<reco::GenJetCollection> genjets;
+  iEvent.getByLabel(genJetCollName_,genjets);
+  if(!genjets.isValid()) {
+    throw edm::Exception(edm::errors::ProductNotFound)
+      << " could not find GenJetCollection named " << genJetCollName_ << ".\n";
+    return;
+  }
+
 
   //////////////////////////////
   // Event Selection
@@ -68,23 +80,25 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   // find highest two et jets
   const reco::CaloJet* tag=0;
   const reco::CaloJet* probe=0;
-  for(reco::CaloJetCollection::const_iterator it=handle->begin(); it!=handle->end(); ++it) {
+  thirdjet_px_=thirdjet_py_=0.0;
+  int cntr=0;
+  for(reco::CaloJetCollection::const_iterator it=calojets->begin(); it!=calojets->end(); ++it) {
+    ++cntr;
     const reco::CaloJet* jet=&(*it);
-    if(!tag)                       tag=jet;
-    else if(!probe)                probe=jet;
-    else if(tag->et()<jet->et())   tag=jet;
-    else if(probe->et()<jet->et()) probe=jet;
+    if(cntr==1) tag=jet;
+    else if(cntr==2) probe=jet;
+    else {
+      thirdjet_px_ += jet->px();
+      thirdjet_py_ += jet->py();
+    }
   }
   if(!tag || !probe) return;
 
   // require that the first two jets are above some minimum,
   // and the rest are below some maximum
-  if(tag->et()<minJetEt_)   passSel |= 0x1;
-  if(probe->et()<minJetEt_) passSel |= 0x2;
-  for(reco::CaloJetCollection::const_iterator it=handle->begin(); it!=handle->end(); ++it) {
-    const reco::CaloJet *jet=&(*it);
-    if(jet!=tag && jet!=probe && jet->et()>maxThirdJetEt_) passSel |= 0x4;
-  }
+  if((tag->et()+probe->et())<minSumJetEt_)         passSel |= 0x1;
+  if(tag->et()<minJetEt_ || probe->et()<minJetEt_) passSel |= 0x2;
+  if(sqrt(thirdjet_px_*thirdjet_px_ + thirdjet_py_*thirdjet_py_)>maxThirdJetEt_) passSel |= 0x4;
 
   // force the tag jet to have the smaller |eta|
   if(std::fabs(tag->eta())>std::fabs(probe->eta())) {
@@ -93,18 +107,15 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
     probe=temp;
   }
 
-  // eta and phi cuts
+  // eta cuts
   double dAbsEta=std::fabs(std::fabs(tag->eta())-std::fabs(probe->eta()));
-  double dPhi=tag->phi()-probe->phi();
-  if(dPhi>3.1415) dPhi = 6.2832-dPhi;
   if(dAbsEta>maxDeltaEta_) passSel |= 0x8;
-  if(dPhi<minDeltaPhi_) passSel |= 0x10;
-  if(fabs(tag->eta())<minTagJetEta_) passSel |= 0x20;
-  if(fabs(tag->eta())>maxTagJetEta_) passSel |= 0x20;
+  if(fabs(tag->eta())<minTagJetEta_) passSel |= 0x10;
+  if(fabs(tag->eta())>maxTagJetEta_) passSel |= 0x10;
 
   // emf cuts
-  if(tag->emEnergyFraction()>maxJetEMF_) passSel |= 0x40;
-  if(probe->emEnergyFraction()>maxJetEMF_) passSel |= 0x80;
+  if(tag->emEnergyFraction()>maxJetEMF_) passSel |= 0x20;
+  if(probe->emEnergyFraction()>maxJetEMF_) passSel |= 0x20;
 
   // make the cuts
   hPassSel_->Fill(passSel);
@@ -113,63 +124,96 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   // dump
   if(debug_) {
     std::cout << "Run: " << iEvent.id().run() << "; Event: " << iEvent.id().event() << std::endl;
-    for(reco::CaloJetCollection::const_iterator it=handle->begin(); it!=handle->end(); ++it) {
+    for(reco::CaloJetCollection::const_iterator it=calojets->begin(); it!=calojets->end(); ++it) {
       const reco::CaloJet *jet=&(*it);
       std::cout << "istag=" << (jet==tag) << "; isprobe=" << (jet==probe) << "; et=" << jet->et() << "; eta=" << jet->eta() << std::endl;
     }
   }
 
-  // calculate the quantities needed for the calibration
-  DijetRespCorrDatum datum;
-
-  datum.SetTagEta(tag->eta());
-  datum.SetProbeEta(probe->eta());
-  datum.SetTagEcalE(tag->emEnergyInEB()+tag->emEnergyInEE());
-  datum.SetProbeEcalE(probe->emEnergyInEB()+probe->emEnergyInEE());
-
+  // fill tag jet variables
+  tjet_pt_    = tag->pt();
+  tjet_p_     = tag->p();
+  tjet_eta_   = tag->eta();
+  tjet_phi_   = tag->phi();
+  tjet_emf_   = tag->emEnergyFraction();
+  tjet_EBE_   = tag->emEnergyInEB();
+  tjet_EEE_   = tag->emEnergyInEE();
+  tjet_HBE_   = tag->hadEnergyInHB();
+  tjet_HEE_   = tag->hadEnergyInHE();
+  tjet_HFE_   = tag->emEnergyInHF() + tag->hadEnergyInHF();
+  tjet_ntwrs_=0;
   std::vector<CaloTowerPtr> tagconst=tag->getCaloConstituents();
-  for(std::vector<CaloTowerPtr>::const_iterator ctp_it=tagconst.begin(); ctp_it!=tagconst.end(); ++ctp_it) {
-    int ieta=(*ctp_it)->id().ieta();
-    int ietaAbs=(*ctp_it)->id().ietaAbs();
-    double hade=(*ctp_it)->hadEnergy();
-    if(ietaAbs>29) hade += (*ctp_it)->emEnergy();
-    if(hade>0) datum.AddTagHcalE(hade, ieta);
+  for(std::vector<CaloTowerPtr>::const_iterator it=tagconst.begin(); it!=tagconst.end(); ++it) {
+    int ieta=(*it)->id().ieta();
+    int ietaAbs=(*it)->id().ietaAbs();
+    tjet_twr_ieta_[tjet_ntwrs_]=ieta;
+    if(ietaAbs<29) {
+      tjet_twr_eme_[tjet_ntwrs_] = (*it)->emEnergy();
+      tjet_twr_hade_[tjet_ntwrs_] = (*it)->hadEnergy();
+    } else {
+      tjet_twr_eme_[tjet_ntwrs_] = 0;
+      tjet_twr_hade_[tjet_ntwrs_] = (*it)->emEnergy()+(*it)->hadEnergy();
+    }
+    ++tjet_ntwrs_;
   }
 
+  // fill probe jet variables
+  pjet_pt_    = probe->pt();
+  pjet_p_     = probe->p();
+  pjet_eta_   = probe->eta();
+  pjet_phi_   = probe->phi();
+  pjet_emf_   = probe->emEnergyFraction();
+  pjet_EBE_   = probe->emEnergyInEB();
+  pjet_EEE_   = probe->emEnergyInEE();
+  pjet_HBE_   = probe->hadEnergyInHB();
+  pjet_HEE_   = probe->hadEnergyInHE();
+  pjet_HFE_   = probe->emEnergyInHF() + probe->hadEnergyInHF();
+  pjet_ntwrs_=0;
   std::vector<CaloTowerPtr> probeconst=probe->getCaloConstituents();
-  for(std::vector<CaloTowerPtr>::const_iterator ctp_it=probeconst.begin(); ctp_it!=probeconst.end(); ++ctp_it) {
-    int ieta=(*ctp_it)->id().ieta();
-    int ietaAbs=(*ctp_it)->id().ietaAbs();
-    double hade=(*ctp_it)->hadEnergy();
-    if(ietaAbs>29) hade += (*ctp_it)->emEnergy();
-    if(hade>0) datum.AddProbeHcalE(hade, ieta);
+  for(std::vector<CaloTowerPtr>::const_iterator it=probeconst.begin(); it!=probeconst.end(); ++it) {
+    int ieta=(*it)->id().ieta();
+    int ietaAbs=(*it)->id().ietaAbs();
+    pjet_twr_ieta_[pjet_ntwrs_]=ieta;
+    if(ietaAbs<29) {
+      pjet_twr_eme_[pjet_ntwrs_] = (*it)->emEnergy();
+      pjet_twr_hade_[pjet_ntwrs_] = (*it)->hadEnergy();
+    } else {
+      pjet_twr_eme_[pjet_ntwrs_] = 0;
+      pjet_twr_hade_[pjet_ntwrs_] = (*it)->emEnergy()+(*it)->hadEnergy();
+    }
+    ++pjet_ntwrs_;
   }
 
-  if(debug_) {
-    std::map<Int_t, Double_t> taghcal, probehcal;
-    datum.GetTagHcalE(taghcal);
-    datum.GetProbeHcalE(probehcal);
-    std::cout << "TagEcalE: " << datum.GetTagEcalE()
-	      << "; ProbeEcalE: " << datum.GetProbeEcalE() << std::endl;
-    for(std::map<Int_t, Double_t>::const_iterator it=taghcal.begin(); it!=taghcal.end(); ++it)
-      std::cout << "Tag Hcal (eta, e): " << it->first << "; " << it->second << std::endl;
-    for(std::map<Int_t, Double_t>::const_iterator it=probehcal.begin(); it!=probehcal.end(); ++it)
-      std::cout << "Probe Hcal (eta, e): " << it->first << "; " << it->second << std::endl;
+  // fill genjet tag/probe variables
+  tjet_gendr_ = 99999.;
+  tjet_genpt_ = 0;
+  tjet_genp_  = 0;
+  pjet_gendr_ = 99999.;
+  pjet_genpt_ = 0;
+  pjet_genp_  = 0;
+  for(reco::GenJetCollection::const_iterator it=genjets->begin(); it!=genjets->end(); ++it) {
+    const reco::GenJet* jet=&(*it);
+    double dr=deltaR(jet, probe);
+    if(dr<pjet_gendr_) {
+      pjet_gendr_ = dr;
+      pjet_genpt_ = jet->pt();
+      pjet_genp_ = jet->p();
+    }
+    dr=deltaR(jet, tag);
+    if(dr<tjet_gendr_) {
+      tjet_gendr_ = dr;
+      tjet_genpt_ = jet->pt();
+      tjet_genp_ = jet->p();
+    }
   }
 
-  hTagEta_->Fill(tag->eta());
-  hProbeEta_->Fill(probe->eta());
-  double B = 2*(tag->p()-probe->p())/(tag->p()+probe->p());
-  hBEta_->Fill(B,probe->eta());
-  hBE_->Fill(B,probe->p()+tag->p());
-  double teme=tag->emEnergyInEB()+tag->emEnergyInEE();
-  double thade=tag->hadEnergyInHB()+tag->hadEnergyInHE()+tag->hadEnergyInHF()+tag->emEnergyInHF();
-  double peme=probe->emEnergyInEB()+probe->emEnergyInEE();
-  double phade=probe->hadEnergyInHB()+probe->hadEnergyInHE()+probe->hadEnergyInHF()+probe->emEnergyInHF();
-  double emf=(teme+peme)/(teme+thade+peme+phade);
-  hBEmf_->Fill(B,emf);
+  // fill dijet variables
+  dijet_deta_=std::fabs(std::fabs(tag->eta())-std::fabs(probe->eta()));
+  dijet_dphi_=tag->phi()-probe->phi();
+  if(dijet_dphi_>3.1415) dijet_dphi_ = 6.2832-dijet_dphi_;
+  dijet_balance_ = (tjet_pt_-pjet_pt_)/(tjet_pt_+pjet_pt_);
 
-  respcorrdata_.push_back(datum);
+  tree_->Fill();
   return;
 }
 
@@ -182,14 +226,50 @@ CalcRespCorrDiJets::beginJob(const edm::EventSetup&)
   rootfile_ = new TFile(rootHistFilename_.c_str(), "RECREATE");
 
   hPassSel_ = new TH1D("hPassSelection", "Selection Pass Failures",200,-0.5,199.5);
-  hTagEta_ = new TH1D("hTagEta","Tag Eta",100,-5,5);
-  hProbeEta_ = new TH1D("hProbeEta","Probe Eta",100,-5,5);
-  hBEta_ = new TH2D("hBEta","B versus eta",100,-3,3,100,-5,5);
-  hBE_ = new TH2D("hBE","B versus sum E",100,-3,3,100,0,2000);
-  hBEmf_ = new TH2D("hBEmf","B versus EMF",100,-3,3,100,0,1);
 
+  tree_ = new TTree("dijettree", "tree for dijet balancing");
+
+  tree_->Branch("tjet_pt",&tjet_pt_, "tjet_pt/F");
+  tree_->Branch("tjet_p",&tjet_p_, "tjet_p/F");
+  tree_->Branch("tjet_eta",&tjet_eta_, "tjet_eta/F");
+  tree_->Branch("tjet_phi",&tjet_phi_, "tjet_phi/F");
+  tree_->Branch("tjet_emf",&tjet_emf_, "tjet_emf/F");
+  tree_->Branch("tjet_genpt",&tjet_genpt_, "tjet_genpt/F");
+  tree_->Branch("tjet_genp",&tjet_genp_, "tjet_genp/F");
+  tree_->Branch("tjet_gendr",&tjet_gendr_, "tjet_gendr/F");
+  tree_->Branch("tjet_EBE",&tjet_EBE_, "tjet_EBE/F");
+  tree_->Branch("tjet_EEE",&tjet_EEE_, "tjet_EEE/F");
+  tree_->Branch("tjet_HBE",&tjet_HBE_, "tjet_HBE/F");
+  tree_->Branch("tjet_HEE",&tjet_HEE_, "tjet_HEE/F");
+  tree_->Branch("tjet_HFE",&tjet_HFE_, "tjet_HFE/F");
+  tree_->Branch("tjet_ntwrs",&tjet_ntwrs_, "tjet_ntwrs/I");
+  tree_->Branch("tjet_twr_ieta",tjet_twr_ieta_, "tjet_twr_ieta[tjet_ntwrs]/I");
+  tree_->Branch("tjet_twr_eme",tjet_twr_eme_, "tjet_twr_eme[tjet_ntwrs]/F");
+  tree_->Branch("tjet_twr_hade",tjet_twr_hade_, "tjet_twr_hade[tjet_ntwrs]/F");
+  tree_->Branch("pjet_pt",&pjet_pt_, "pjet_pt/F");
+  tree_->Branch("pjet_p",&pjet_p_, "pjet_p/F");
+  tree_->Branch("pjet_eta",&pjet_eta_, "pjet_eta/F");
+  tree_->Branch("pjet_phi",&pjet_phi_, "pjet_phi/F");
+  tree_->Branch("pjet_emf",&pjet_emf_, "pjet_emf/F");
+  tree_->Branch("pjet_genpt",&pjet_genpt_, "pjet_genpt/F");
+  tree_->Branch("pjet_genp",&pjet_genp_, "pjet_genp/F");
+  tree_->Branch("pjet_gendr",&pjet_gendr_, "pjet_gendr/F");
+  tree_->Branch("pjet_EBE",&pjet_EBE_, "pjet_EBE/F");
+  tree_->Branch("pjet_EEE",&pjet_EEE_, "pjet_EEE/F");
+  tree_->Branch("pjet_HBE",&pjet_HBE_, "pjet_HBE/F");
+  tree_->Branch("pjet_HEE",&pjet_HEE_, "pjet_HEE/F");
+  tree_->Branch("pjet_HFE",&pjet_HFE_, "pjet_HFE/F");
+  tree_->Branch("pjet_ntwrs",&pjet_ntwrs_, "pjet_ntwrs/I");
+  tree_->Branch("pjet_twr_ieta",pjet_twr_ieta_, "pjet_twr_ieta[pjet_ntwrs]/I");
+  tree_->Branch("pjet_twr_eme",pjet_twr_eme_, "pjet_twr_eme[pjet_ntwrs]/F");
+  tree_->Branch("pjet_twr_hade",pjet_twr_hade_, "pjet_twr_hade[pjet_ntwrs]/F");
+  tree_->Branch("dijet_deta",&dijet_deta_, "dijet_deta/F");
+  tree_->Branch("dijet_dphi",&dijet_dphi_, "dijet_dphi/F");
+  tree_->Branch("dijet_balance",&dijet_balance_, "dijet_balance/F");
+  tree_->Branch("thirdjet_px",&thirdjet_px_, "thirdjet_px/F");
+  tree_->Branch("thirdjet_py",&thirdjet_py_, "thirdjet_py/F");
   
-
+  return;
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
@@ -199,13 +279,18 @@ CalcRespCorrDiJets::endJob() {
   // write histograms
   rootfile_->cd();
   hPassSel_->Write();
-  hTagEta_->Write();
-  hProbeEta_->Write();
-  hBEta_->Write();
-  hBE_->Write();
-  hBEmf_->Write();
-  respcorrdata_.Write("respcorrdata");
+  tree_->Write();
   rootfile_->Close();
+}
+
+// helper function
+
+double CalcRespCorrDiJets::deltaR(const reco::Jet* j1, const reco::Jet* j2)
+{
+  double deta = j1->eta()-j2->eta();
+  double dphi = std::fabs(j1->phi()-j2->phi());
+  if(dphi>3.1415927) dphi = 2*3.1415927 - dphi;
+  return std::sqrt(deta*deta + dphi*dphi);
 }
 
 //define this as a plug-in

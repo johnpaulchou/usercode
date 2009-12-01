@@ -8,12 +8,15 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('HcalClosureTest.Analyzers.calcrespcorrdijets_cfi')
 
 process.calcrespcorrdijets.rootHistFilename = cms.string('plots.root')
-process.calcrespcorrdijets.minTagJetEta     = cms.double(0.0)
+process.calcrespcorrdijets.minTagJetEta     = cms.double(1.0)
 process.calcrespcorrdijets.maxTagJetEta     = cms.double(5.0)
-process.calcrespcorrdijets.maxThirdJetEt    = cms.double(5.0)
-process.calcrespcorrdijets.maxDeltaEta      = cms.double(0.5)
-process.calcrespcorrdijets.minDeltaPhi      = cms.double(2.0)
+process.calcrespcorrdijets.maxThirdJetEt    = cms.double(100.)
+process.calcrespcorrdijets.maxDeltaEta      = cms.double(1.5)
+process.calcrespcorrdijets.minSumJetEt      = cms.double(50.)
+process.calcrespcorrdijets.minJetEt         = cms.double(25.)
 process.calcrespcorrdijets.debug            = cms.untracked.bool(False)
+process.calcrespcorrdijets.jetCollName      = cms.string('sisCone7CaloJets')
+process.calcrespcorrdijets.genJetCollName   = cms.string('sisCone7GenJets')
 
 # particle gun; all |eta|
 #process.calcrespcorrdijets.maxCalibratedIEta = cms.int32(23)
@@ -24,17 +27,10 @@ process.calcrespcorrdijets.debug            = cms.untracked.bool(False)
 #process.calcrespcorrdijets.respCorr = cms.vdouble(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.26437, 1.27885, 1.252, 1.26742, 1.32585, 1.27661, 1.29944, 1.451, 1.2652, 1.25045, 1.29709, 1.23643, 1.11458, 1.14601, 1.20513, 1.15064, 1.11951, 1.16586, 1.15791, 1.13728, 1.14483, 1.1412, 1.11142, 0, 1.15833, 1.14589, 1.15, 1.14048, 1.22407, 1.09756, 1.07979, 1.14484, 1.22885, 1.20833, 1.21161, 1.18929, 1.17783, 1.27585, 1.29167, 1.25481, 1.26563, 1.35172, 1.2816, 1.25988, 1.22321, 1.21111, 1.175, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 )
 
 # run over files
-readFiles = cms.untracked.vstring()
+
+import FWCore.Python.FileUtils as FileUtils
+readFiles = cms.untracked.vstring( FileUtils.loadListFromFile ('QCD_Pt30.list') )
 process.source = cms.Source ("PoolSource",fileNames = readFiles)
-
-#readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_1.root')
-#readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_2.root')
-#readFiles.append('file:/afs/cern.ch/user/j/johnpaul/localscratch/QCDpt80_3.root')
-
-for i in range (1, 60):
-    if i==28:
-        continue
-    readFiles.append('dcap://pnfs/cms/WAX/resilient/johnpaul/DiJetCalibration/QCDpt80/QCDpt80_'+str(i)+'.root')
 print readFiles
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )

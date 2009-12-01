@@ -1,16 +1,9 @@
 <use name=DataFormats/CaloTowers>
-<use name=DataFormats/Common>
-<use name=CondFormats/DataRecord>
-<use name=FWCore/Framework>
-<use name=FWCore/PluginManager>
-<use name=rootrflx>
-<use name=rootcore>
+<use name=root>
 <use name=rootminuit>
 <export>
   <use name=DataFormats/CaloTowers>
-  <use name=DataFormats/Common>
-  <use name=CondFormats/DataRecord>
-  <use name=FWCore/Framework>
-  <use name=FWCore/PluginManager>
+  <use name=root>
+  <use name=rootminuit>
   <lib name=HcalClosureTestDataFormat>
 </export>

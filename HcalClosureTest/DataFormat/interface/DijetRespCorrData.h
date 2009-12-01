@@ -43,22 +43,30 @@ class DijetRespCorrDatum : public TObject
   ~DijetRespCorrDatum();
 
   Double_t GetTagEta(void) const;
+  Double_t GetTagPhi(void) const;
   Double_t GetTagHcalE(Int_t ieta);
   void     GetTagHcalE(std::map<Int_t, Double_t>&) const;
   Double_t GetTagEcalE(void) const;
   Double_t GetProbeEta(void) const;
+  Double_t GetProbePhi(void) const;
   Double_t GetProbeHcalE(Int_t ieta);
   void     GetProbeHcalE(std::map<Int_t, Double_t>&) const;
   Double_t GetProbeEcalE(void) const;
+  Double_t GetThirdJetPx(void) const;
+  Double_t GetThirdJetPy(void) const;
   
   void SetTagEta(Double_t);
+  void SetTagPhi(Double_t);
   void SetTagHcalE(Double_t, Int_t ieta);
   void AddTagHcalE(Double_t, Int_t ieta);
   void SetTagEcalE(Double_t);
   void SetProbeEta(Double_t);
+  void SetProbePhi(Double_t);
   void SetProbeHcalE(Double_t, Int_t ieta);
   void AddProbeHcalE(Double_t, Int_t ieta);
   void SetProbeEcalE(Double_t);
+  void SetThirdJetPx(Double_t);
+  void SetThirdJetPy(Double_t);
 
   // calculate the ecal, hcal, and HF energy in the tag and probe jets
   // scale the hcal and hf energy by the response corrections
@@ -67,14 +75,17 @@ class DijetRespCorrDatum : public TObject
 
  private:
   // tag jet info
-  Double_t fTagEta;
+  Double_t fTagEta, fTagPhi;
   std::map<Int_t, Double_t> fTagHcalE;
   Double_t fTagEcalE;
 
   // probe jet info
-  Double_t fProbeEta;
+  Double_t fProbeEta, fProbePhi;
   std::map<Int_t, Double_t> fProbeHcalE;
   Double_t fProbeEcalE;
+
+  // third jet info
+  Double_t fThirdJetPx, fThirdJetPy;
   
   ClassDef(DijetRespCorrDatum, 1);
 };
@@ -95,8 +106,6 @@ class DijetRespCorrData : public TObject
   // calculate the total distance between the tag and probe jets
   // given a set of response corrections
   Double_t GetLikelihoodDistance(const TArrayD& respcorr) const;
-
-  TH2D* DrawBalance(const char* name, const char* title) const;
 
   // fit for the response corrections
   //  TArrayD doFit(const TArrayD& respCorrInit, Int_t maxIetaFixed);

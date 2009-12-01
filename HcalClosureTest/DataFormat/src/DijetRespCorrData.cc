@@ -24,6 +24,11 @@ Double_t DijetRespCorrDatum::GetTagEta(void) const
   return fTagEta;
 }
 
+Double_t DijetRespCorrDatum::GetTagPhi(void) const
+{
+  return fTagPhi;
+}
+
 Double_t DijetRespCorrDatum::GetTagHcalE(Int_t ieta)
 {
   Double_t v=fTagHcalE[ieta];
@@ -46,6 +51,11 @@ Double_t DijetRespCorrDatum::GetProbeEta(void) const
   return fProbeEta;
 }
 
+Double_t DijetRespCorrDatum::GetProbePhi(void) const
+{
+  return fProbePhi;
+}
+
 Double_t DijetRespCorrDatum::GetProbeHcalE(Int_t ieta)
 {
   Double_t v=fProbeHcalE[ieta];
@@ -63,9 +73,25 @@ Double_t DijetRespCorrDatum::GetProbeEcalE(void) const
   return fProbeEcalE;
 }
 
+Double_t DijetRespCorrDatum::GetThirdJetPx(void) const
+{
+  return fThirdJetPx;
+}
+
+Double_t DijetRespCorrDatum::GetThirdJetPy(void) const
+{
+  return fThirdJetPy;
+}
+
 void DijetRespCorrDatum::SetTagEta(Double_t v)
 {
   fTagEta = v;
+  return;
+}
+
+void DijetRespCorrDatum::SetTagPhi(Double_t v)
+{
+  fTagPhi = v;
   return;
 }
 
@@ -95,6 +121,13 @@ void DijetRespCorrDatum::SetProbeEta(Double_t v)
   return;
 }
 
+void DijetRespCorrDatum::SetProbePhi(Double_t v)
+{
+  fProbePhi = v;
+  return;
+}
+
+
 void DijetRespCorrDatum::SetProbeHcalE(Double_t v, Int_t ieta)
 {
   assert(ieta<=MAXIETA && ieta>=-MAXIETA && ieta!=0);
@@ -112,6 +145,18 @@ void DijetRespCorrDatum::AddProbeHcalE(Double_t v, Int_t ieta)
 void DijetRespCorrDatum::SetProbeEcalE(Double_t v)
 {
   fProbeEcalE = v;
+  return;
+}
+
+void DijetRespCorrDatum::SetThirdJetPx(Double_t v)
+{
+  fThirdJetPx = v;
+  return;
+}
+
+void DijetRespCorrDatum::SetThirdJetPy(Double_t v)
+{
+  fThirdJetPy = v;
   return;
 }
 
@@ -210,31 +255,6 @@ Double_t DijetRespCorrData::GetLikelihoodDistance(const TArrayD& respcorr) const
   return total;
 }
 
-TH2D* DijetRespCorrData::DrawBalance(const char* name, const char* title) const
-{
-  Double_t array[NUMTOWERS] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-				1.151630, 1.148890, 1.144870, 1.161240, 1.195630, 1.190690, 1.162400, 1.130190, 1.128810, 1.114070, 1.109850, 1.098620, 1.099950, 1.096140, 1.087350, 1.076980, 1.095540, 1.092960, 1.091500, 1.087100, 1.0, 1.085640, 1.094110, 1.089310, 1.089260, 1.079420, 1.089310, 1.093900, 1.104690, 1.098890, 1.109600, 1.115400, 1.144240, 1.125160, 1.148010, 1.204180, 1.197330, 1.150100, 1.154010, 1.143610, 1.159000,
-				1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
-  TArrayD respcorr;
-  respcorr.Set(NUMTOWERS, array);
-
-  TH2D* hB=new TH2D(name, title, 100,-2,2,10,0,5);
-
-  // loop over each jet pair
-  for(std::vector<DijetRespCorrDatum>::const_iterator it=fData.begin(); it!=fData.end(); ++it) {
-
-    // calculate the balance and resolution for each jet pair
-    Double_t B, dB;
-    GetBalance(*it, respcorr, B, dB);
-    Double_t te, th, thf;
-    Double_t pe, ph, phf;
-    it->GetTagEnergies(respcorr, te, th, thf);
-    it->GetProbeEnergies(respcorr, pe, ph, phf);
-    hB->Fill(B, fabs(it->GetProbeEta()));
-  }
-  return hB;
-}
-
 TH1D* DijetRespCorrData::doFit(const char* name, const char* title)
 {
   TArrayD respcorr, respcorre;
@@ -274,6 +294,12 @@ void DijetRespCorrData::doFit(TArrayD& respcorr, TArrayD& respcorre)
     oss << "Tower ieta: " << ieta;
     gMinuit->DefineParameter(i, oss.str().c_str(), respCorrInit[i], fParStep, fParMin, fParMax);
     if(ieta>=-maxIetaFixed && ieta<=maxIetaFixed) gMinuit->FixParameter(i);
+
+    // override the HF
+    if(ieta<=-30 || ieta>=30) {
+      gMinuit->DefineParameter(i, oss.str().c_str(), 1.3, fParStep, fParMin, fParMax);
+      gMinuit->FixParameter(i);
+    }
   }
 
   // Minimize
@@ -302,16 +328,25 @@ void DijetRespCorrData::GetBalance(const DijetRespCorrDatum& datum, const TArray
   datum.GetProbeEnergies(respcorr, pe, ph, phf);
   
   // calculate the resolution and balance in E_T, not E
-  Double_t t=(te+th+thf)/std::cosh(datum.GetTagEta());
-  Double_t p=(pe+ph+phf)/std::cosh(datum.GetProbeEta());
-  //  Double_t dt=fEcalRes*fEcalRes*te+fHcalRes*fHcalRes*th+fHfRes*fHfRes*thf;
-  //  Double_t dp=fEcalRes*fEcalRes*pe+fHcalRes*fHcalRes*ph+fHfRes*fHfRes*phf;
-  Double_t dt = te+th+thf;
-  Double_t dp = pe+ph+phf;
+  Double_t tet=(te+th+thf)/std::cosh(datum.GetTagEta());
+  Double_t pet=(pe+ph+phf)/std::cosh(datum.GetProbeEta());
   
-  balance_ = 2*(t-p)/(t+p);
-  resolution_ = 4*t*p/(t+p)/(t+p)*sqrt(dt/t/t+dp/p/p);
-  //  resolution_ = 1.0;
+  // correct the tag/probe E_T's for the "third jet"
+  Double_t tpx = tet*std::cos(datum.GetTagPhi());
+  Double_t tpy = tet*std::sin(datum.GetTagPhi());
+  Double_t ppx = pet*std::cos(datum.GetProbePhi());
+  Double_t ppy = pet*std::sin(datum.GetProbePhi());
+
+  tpx += 0.5*datum.GetThirdJetPx();
+  tpy += 0.5*datum.GetThirdJetPy();
+  ppx -= 0.5*datum.GetThirdJetPx();
+  ppy -= 0.5*datum.GetThirdJetPy();
+  
+  Double_t tetcorr = std::sqrt(tpx*tpx + tpy*tpy);
+  Double_t petcorr = std::sqrt(ppx*ppx + ppy*ppy);
+
+  balance_ = 2*(tetcorr-petcorr)/(tetcorr+petcorr);
+  resolution_ = 1.0;
   return;
 }
 
