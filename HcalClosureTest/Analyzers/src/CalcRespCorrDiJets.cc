@@ -10,6 +10,7 @@
 #include "HcalClosureTest/Analyzers/interface/CalcRespCorrDiJets.h"
 #include "DataFormats/JetReco/interface/CaloJetCollection.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
+#include "JetMETCorrections/Objects/interface/JetCorrector.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 
 #include "TTree.h"
@@ -28,6 +29,7 @@ CalcRespCorrDiJets::CalcRespCorrDiJets(const edm::ParameterSet& iConfig)
 {
   // set parameters
   jetCollName_       = iConfig.getParameter<std::string>("jetCollName");
+  jetCorrName_       = iConfig.getParameter<std::string>("jetCorrName");
   genJetCollName_    = iConfig.getParameter<std::string>("genJetCollName");
   rootHistFilename_  = iConfig.getParameter<std::string>("rootHistFilename");
   maxDeltaEta_       = iConfig.getParameter<double>("maxDeltaEta");
@@ -51,7 +53,7 @@ CalcRespCorrDiJets::~CalcRespCorrDiJets()
   
 // ------------ method called to for each event  ------------
 void
-CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
+CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
 { 
   edm::Handle<reco::CaloJetCollection> calojets;
   iEvent.getByLabel(jetCollName_,calojets);
@@ -68,6 +70,8 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
       << " could not find GenJetCollection named " << genJetCollName_ << ".\n";
     return;
   }
+
+  const JetCorrector* corrector = JetCorrector::getJetCorrector(jetCorrName_,evSetup);
 
 
   //////////////////////////////
@@ -136,6 +140,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   tjet_eta_   = tag->eta();
   tjet_phi_   = tag->phi();
   tjet_emf_   = tag->emEnergyFraction();
+  tjet_scale_ = corrector->correction(tag->p4());
   tjet_EBE_   = tag->emEnergyInEB();
   tjet_EEE_   = tag->emEnergyInEE();
   tjet_HBE_   = tag->hadEnergyInHB();
@@ -147,7 +152,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
     int ieta=(*it)->id().ieta();
     int ietaAbs=(*it)->id().ietaAbs();
     tjet_twr_ieta_[tjet_ntwrs_]=ieta;
-    if(ietaAbs<29) {
+    if(ietaAbs<=29) {
       tjet_twr_eme_[tjet_ntwrs_] = (*it)->emEnergy();
       tjet_twr_hade_[tjet_ntwrs_] = (*it)->hadEnergy();
     } else {
@@ -163,6 +168,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
   pjet_eta_   = probe->eta();
   pjet_phi_   = probe->phi();
   pjet_emf_   = probe->emEnergyFraction();
+  pjet_scale_ = corrector->correction(probe->p4());
   pjet_EBE_   = probe->emEnergyInEB();
   pjet_EEE_   = probe->emEnergyInEE();
   pjet_HBE_   = probe->hadEnergyInHB();
@@ -174,7 +180,7 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup&)
     int ieta=(*it)->id().ieta();
     int ietaAbs=(*it)->id().ietaAbs();
     pjet_twr_ieta_[pjet_ntwrs_]=ieta;
-    if(ietaAbs<29) {
+    if(ietaAbs<=29) {
       pjet_twr_eme_[pjet_ntwrs_] = (*it)->emEnergy();
       pjet_twr_hade_[pjet_ntwrs_] = (*it)->hadEnergy();
     } else {
@@ -234,6 +240,7 @@ CalcRespCorrDiJets::beginJob(const edm::EventSetup&)
   tree_->Branch("tjet_eta",&tjet_eta_, "tjet_eta/F");
   tree_->Branch("tjet_phi",&tjet_phi_, "tjet_phi/F");
   tree_->Branch("tjet_emf",&tjet_emf_, "tjet_emf/F");
+  tree_->Branch("tjet_scale",&tjet_scale_, "tjet_scale/F");
   tree_->Branch("tjet_genpt",&tjet_genpt_, "tjet_genpt/F");
   tree_->Branch("tjet_genp",&tjet_genp_, "tjet_genp/F");
   tree_->Branch("tjet_gendr",&tjet_gendr_, "tjet_gendr/F");
@@ -251,6 +258,7 @@ CalcRespCorrDiJets::beginJob(const edm::EventSetup&)
   tree_->Branch("pjet_eta",&pjet_eta_, "pjet_eta/F");
   tree_->Branch("pjet_phi",&pjet_phi_, "pjet_phi/F");
   tree_->Branch("pjet_emf",&pjet_emf_, "pjet_emf/F");
+  tree_->Branch("pjet_scale",&pjet_scale_, "pjet_scale/F");
   tree_->Branch("pjet_genpt",&pjet_genpt_, "pjet_genpt/F");
   tree_->Branch("pjet_genp",&pjet_genp_, "pjet_genp/F");
   tree_->Branch("pjet_gendr",&pjet_gendr_, "pjet_gendr/F");

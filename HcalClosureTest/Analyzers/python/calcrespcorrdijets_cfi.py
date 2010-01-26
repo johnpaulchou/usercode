@@ -2,14 +2,16 @@ import FWCore.ParameterSet.Config as cms
 
 calcrespcorrdijets = cms.EDProducer(
     'CalcRespCorrDiJets',
-    jetCollName = cms.string('iterativeCone5CaloJets'),
-    genJetCollName = cms.string('iterativeCone5GenJets'),
-    rootHistFilename = cms.string('respcorrdijettree.root'),
-    maxDeltaEta = cms.double(0.5),
-    minDeltaPhi = cms.double(2.0),
-    minTagJetEta = cms.double(1.0),
-    maxTagJetEta = cms.double(5.0),
-    minJetEt = cms.double(30),
-    maxThirdJetEt = cms.double(10),
-    maxJetEMF = cms.double(0.9)
+    jetCollName      = cms.string('sisCone5CaloJets'),
+    jetCorrName      = cms.string('L2L3JetCorrectorSC5Calo'),
+    genJetCollName   = cms.string('sisCone5GenJets'),
+    rootHistFilename = cms.string('dijettree.root'),
+    maxDeltaEta      = cms.double(1.5),
+    minTagJetEta     = cms.double(0.0),
+    maxTagJetEta     = cms.double(5.0),
+    minSumJetEt      = cms.double(10.),
+    minJetEt         = cms.double(5.0),
+    maxThirdJetEt    = cms.double(100.),
+    maxJetEMF        = cms.double(0.9),
+    debug            = cms.untracked.bool(False)
     )
