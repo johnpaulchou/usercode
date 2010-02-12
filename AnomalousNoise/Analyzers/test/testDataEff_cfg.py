@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 # define the dataset here
 dataset = 3 # 1=QCDPt15, 2 = QCDPt300, 3 = QCDPt3000, 4=R112237
 
-process = cms.Process("ANA")
+process = cms.Process("ANALYSIS")
 
 process.load('Configuration/StandardSequences/Services_cff')
 process.load('FWCore/MessageService/MessageLogger_cfi')
@@ -25,17 +25,20 @@ if dataset == 1:
     process.dataefficiency.rootHistFilename = cms.string('qcd15.root')
     for i in range(1,21):
         readFiles.append('dcap:///pnfs/cms/WAX/11/store/user/johnpaul/AnomalousNoise/QCD_Pt15/out_'+str(i)+'.root')
+
 elif dataset == 2:
     process.dataefficiency.rootHistFilename = cms.string('qcd300.root')
     for i in range(1,42):
-        if i==5:
-            continue
         readFiles.append('dcap:///pnfs/cms/WAX/11/store/user/johnpaul/AnomalousNoise/QCD_Pt300/out_'+str(i)+'.root')
+
 elif dataset == 3:
     process.dataefficiency.rootHistFilename = cms.string('qcd3000.root')
     for i in range(1,41):
         readFiles.append('dcap:///pnfs/cms/WAX/11/store/user/johnpaul/AnomalousNoise/QCD_Pt3000/out_'+str(i)+'.root')
+
 elif dataset == 4:
+    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+    process.GlobalTag.globaltag = 'CRAFT09_R2_V2::All'
     process.dataefficiency.rootHistFilename = cms.string('R112237.root')
     for i in range(1, 249):
         readFiles.append('dcap:///pnfs/cms/WAX/11/store/user/johnpaul/AnomalousNoise/R112237/out_'+str(i)+'.root')

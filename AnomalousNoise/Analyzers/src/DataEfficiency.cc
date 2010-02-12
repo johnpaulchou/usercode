@@ -18,6 +18,14 @@
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "DataFormats/METReco/interface/HcalNoiseSummary.h"
 
+// trigger stuff
+#include "CondFormats/L1TObjects/interface/L1GtTriggerMenu.h"
+#include "CondFormats/DataRecord/interface/L1GtTriggerMenuRcd.h"
+#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutSetupFwd.h"
+#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutSetup.h"
+#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutRecord.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+
 // root stuff
 #include "TFile.h"
 #include "TH1D.h"
@@ -64,6 +72,15 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
       << " could not find HBHERecHitCollection named " << hbheRecHitCollName_ << ".\n";
     return;
   }
+
+  // get the calotowers
+  edm::Handle<CaloTowerCollection> twrs_h;
+  iEvent.getByLabel(caloTowerCollName_,twrs_h);
+  if(!twrs_h.isValid()) {
+    throw edm::Exception(edm::errors::ProductNotFound)
+      << " could not find CaloTowerCollection named " << caloTowerCollName_ << ".\n";
+    return;
+  }
   
   // get the MET
   edm::Handle<reco::CaloMETCollection> met_h;
@@ -102,6 +119,50 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
   }
   const HcalNoiseSummary summary = *summary_h;
 
+  // get the trigger info
+  trigger_ = 0;
+  /*
+  edm::ESHandle<L1GtTriggerMenu> menuRcd;
+  evSetup.get<L1GtTriggerMenuRcd>().get(menuRcd) ;
+  const L1GtTriggerMenu* menu = menuRcd.product();
+
+  edm::Handle< L1GlobalTriggerReadoutRecord > gtReadoutRecord;
+  iEvent.getByLabel( edm::InputTag("gtDigis"), gtReadoutRecord);
+  const DecisionWord& gtDecisionWordBeforeMask = gtReadoutRecord->decisionWord();
+  const TechnicalTriggerWord&  technicalTriggerWordBeforeMask = gtReadoutRecord->technicalTriggerWord();
+
+  trigger_ |= 0x1 * menu->gtAlgorithmResult( "L1_SingleJet6", gtDecisionWordBeforeMask);
+  trigger_ |= 0x2 * menu->gtAlgorithmResult( "L1_SingleJet10", gtDecisionWordBeforeMask);
+  trigger_ |= 0x4 * menu->gtAlgorithmResult( "L1_SingleEG1", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMuBeamHalo", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMuOpen", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMu0", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMu3", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMu5", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMu7", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMu10", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMu14", gtDecisionWordBeforeMask);
+  trigger_ |= 0x8 * menu->gtAlgorithmResult( "L1_SingleMu20", gtDecisionWordBeforeMask);
+  trigger_ |= 0x10 * menu->gtAlgorithmResult( "L1_ETT60", gtDecisionWordBeforeMask);
+  trigger_ |= 0x20 * menu->gtAlgorithmResult( "L1_ETM20", gtDecisionWordBeforeMask);
+  trigger_ |= 0x40 * menu->gtAlgorithmResult( "L1_ETM80", gtDecisionWordBeforeMask);
+  trigger_ |= 0x80 * menu->gtAlgorithmResult( "L1_HTT100", gtDecisionWordBeforeMask);
+  trigger_ |= 0x100 * menu->gtAlgorithmResult( "L1_SingleJet10U_NotBptxC", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_SingleHfBitCountsRing1_1", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_SingleHfBitCountsRing2_1", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_SingleHfRingEtSumsRing1_4", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_SingleHfRingEtSumsRing1_200", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_SingleHfRingEtSumsRing2_4", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_SingleHfRingEtSumsRing2_200", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_DoubleHfBitCountsRing1_P1N1", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_DoubleHfBitCountsRing2_P1N1", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_DoubleHfRingEtSumsRing1_P4N4", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_DoubleHfRingEtSumsRing1_P200N200", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_DoubleHfRingEtSumsRing2_P4N4", gtDecisionWordBeforeMask);
+  trigger_ |= 0x200 * menu->gtAlgorithmResult( "L1_DoubleHfRingEtSumsRing2_P200N200", gtDecisionWordBeforeMask);
+  trigger_ |= 0x400 * technicalTriggerWordBeforeMask.at(37);
+  */
+ 
   // fill distributions
   nhits_=0;
   for(HBHERecHitCollection::const_iterator it=hits_h->begin(); it!=hits_h->end(); ++it) {
@@ -161,6 +222,8 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
   met_ =0;
   hade_=0;
   eme_=0;
+  trackenergy_=0;
+  status_=0;
 
   if(tracks_h.isValid()) {
     for(reco::TrackCollection::const_iterator iTrack = tracks_h->begin(); iTrack!=tracks_h->end(); ++iTrack) {
@@ -190,6 +253,8 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
   met_ = calomet.pt();
   hade_=summary.eventHadEnergy();
   eme_=summary.eventEMEnergy();
+  trackenergy_=summary.eventTrackEnergy();
+  status_=summary.noiseFilterStatus();
   
   tree_->Fill();
 
@@ -198,6 +263,49 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
   int lumiSection = iEvent.luminosityBlock();
   lumiCountMap_[lumiSection]++;
 
+  /*
+  std::cout << "\n*** Towers *** " << std::endl;
+  for(CaloTowerCollection::const_iterator it=twrs_h->begin(); it!=twrs_h->end(); ++it) {
+    const CaloTower &twr=(*it);
+    std::cout << twr.ieta() << " " << twr.iphi() << " " << twr.emEnergy() << " " << twr.hadEnergy() << " " << twr.outerEnergy() << std::endl;
+  }
+  std::cout << "\n*** Hits *** " << std::endl;
+  for(HBHERecHitCollection::const_iterator it=hits_h->begin(); it!=hits_h->end(); ++it) {
+    const HBHERecHit &hit=(*it);
+    std::cout << hit.id().ieta() << " " << hit.id().iphi() << " " << hit.energy() << std::endl;
+  }
+  std::cout << "\n*** RBX Towers *** " << std::endl;
+  for(reco::HcalNoiseRBXCollection::const_iterator it=rbxs_h->begin(); it!=rbxs_h->end(); ++it) {
+    const reco::HcalNoiseRBX &rbx=(*it);
+    
+    std::vector<HcalNoiseHPD> hpds = rbx.HPDs();
+    for(std::vector<HcalNoiseHPD>::const_iterator it2=hpds.begin(); it2!=hpds.end(); ++it2) {
+      const reco::HcalNoiseHPD &hpd=(*it2);
+      const edm::RefVector<CaloTowerCollection> hpdtwrs=hpd.caloTowers();
+      
+      for(edm::RefVector<CaloTowerCollection>::const_iterator it3=hpdtwrs.begin(); it3!=hpdtwrs.end(); ++it3) {
+	const CaloTower &hpdtwr=(**it3);
+	std::cout << hpdtwr.ieta() << " " << hpdtwr.iphi() << " " << hpdtwr.emEnergy() << " " << hpdtwr.hadEnergy() << " " << hpdtwr.outerEnergy() << std::endl;
+      }
+    }
+  }
+
+  std::cout << "\n*** RBX Hits *** " << std::endl;
+  for(reco::HcalNoiseRBXCollection::const_iterator it=rbxs_h->begin(); it!=rbxs_h->end(); ++it) {
+    const reco::HcalNoiseRBX &rbx=(*it);
+    
+    std::vector<HcalNoiseHPD> hpds = rbx.HPDs();
+    for(std::vector<HcalNoiseHPD>::const_iterator it2=hpds.begin(); it2!=hpds.end(); ++it2) {
+      const reco::HcalNoiseHPD &hpd=(*it2);
+      const edm::RefVector<HBHERecHitCollection> hpdhits=hpd.recHits();
+      
+      for(edm::RefVector<HBHERecHitCollection>::const_iterator it3=hpdhits.begin(); it3!=hpdhits.end(); ++it3) {
+	const HBHERecHit &hpdhit=(**it3);
+	std::cout << hpdhit.id().ieta() << " " << hpdhit.id().iphi() << " " << hpdhit.energy() << std::endl;
+      }
+    }
+  }
+  */
   return;
 }
 
@@ -258,6 +366,9 @@ DataEfficiency::beginJob(const edm::EventSetup&)
   tree_->Branch("hade",&hade_, "hade/F");
   tree_->Branch("eme",&eme_, "eme/F");
   tree_->Branch("met",&met_, "met/F");
+  tree_->Branch("trackenergy",&trackenergy_, "trackenergy/F");
+  tree_->Branch("status",&status_, "status/I");
+  tree_->Branch("trigger",&trigger_, "trigger/I");
 
 }
 

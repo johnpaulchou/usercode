@@ -1,27 +1,36 @@
+# Auto generated configuration file
+# using: 
+# Revision: 1.151 
+# Source: /cvs_server/repositories/CMSSW/CMSSW/Configuration/PyReleaseValidation/python/ConfigBuilder.py,v 
+# with command line options: myreco -s RAW2DIGI,RECO --data --filein file:myfile.root --eventcontent RECO --datatier RECO --conditions CRAFT09_R2_V2::All -n 10 --no_exec
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process("RECO")
+process = cms.Process('RECO')
 
-# reconstruction sequence
+# import of standard configurations
 process.load('Configuration/StandardSequences/Services_cff')
 process.load('FWCore/MessageService/MessageLogger_cfi')
-process.load('Configuration/StandardSequences/MixingNoPileUp_cff')
 process.load('Configuration/StandardSequences/GeometryExtended_cff')
 process.load('Configuration/StandardSequences/MagneticField_38T_cff')
-process.load('Configuration/StandardSequences/VtxSmearedEarly10TeVCollision_cff')
-process.load('Configuration.StandardSequences.RawToDigi_Data_cff')
+process.load('Configuration/StandardSequences/RawToDigi_Data_cff')
 process.load('Configuration/StandardSequences/L1Reco_cff')
 process.load('Configuration/StandardSequences/Reconstruction_cff')
 process.load('Configuration/StandardSequences/EndOfProcess_cff')
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
-
-process.GlobalTag.globaltag = "CRAFT09_R_V4::All"
+process.load('Configuration/EventContent/EventContent_cff')
 
 # special running for hcalnoise filter
-process.hcalnoise.fillTracks = cms.bool(False)
 process.hcalnoise.writeAllRBXs = cms.bool(True)
-process.hcalnoise.maxCaloTowerIEta = cms.int32(20)
-process.hcalnoise.maxTrackEta = cms.double(2.0) 
+
+process.configurationMetadata = cms.untracked.PSet(
+    version = cms.untracked.string('$Revision: 1.151 $'),
+    annotation = cms.untracked.string('myreco nevts:10'),
+    name = cms.untracked.string('PyReleaseValidation')
+)
+
+process.options = cms.untracked.PSet(
+    Rethrow = cms.untracked.vstring('ProductNotFound')
+)
 
 # Tone down the logging messages, MessageLogger!
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
@@ -30,14 +39,14 @@ process.options = cms.untracked.PSet(
     wantSummary = cms.untracked.bool(True)
     )
 
-# run over files
+# Input source
 readFiles = cms.untracked.vstring()
-secFiles = cms.untracked.vstring()
 import FWCore.Utilities.FileUtils as FileUtils
 readFiles = cms.untracked.vstring( FileUtils.loadListFromFile ('filelists/R112237_raw.list') )
 process.source = cms.Source ("PoolSource",fileNames = readFiles )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100000) )
 
+# Output definition
 process.output = cms.OutputModule(
     "PoolOutputModule",
     outputCommands = cms.untracked.vstring('drop *',
@@ -48,24 +57,23 @@ process.output = cms.OutputModule(
                                            'keep recoCaloMETs_*_*_*', 
                                            'keep recoCaloJets_*_*_*',
                                            'keep recoTracks_generalTracks_*_*',
-                                           'keep L1GlobalTriggerRecord_*_*_*'
+                                           'keep L1GlobalTrigger*_*_*_*'
                                            ),
     fileName = cms.untracked.string('out.root')
     )
 
-process.sisCone5CaloJets.doPVCorrection = cms.bool(False)
-process.sisCone7CaloJets.doPVCorrection = cms.bool(False)
-process.kt4CaloJets.doPVCorrection = cms.bool(False)
-process.kt6CaloJets.doPVCorrection = cms.bool(False)
-process.iterativeCone5CaloJets.doPVCorrection = cms.bool(False)
-process.ak5CaloJets.doPVCorrection = cms.bool(False)
-process.ak7CaloJets.doPVCorrection = cms.bool(False)
 
-# path & schedule (w/o unneccessary steps)
-process.raw2digi_step = cms.Path(process.ecalDigis+process.ecalPreshowerDigis+process.hcalDigis)
-process.localreco = cms.Sequence(process.calolocalreco)
-process.globalreco = cms.Sequence(process.ecalClusters+process.caloTowersRec+process.recoJets)
-process.highlevelreco = cms.Sequence(process.metNoHF+process.hcalnoise)
-process.reconstruction_step = cms.Path(process.localreco*process.globalreco*process.highlevelreco)
+# Additional output definition
+
+# Other statements
+process.GlobalTag.globaltag = 'CRAFT09_R2_V2::All'
+
+# Path and EndPath definitions
+process.raw2digi_step = cms.Path(process.RawToDigi)
+process.L1Reco_step = cms.Path(process.L1Reco)
+process.reconstruction_step = cms.Path(process.reconstruction)
+process.endjob_step = cms.Path(process.endOfProcess)
 process.out_step = cms.EndPath(process.output)
-process.schedule = cms.Schedule(process.raw2digi_step,process.reconstruction_step,process.out_step)
+
+# Schedule definition
+process.schedule = cms.Schedule(process.raw2digi_step,process.L1Reco_step,process.reconstruction_step,process.endjob_step,process.out_step)

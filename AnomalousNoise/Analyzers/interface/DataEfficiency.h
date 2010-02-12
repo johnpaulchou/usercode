@@ -82,8 +82,9 @@ class DataEfficiency : public edm::EDAnalyzer {
   int njets_;
   float jetpt_[100], jeteta_[100], jetphi_[100], jetHBhade_[100], jetHEhade_[100], jetEBeme_[100], jetEEeme_[100];
 
-  float hade_, eme_;
+  float hade_, eme_, trackenergy_;
   float met_;
+  int status_, trigger_;
 
 };
 
