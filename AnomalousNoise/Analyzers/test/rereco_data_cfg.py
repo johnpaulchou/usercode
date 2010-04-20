@@ -23,7 +23,7 @@ process.load('Configuration/EventContent/EventContent_cff')
 process.hcalnoise.writeAllRBXs = cms.bool(True)
 
 process.configurationMetadata = cms.untracked.PSet(
-    version = cms.untracked.string('$Revision: 1.151 $'),
+    version = cms.untracked.string('$Revision: 1.2 $'),
     annotation = cms.untracked.string('myreco nevts:10'),
     name = cms.untracked.string('PyReleaseValidation')
 )
@@ -66,7 +66,7 @@ process.output = cms.OutputModule(
 # Additional output definition
 
 # Other statements
-process.GlobalTag.globaltag = 'CRAFT09_R2_V2::All'
+process.GlobalTag.globaltag = 'CRAFT09_R_V10::All'
 
 # Path and EndPath definitions
 process.raw2digi_step = cms.Path(process.RawToDigi)

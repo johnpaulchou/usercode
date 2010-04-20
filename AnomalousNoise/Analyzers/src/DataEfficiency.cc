@@ -65,9 +65,9 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
   }
 
   // get the hits
-  edm::Handle<HBHERecHitCollection> hits_h;
-  iEvent.getByLabel(hbheRecHitCollName_, hits_h);
-  if(!hits_h.isValid()) {
+  edm::Handle<HBHERecHitCollection> hbhehits_h;
+  iEvent.getByLabel(hbheRecHitCollName_, hbhehits_h);
+  if(!hbhehits_h.isValid()) {
     throw edm::Exception(edm::errors::ProductNotFound)
       << " could not find HBHERecHitCollection named " << hbheRecHitCollName_ << ".\n";
     return;
@@ -81,7 +81,7 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
       << " could not find CaloTowerCollection named " << caloTowerCollName_ << ".\n";
     return;
   }
-  
+
   // get the MET
   edm::Handle<reco::CaloMETCollection> met_h;
   iEvent.getByLabel(metCollName_,met_h);
@@ -165,7 +165,7 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
  
   // fill distributions
   nhits_=0;
-  for(HBHERecHitCollection::const_iterator it=hits_h->begin(); it!=hits_h->end(); ++it) {
+  for(HBHERecHitCollection::const_iterator it=hbhehits_h->begin(); it!=hbhehits_h->end(); ++it) {
     const HBHERecHit &hit=(*it);
     if(hit.energy()<25) continue;
     hitieta_[nhits_] = hit.id().ieta();
@@ -249,12 +249,26 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
     jetEEeme_[njets_] = jet.emEnergyInEE();
     ++njets_;
   }
-  
+
+  hade_=eme_=0;
+  for(CaloTowerCollection::const_iterator it=twrs_h->begin(); it!=twrs_h->end(); ++it) {
+    const CaloTower &twr=(*it);
+    
+    if(abs(twr.ieta())<=29) {
+      hade_+=twr.hadEnergy();
+      eme_+=twr.emEnergy();
+    }
+  }
   met_ = calomet.pt();
-  hade_=summary.eventHadEnergy();
-  eme_=summary.eventEMEnergy();
   trackenergy_=summary.eventTrackEnergy();
-  status_=summary.noiseFilterStatus();
+
+  status_=0;
+  if(summary.minE2Over10TS()<0.70)  status_ |= 0x1;
+  if(summary.maxE2Over10TS()>0.91)  status_ |= 0x1;
+  if(summary.maxRBXHits()>=17)      status_ |= 0x2;
+  if(summary.maxZeros()>=9)         status_ |= 0x4;
+  if(summary.min25GeVHitTime()<-7.) status_ |= 0x8;
+  if(summary.max25GeVHitTime()>6.)  status_ |= 0x8;
   
   tree_->Fill();
 
@@ -263,49 +277,6 @@ DataEfficiency::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup
   int lumiSection = iEvent.luminosityBlock();
   lumiCountMap_[lumiSection]++;
 
-  /*
-  std::cout << "\n*** Towers *** " << std::endl;
-  for(CaloTowerCollection::const_iterator it=twrs_h->begin(); it!=twrs_h->end(); ++it) {
-    const CaloTower &twr=(*it);
-    std::cout << twr.ieta() << " " << twr.iphi() << " " << twr.emEnergy() << " " << twr.hadEnergy() << " " << twr.outerEnergy() << std::endl;
-  }
-  std::cout << "\n*** Hits *** " << std::endl;
-  for(HBHERecHitCollection::const_iterator it=hits_h->begin(); it!=hits_h->end(); ++it) {
-    const HBHERecHit &hit=(*it);
-    std::cout << hit.id().ieta() << " " << hit.id().iphi() << " " << hit.energy() << std::endl;
-  }
-  std::cout << "\n*** RBX Towers *** " << std::endl;
-  for(reco::HcalNoiseRBXCollection::const_iterator it=rbxs_h->begin(); it!=rbxs_h->end(); ++it) {
-    const reco::HcalNoiseRBX &rbx=(*it);
-    
-    std::vector<HcalNoiseHPD> hpds = rbx.HPDs();
-    for(std::vector<HcalNoiseHPD>::const_iterator it2=hpds.begin(); it2!=hpds.end(); ++it2) {
-      const reco::HcalNoiseHPD &hpd=(*it2);
-      const edm::RefVector<CaloTowerCollection> hpdtwrs=hpd.caloTowers();
-      
-      for(edm::RefVector<CaloTowerCollection>::const_iterator it3=hpdtwrs.begin(); it3!=hpdtwrs.end(); ++it3) {
-	const CaloTower &hpdtwr=(**it3);
-	std::cout << hpdtwr.ieta() << " " << hpdtwr.iphi() << " " << hpdtwr.emEnergy() << " " << hpdtwr.hadEnergy() << " " << hpdtwr.outerEnergy() << std::endl;
-      }
-    }
-  }
-
-  std::cout << "\n*** RBX Hits *** " << std::endl;
-  for(reco::HcalNoiseRBXCollection::const_iterator it=rbxs_h->begin(); it!=rbxs_h->end(); ++it) {
-    const reco::HcalNoiseRBX &rbx=(*it);
-    
-    std::vector<HcalNoiseHPD> hpds = rbx.HPDs();
-    for(std::vector<HcalNoiseHPD>::const_iterator it2=hpds.begin(); it2!=hpds.end(); ++it2) {
-      const reco::HcalNoiseHPD &hpd=(*it2);
-      const edm::RefVector<HBHERecHitCollection> hpdhits=hpd.recHits();
-      
-      for(edm::RefVector<HBHERecHitCollection>::const_iterator it3=hpdhits.begin(); it3!=hpdhits.end(); ++it3) {
-	const HBHERecHit &hpdhit=(**it3);
-	std::cout << hpdhit.id().ieta() << " " << hpdhit.id().iphi() << " " << hpdhit.energy() << std::endl;
-      }
-    }
-  }
-  */
   return;
 }
 
@@ -369,7 +340,6 @@ DataEfficiency::beginJob(const edm::EventSetup&)
   tree_->Branch("trackenergy",&trackenergy_, "trackenergy/F");
   tree_->Branch("status",&status_, "status/I");
   tree_->Branch("trigger",&trigger_, "trigger/I");
-
 }
 
 // ------------ method called once each job just after ending the event loop  ------------

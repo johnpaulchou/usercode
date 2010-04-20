@@ -23,7 +23,7 @@ process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
 process.load('Configuration/EventContent/EventContent_cff')
 
 process.configurationMetadata = cms.untracked.PSet(
-    version = cms.untracked.string('$Revision: 1.151 $'),
+    version = cms.untracked.string('$Revision: 1.2 $'),
     annotation = cms.untracked.string('config.py nevts:10'),
     name = cms.untracked.string('PyReleaseValidation')
 )
@@ -37,7 +37,7 @@ process.options = cms.untracked.PSet(
 # Input source
 readFiles = cms.untracked.vstring()
 import FWCore.Utilities.FileUtils as FileUtils
-readFiles = cms.untracked.vstring( FileUtils.loadListFromFile ('filelists/QCD_Pt300_raw.list') )
+#readFiles = cms.untracked.vstring( FileUtils.loadListFromFile ('filelists/QCD_Pt300_raw.list') )
 process.source = cms.Source ("PoolSource",fileNames = readFiles )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 
@@ -60,7 +60,7 @@ process.output = cms.OutputModule(
 # Additional output definition
 
 # Other statements
-process.GlobalTag.globaltag = 'MC_3XY_V9A::All'
+process.GlobalTag.globaltag = 'MC_3XY_V25::All'
 
 # special running for hcalnoise filter
 process.hcalnoise.writeAllRBXs = cms.bool(True)

@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 # define the dataset here
-dataset = 3 # 1=QCDPt15, 2 = QCDPt300, 3 = QCDPt3000, 4=R112237
+dataset = 4 # 1=QCDPt15, 2 = QCDPt300, 3 = QCDPt3000, 4=R112237, 5=Minbias
 
 process = cms.Process("ANALYSIS")
 
@@ -38,10 +38,17 @@ elif dataset == 3:
 
 elif dataset == 4:
     process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-    process.GlobalTag.globaltag = 'CRAFT09_R2_V2::All'
-    process.dataefficiency.rootHistFilename = cms.string('R112237.root')
-    for i in range(1, 249):
+    process.GlobalTag.globaltag = 'CRAFT09_R_V9::All'
+    process.dataefficiency.rootHistFilename = cms.string('/uscms/home/johnpaul/nobackup/R112237_3.root')
+    for i in range(201, 249):
         readFiles.append('dcap:///pnfs/cms/WAX/11/store/user/johnpaul/AnomalousNoise/R112237/out_'+str(i)+'.root')
+
+elif dataset == 5:
+    process.dataefficiency.rootHistFilename = cms.string('/uscms/home/johnpaul/nobackup/MinBias.root')
+    for i in range(1,121):
+        if i==73 or i==77 or i==106 or i==107:
+            continue
+        readFiles.append('dcap:///pnfs/cms/WAX/11/store/user/johnpaul/MinBias342p1All/out_'+str(i)+'.root')
 
 
 process.source = cms.Source ("PoolSource",fileNames = readFiles)

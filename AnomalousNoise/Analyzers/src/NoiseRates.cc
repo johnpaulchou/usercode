@@ -84,7 +84,7 @@ NoiseRates::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
   lumiCountMap_[lumiSection]++;
 
   // get the L1 results
-  if(findTrigger_ && !l1AlgorithmResult(iEvent, evSetup, trigName_)) return;
+  //  if(findTrigger_ && !l1AlgorithmResult(iEvent, evSetup, trigName_)) return;
 
   // get the MET
   edm::Handle<reco::CaloMETCollection> met_h;

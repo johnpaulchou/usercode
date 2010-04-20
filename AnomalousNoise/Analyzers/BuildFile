@@ -3,6 +3,7 @@
 <use name=FWCore/Framework>
 <use name=L1Trigger/GlobalTriggerAnalyzer>
 <use name=Geometry/CaloTopology>
+<use name=AnomalousNoise/Algorithms>
 <use name=root>
 <export>
    <lib name=AnomalousNoiseAnalyzers>
@@ -10,5 +11,6 @@
    <use name=FWCore/Framework>
    <use name=L1Trigger/GlobalTriggerAnalyzer>
    <use name=Geometry/CaloTopology>
+   <use name=AnomalousNoise/Algorithms>
    <use name=root>
 </export>
