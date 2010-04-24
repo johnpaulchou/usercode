@@ -12,6 +12,7 @@
 <use name=RecoLocalCalo/HcalRecAlgos>
 <use name=RecoLocalCalo/EcalRecAlgos>
 <use name=CondFormats/EcalObjects>
+<use name=TrackingTools/TrackAssociator>
 <export>
  <lib name=AnomalousNoiseAlgorithms>
  <use name=boost>
@@ -28,4 +29,5 @@
  <use name=RecoLocalCalo/HcalRecAlgos>
  <use name=RecoLocalCalo/EcalRecAlgos>
  <use name=CondFormats/EcalObjects>
+ <use name=TrackingTools/TrackAssociator>
 </export>

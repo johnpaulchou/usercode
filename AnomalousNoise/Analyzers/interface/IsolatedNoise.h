@@ -35,17 +35,59 @@ class IsolatedNoise : public edm::EDAnalyzer {
   virtual void endJob();
 
   // helper function
-  void DumpHitCollectionInfo(std::vector<HitCollectionInfo>&) const;
+  void DumpHBHEHitMap(std::vector<HBHEHitMap>&) const;
 
   // parameters
   edm::InputTag hbheLabel_;
   std::vector<edm::InputTag> ecalLabels_;
+  edm::InputTag trackLabel_;
+  std::string rootHistFileName_;
+  
+  // object validator
+  ObjectValidator objvalidator_;
 
-  // hit validator
-  HitValidator hitvalidator_;
+  // tracking stuff
+  TrackDetectorAssociator trackAssociator_;
+  TrackAssociatorParameters trackParameters_;
+
 
   // root file/histograms
   TFile* rootfile_;
+  TTree* tree_;
+
+  int foundnoise_;
+  float noisee_;
+  int nnoisehits_;
+  int noisetype_;
+
+  int nrbxs_;
+  int rbxnhits_[72];
+  float rbxe_[72];
+  float rbxtrkfide_[72];
+  int rbxisolnhcalhits_[72], rbxisolnecalhits_[72], rbxisolntrks_[72];
+  float rbxisolhcale_[72], rbxisolecale_[72], rbxisoltrke_[72];
+
+  int nhpds_;
+  int hpdnhits_[288];
+  float hpde_[288];
+  float hpdtrkfide_[288];
+  int hpdisolnhcalhits_[288], hpdisolnecalhits_[288], hpdisolntrks_[288];
+  float hpdisolhcale_[288], hpdisolecale_[288], hpdisoltrke_[288];
+
+  int ndis_;
+  int dinhits_[1000];
+  float die_[1000];
+  float ditrkfide_[1000];
+  int diisolnhcalhits_[1000], diisolnecalhits_[1000], diisolntrks_[1000];
+  float diisolhcale_[1000], diisolecale_[1000], diisoltrke_[1000];
+
+  int nmonos_;
+  int mononhits_[1000];
+  float monoe_[1000];
+  float monotrkfide_[1000];
+  int monoisolnhcalhits_[1000], monoisolnecalhits_[1000], monoisolntrks_[1000];
+  float monoisolhcale_[1000], monoisolecale_[1000], monoisoltrke_[1000];
+
 
 };
 

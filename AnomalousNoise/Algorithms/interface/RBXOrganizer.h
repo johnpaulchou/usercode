@@ -7,6 +7,9 @@
 #include "Geometry/CaloTopology/interface/CaloTowerConstituentsMap.h"
 #include "DataFormats/HcalRecHit/interface/HcalRecHitCollections.h"
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "TrackingTools/TrackAssociator/interface/TrackDetectorAssociator.h"
+#include "TrackingTools/TrackAssociator/interface/TrackAssociatorParameters.h"
 
 #include <vector>
 #include <set>
@@ -21,16 +24,41 @@ class EcalSeverityLevelAlgo;
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// HitValidator
+// ObjectValidator
 //
+// determines if an ECAL hit, HCAL hit, or track is valid or not.
+// Note that various objects need to be passed to the validator before use.
+// ObjectValidatorAbs provides a base class in case you want to change the
+// hit/track validation algorithms.
 //////////////////////////////////////////////////////////////////////////////
 
-// determines if a hit is valid or not
-class HitValidator
+class ObjectValidatorAbs
 {
  public:
-  explicit HitValidator(const edm::ParameterSet&);
-  virtual ~HitValidator();
+  ObjectValidatorAbs() {}
+  virtual ~ObjectValidatorAbs() {}
+
+  virtual bool validHit(const HBHERecHit&) const = 0;
+  virtual bool validHit(const EcalRecHit&) const = 0;
+  virtual bool validTrack(const reco::Track&) const = 0;
+};
+
+class ObjectValidator : public ObjectValidatorAbs
+{
+ public:
+  explicit ObjectValidator(const edm::ParameterSet&);
+  ObjectValidator(double HBThreshold, double HESThreshold, double HEDThreshold, double EBThreshold, double EEThreshold,
+		  uint32_t HcalAcceptSeverityLevel, uint32_t EcalAcceptSeverityLevel, bool UseHcalRecoveredHits, bool UseEcalRecoveredHits) :
+    HBThreshold_(HBThreshold),
+    HESThreshold_(HESThreshold),
+    HEDThreshold_(HEDThreshold),
+    EBThreshold_(EBThreshold),
+    EEThreshold_(EEThreshold),
+    HcalAcceptSeverityLevel_(HcalAcceptSeverityLevel),
+    EcalAcceptSeverityLevel_(EcalAcceptSeverityLevel),
+    UseHcalRecoveredHits_(UseHcalRecoveredHits),
+    UseEcalRecoveredHits_(UseEcalRecoveredHits) {}
+  virtual ~ObjectValidator();
   
   inline void setHcalChannelQuality(const HcalChannelQuality* q) { theHcalChStatus_=q; }
   inline void setEcalChannelStatus(const EcalChannelStatus* q) { theEcalChStatus_=q; }
@@ -42,6 +70,7 @@ class HitValidator
 
   bool validHit(const HBHERecHit&) const;
   bool validHit(const EcalRecHit&) const;
+  bool validTrack(const reco::Track&) const;
 
  private:
 
@@ -67,193 +96,227 @@ class HitValidator
   // needed to determine an ECAL channel's validity
   const EcalRecHitCollection* theEBRecHitCollection_;
   const EcalRecHitCollection* theEERecHitCollection_;
-
 };
 
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// HcalHitOrganizer
+// PhysicsTower
 //
+// basic structure to hold information relevant at the tower level
+// consists of hcal hits, ecal hits, and tracks
 //////////////////////////////////////////////////////////////////////////////
 
-// organizes HCAL hits so that you can quickly identify their neighbors in eta-phi space
-class HcalHitOrganizer
-{
+struct PhysicsTower {
+  CaloTowerDetId id;
+  std::set<const HBHERecHit*> hcalhits;
+  std::set<const EcalRecHit*> ecalhits;
+  std::set<const reco::Track*> tracks;
+};
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// PhysicsTowerOrganizer
+//
+// Organizers the PhysicsTowers into CaloTower (ieta,iphi) space.
+// Also provides methods to find a towers nearest neighbors.
+// For simplicity, merges the ieta=28 and ieta=29 towers together (calls them
+// tower "28", collectively).
+//////////////////////////////////////////////////////////////////////////////
+
+class PhysicsTowerOrganizer {
  public:
-  HcalHitOrganizer(const HBHERecHitCollection& hcalcollection, const HitValidator& hitvalidator);
-  virtual ~HcalHitOrganizer();
-
-  // gets a vector of the neighboring hits
-  void neighbors(const HBHERecHit* hit, std::vector<const HBHERecHit*>& neighbors);
-
-  // same as above, but also requires that the neighbors are in a different RBX
-  void neighborsDifferentRBX(const HBHERecHit* hit, std::vector<const HBHERecHit*>& neighbors);
-
-  // same as above, but also requires that the neighbors are in a different HPD
-  void neighborsDifferentHPD(const HBHERecHit* hit, std::vector<const HBHERecHit*>& neighbors);
-
-  // same as above, but also requires that the neighbors are in a same HPD
-  void neighborsSameHPD(const HBHERecHit* hit, std::vector<const HBHERecHit*>& neighbors);
-
-  // finds a hit by eta/phi/depth coordinate
-  // returns 0 if no hit with that coordinate can be found
-  const HBHERecHit* findHit(int ieta, int iphi, int depth);
-
- private:
-
-  struct HBHERecHitCompare {
-    inline bool operator() (const HBHERecHit* h1, const HBHERecHit* h2) {
-      if(h1->id().ieta()<h2->id().ieta()) return true;
-      else if(h1->id().ieta()>h2->id().ieta()) return false;
-      else if(h1->id().iphi()<h2->id().iphi()) return true;
-      else if(h1->id().iphi()>h2->id().iphi()) return false;
-      else if(h1->id().depth()<h2->id().depth()) return true;
-      else if(h1->id().depth()>h2->id().depth()) return false;
-      else return false;
+  struct towercmp {
+    bool operator() (const PhysicsTower& lhs, const PhysicsTower& rhs) const {
+      return (lhs.id < rhs.id);
     }
   };
 
+  PhysicsTowerOrganizer(const edm::Event& iEvent,
+			const edm::EventSetup& evSetup,
+			const HBHERecHitCollection& hbhehitcoll,
+			const EcalRecHitCollection& ebhitcoll,
+			const EcalRecHitCollection& eehitcoll,
+			const reco::TrackCollection& trackcoll,
+			const ObjectValidatorAbs& objectvalidator,
+			const CaloTowerConstituentsMap& ctcm,
+			TrackDetectorAssociator& trackAssociator,
+			const TrackAssociatorParameters& trackParameters);
 
-  typedef std::set<const HBHERecHit*, HBHERecHitCompare> hitset_t;
-  hitset_t hits_;
+  virtual ~PhysicsTowerOrganizer() {}
 
-  // helper function which implements the neighbors algorithm
-  // if relative==0, get all neighbors in a different RBX
-  // if relative==1, get all neighbors in a different HPD
-  // if relative==2, get all neighbors
-  // if relative==3, get all neighbors in the same HPD
-  void neighbors_(const HBHERecHit*, std::vector<const HBHERecHit*>&, int relative);
-  void addHit_(const HBHERecHit*, const HBHERecHit*, std::vector<const HBHERecHit*>&, int relative);
+  // find a PhysicsTower by some coordinate
+  inline const PhysicsTower* findTower(const CaloTowerDetId& id) const;
+  inline const PhysicsTower* findTower(int ieta, int iphi) const;
+  
+  // get the neighbors +/- 1 in eta-space or +/- 1 in phi-space
+  // (accounts for change in phi-segmentation starting with eta=21)
+  void findNeighbors(const CaloTowerDetId& id, std::set<const PhysicsTower*>& neighbors) const;
+  void findNeighbors(const PhysicsTower* twr, std::set<const PhysicsTower*>& neighbors) const;
+  void findNeighbors(int ieta, int iphi, std::set<const PhysicsTower*>& neighbors) const;  
+
+ private:
+  // the non-const, private version of findTower()
+  PhysicsTower* findTower(const CaloTowerDetId& id);
+  PhysicsTower* findTower(int ieta, int iphi);
+
+  void insert_(CaloTowerDetId& id, const HBHERecHit* hit);
+  void insert_(CaloTowerDetId& id, const EcalRecHit* hit);
+  void insert_(CaloTowerDetId& id, const reco::Track* hit);
+
+  std::set<PhysicsTower, towercmp> towers_;
+  
+};
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// HBHEHitMap
+//
+// Collection of HBHERecHits and their associated PhysicsTowers.
+// Typically, these maps are organized into RBXs, HPDs, dihits, or monohits.
+// From this one may calculate the hcal, ecal, and track energy associated
+// with these hits.
+//
+// N.B. Many, of the operations can be computationally expensive and should be
+// used with care.
+//////////////////////////////////////////////////////////////////////////////
+
+
+class HBHEHitMap {
+
+ public:
+
+  typedef std::map<const HBHERecHit*, const PhysicsTower*>::const_iterator hitmap_const_iterator;
+  typedef std::set<const PhysicsTower*>::const_iterator neighbor_const_iterator;
+
+  struct twrinfo {
+    double hcalInMap;
+    double hcalOutOfMap;
+    double ecal;
+    double track;
+  };
+
+  HBHEHitMap();
+  virtual ~HBHEHitMap() {}
+
+  // energy of the hits in this collection
+  double hitEnergy(void) const;
+
+  // energy of the hits in a region fiducial to tracks
+  double hitEnergyTrackFiducial(void) const;
+
+  // number of hits in this collection
+  int nHits(void) const;
+
+  // same as above, except for the HCAL hits, ECAL hits, and tracks in the same towers as the hits
+  // note that HCAL hits may be present in the same tower, but not be a part of the collection
+  double hcalEnergySameTowers(void) const;
+  double ecalEnergySameTowers(void) const;
+  double trackEnergySameTowers(void) const;
+  int nHcalHitsSameTowers(void) const;
+  int nEcalHitsSameTowers(void) const;
+  int nTracksSameTowers(void) const;
+  void hcalHitsSameTowers(std::set<const HBHERecHit*>& v) const;
+  void ecalHitsSameTowers(std::set<const EcalRecHit*>& v) const;
+  void tracksSameTowers(std::set<const reco::Track*>& v) const;
+
+  // same as above except for the hits and tracks in the neighboring towers to the hits in the collection
+  double hcalEnergyNeighborTowers(void) const;
+  double ecalEnergyNeighborTowers(void) const;
+  double trackEnergyNeighborTowers(void) const;
+  int nHcalHitsNeighborTowers(void) const;
+  int nEcalHitsNeighborTowers(void) const;
+  int nTracksNeighborTowers(void) const;
+  void hcalHitsNeighborTowers(std::set<const HBHERecHit*>& v) const;
+  void ecalHitsNeighborTowers(std::set<const EcalRecHit*>& v) const;
+  void tracksNeighborTowers(std::set<const reco::Track*>& v) const;
+
+  // gives the total energy due to hcal, ecal, and tracks tower-by-tower
+  // separates the hcal energy into that which is a hit in the collection, and that which is not
+  void byTowers(std::vector<twrinfo>& v) const;
+
+  // find a hit in the hitmap
+  hitmap_const_iterator findHit(const HBHERecHit* hit) const { return hits_.find(hit); }
+
+  // find a neighbor
+  neighbor_const_iterator findNeighbor(const PhysicsTower* twr) const { return neighbors_.find(twr); }
+
+  // add a hit to the hitmap
+  void insert(const HBHERecHit* hit, const PhysicsTower* twr, std::set<const PhysicsTower*>& neighbors);
+
+  // access to the private maps and sets
+  inline hitmap_const_iterator beginHits(void) const { return hits_.begin(); }
+  inline hitmap_const_iterator endHits(void) const { return hits_.end(); }
+
+  inline neighbor_const_iterator beginNeighbors(void) const { return neighbors_.begin(); }
+  inline neighbor_const_iterator endNeighbors(void) const { return neighbors_.end(); }
+
+ private:
+  std::map<const HBHERecHit*, const PhysicsTower*> hits_;
+  std::set<const PhysicsTower*> neighbors_;
+
+  void calcHits_(void) const;
+  mutable double hitEnergy_;
+  mutable double hitEnergyTrkFid_;
+  mutable int nHits_;
+
+  void calcHcalSameTowers_(void) const;
+  mutable double hcalEnergySameTowers_;
+  mutable int nHcalHitsSameTowers_;
+
+  void calcEcalSameTowers_(void) const;
+  mutable double ecalEnergySameTowers_;
+  mutable int nEcalHitsSameTowers_;
+
+  void calcTracksSameTowers_(void) const;
+  mutable double trackEnergySameTowers_;
+  mutable int nTracksSameTowers_;
+
+  void calcHcalNeighborTowers_(void) const;
+  mutable double hcalEnergyNeighborTowers_;
+  mutable int nHcalHitsNeighborTowers_;
+
+  void calcEcalNeighborTowers_(void) const;
+  mutable double ecalEnergyNeighborTowers_;
+  mutable int nEcalHitsNeighborTowers_;
+
+  void calcTracksNeighborTowers_(void) const;
+  mutable double trackEnergyNeighborTowers_;
+  mutable int nTracksNeighborTowers_;
 
 };
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// EcalHitOrganizer
+// HBHEHitMapOrganizer
 //
+// Organizers the HBHEHitMaps into RBXs, HPDs, dihits, and monohits
 //////////////////////////////////////////////////////////////////////////////
 
-// organizes ECAL hits so that you can quickly identify their neighbors in eta-phi space
-class EcalHitOrganizer
+class HBHEHitMapOrganizer
 {
  public:
-  EcalHitOrganizer(const EcalRecHitCollection& ebcollection,
-		   const EcalRecHitCollection& eecollection,
-		   const HitValidator& hitvalidator,
-		   const CaloTowerConstituentsMap& ctcm);
-  virtual ~EcalHitOrganizer();
+  HBHEHitMapOrganizer(const HBHERecHitCollection& hbhehitcoll,
+		      const ObjectValidatorAbs& objvalidator,
+		      const PhysicsTowerOrganizer& pto);
 
-  // finds ecal hits by eta/phi coordinate
-  void findHits(int ieta, int iphi, std::vector<const EcalRecHit*>& v) const;
+  virtual ~HBHEHitMapOrganizer() {}
+
+  void getRBXs(std::vector<HBHEHitMap>& v, double energy) const;
+  void getHPDs(std::vector<HBHEHitMap>& v, double energy) const;
+  void getDiHits(std::vector<HBHEHitMap>& v, double energy) const;
+  void getMonoHits(std::vector<HBHEHitMap>& v, double energy) const;
 
  private:
   
-  class etaphi_t : public std::pair<int, int> {
-  public:
-    etaphi_t(int ieta, int iphi) { first=ieta; second=iphi; }
-    ~etaphi_t() {}
-    inline int ieta(void) { return first; }
-    inline int iphi(void) { return second; }
-    inline void ieta(int i) { first=i; }
-    inline void iphi(int i) { second=i; }
-  };
-  typedef std::multimap<etaphi_t, const EcalRecHit*> hitmap_t;
-  hitmap_t hits_;
-};
+  std::map<int, HBHEHitMap> rbxs_, hpds_;
+  std::vector<HBHEHitMap> dihits_, monohits_;
 
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// HitCollectionInfo
-//
-//////////////////////////////////////////////////////////////////////////////
-
-// a collection of hits, and their hcal neighbors, ecal neighbors, and tracks
-class HitCollectionInfo {
-
-  // allow RBXOrganizer to fill the private members
-  friend class RBXOrganizer;
-
-public:
-  HitCollectionInfo();
-  virtual ~HitCollectionInfo() {}
-
-  // total energy in the hits themselves, their neighbors, and the ecal in front of them
-  double hitEnergy(double threshold=0.0) const;
-  double neighborEnergy(double threshold=0.0) const;
-  double ecalEnergy(double threshold=0.0) const;
-
-  // total number of hits found
-  int nHits(double threshold=0.0) const;
-  int nNeighbors(double threshold=0.0) const;
-  int nEcalHits(double threshold=0.0) const;
-
-  // used to loop over the hcal hits
-  inline std::set<const HBHERecHit*>::const_iterator hcalHitsBegin() const { return hcalhits_.begin(); }
-  inline std::set<const HBHERecHit*>::const_iterator hcalHitsEnd() const { return hcalhits_.end(); }
-
-  // used to loop over the neighbors
-  inline std::set<const HBHERecHit*>::const_iterator hcalNeighborsBegin() const { return hcalneighbors_.begin(); }
-  inline std::set<const HBHERecHit*>::const_iterator hcalNeighborsEnd() const { return hcalneighbors_.end(); }
-
-  // used to loop over the ecal hits
-  inline std::set<const EcalRecHit*>::const_iterator ecalNeighborsBegin() const { return ecalneighbors_.begin(); }
-  inline std::set<const EcalRecHit*>::const_iterator ecalNeighborsEnd() const { return ecalneighbors_.end(); }
-
- private:
-
-  std::set<const HBHERecHit*> hcalhits_;
-  std::set<const HBHERecHit*> hcalneighbors_;
-  std::set<const EcalRecHit*> ecalneighbors_;
-
-  mutable double hitenergy_;
-  mutable double neighborenergy_;
-  mutable double ecalenergy_;
-  mutable int nhits_;
-  mutable int nneighbors_;
-  mutable int necalhits_;
+  // helper functions
+  // finds all of the hits which are neighbors and in the same HPD as the reference hit
+  void getHPDNeighbors(const HBHERecHit* hit, std::vector<const HBHERecHit*>& neighbors, const PhysicsTowerOrganizer& pto);
 
 };
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// RBXOrganizer
-//
-//////////////////////////////////////////////////////////////////////////////
-
-// organizers hits according to RBXs, HPDs, dihits, and monohits
-class RBXOrganizer
-{
-public:
-  RBXOrganizer(const HBHERecHitCollection& hbhehitcollection,
-	       const EcalRecHitCollection& ebhitcollection,
-	       const EcalRecHitCollection& eehitcollection,
-	       const HitValidator& validator,
-	       const CaloTowerConstituentsMap& ctcm);
-
-  virtual ~RBXOrganizer();  
-
-  void getRBXs(std::vector<HitCollectionInfo>& rbxs, double rbxenergy) const;
-  void getHPDs(std::vector<HitCollectionInfo>& hpds, double hpdenergy) const;
-  void getDiHits(std::vector<HitCollectionInfo>& dihits, double dihitenergy) const;
-  void getMonoHits(std::vector<HitCollectionInfo>& monohits, double monohitenergy) const;
-
-  void dump(void) const;
-
- private:
-  std::map<int, HitCollectionInfo> rbxs_;
-  std::map<int, HitCollectionInfo> hpds_;
-
-  std::vector<HitCollectionInfo> dihits_;
-  std::vector<HitCollectionInfo> monohits_;
-
-  HcalHitOrganizer hcalhitorganizer_;
-  EcalHitOrganizer ecalhitorganizer_;
-
-
-};
-
 
 
 #endif
