@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 # define the dataset here
-dataset = 2 # 1=CRAFT, 2=MinBiasData, 3=MinBiasMC. 4=ttbarMC
+dataset = 4 # 1=CRAFT, 2=MinBiasData, 3=MinBiasMC. 4=ttbarMC
 
 process = cms.Process("ANALYSIS")
 
@@ -98,7 +98,7 @@ process.options = cms.untracked.PSet(
 # run over files
 readFiles = cms.untracked.vstring()
 if dataset==1:
-    readFiles.append('/store/data/CRAFT09/Calo/RECO/v1/000/112/237/08AEF410-D093-DE11-93B4-001D09F28F25.root')
+    readFiles.append('/store/data/CRAFT09/Calo/RECO/CRAFT09_R_V4_CollisionSeq_v1/0011/003CD6CF-08BC-DE11-B52A-002618943970.root')
 elif dataset==2:
     readFiles.append('/store/data/Commissioning10/MinimumBias/RECO/Apr20ReReco-v1/0160/00064D6A-8D4C-DF11-B7C4-002618943829.root')
     readFiles.append('/store/data/Commissioning10/MinimumBias/RECO/Apr20ReReco-v1/0160/0065C473-8F4C-DF11-A129-003048679080.root')

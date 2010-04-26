@@ -242,13 +242,13 @@ IsolatedNoise::analyze(const edm::Event& iEvent, const edm::EventSetup& evSetup)
 
   // print the results
   if(noisehits.size()>0) {
-    std::cout << "Dump of the noisy hits" << std::endl;
+    std::cout << "Dump of the noisy hits (" << iEvent.run() << ":" << iEvent.id().event() << ")" << std::endl;
     for(std::set<const HBHERecHit*>::const_iterator it=noisehits.begin(); it!=noisehits.end(); ++it) {
       std::cout << (**it) << std::endl;
     }
   }
-
-  /* if(rbxs.size()>0 || hpds.size()>0 || dihits.size()>0 || monohits.size()>0) {
+  /*
+  if(rbxs.size()>0 || hpds.size()>0 || dihits.size()>0 || monohits.size()>0) {
     std::cout << "------------------------------------" << std::endl;
     std::cout << "RBXs:" << std::endl;
     DumpHBHEHitMap(rbxs);
