@@ -123,8 +123,6 @@ namespace HcalComplicatedRecAlgoImpl {
       }
     }
 
-    
-
     return RecHit(digi.id(),ampl,time);    
   }
 }
