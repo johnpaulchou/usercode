@@ -11,6 +11,8 @@
 <use   name="PhysicsTools/PatUtils"/>
 <use   name="PhysicsTools/PatExamples"/>
 <use   name="PhysicsTools/FWLite"/>
+<use   name="RecoMET/METAlgorithms"/>
 <environment>
   <bin   file="GetHLTriggers.cc"></bin>
+  <bin   file="EmulateNoiseFilter.cc"></bin>
 </environment>
