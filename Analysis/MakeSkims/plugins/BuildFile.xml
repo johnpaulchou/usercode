@@ -1,0 +1,7 @@
+<export>
+</export>
+<library name="AnalysisMakeSkims_plugins" file="*.cc">
+<use name="FWCore/Framework"/>
+<use name="DataFormats/PatCandidates"/>
+<use name="Analysis/MakeSkims"/>
+</library>
