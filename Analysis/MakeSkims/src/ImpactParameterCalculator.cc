@@ -2,6 +2,8 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+#include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
+
 ImpactParameterCalculator::ImpactParameterCalculator(const edm::Event& iEvent, const edm::EventSetup& iSetup, const edm::InputTag& VertexSrc)
 {
   // transient track builder to determine muon p.v. i.p. sig
@@ -45,4 +47,16 @@ std::pair<bool, Measurement1D> ImpactParameterCalculator::absoluteImpactParamete
   if(!theVertex) return std::pair<bool, Measurement1D>(false, Measurement1D());
   reco::TransientTrack tt = trackBuilder->build(p);
   return IPTools::absoluteImpactParameter3D(tt, *theVertex);
+}
+
+double ImpactParameterCalculator::deltaZ(const reco::Track& p) const
+{
+  if(!theVertex) return 999.;
+  return p.vz()-theVertex->z();
+}
+
+double ImpactParameterCalculator::deltaZ(const reco::GsfTrack& p) const
+{
+  if(!theVertex) return 999.;
+  return p.vz()-theVertex->z();
 }

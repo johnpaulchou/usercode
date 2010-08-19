@@ -4,4 +4,5 @@
 <use name="FWCore/Framework"/>
 <use name="DataFormats/PatCandidates"/>
 <use name="Analysis/MakeSkims"/>
+<use name="RecoLocalCalo/EcalRecAlgos"/>
 </library>

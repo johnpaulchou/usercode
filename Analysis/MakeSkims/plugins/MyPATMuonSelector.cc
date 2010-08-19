@@ -12,16 +12,20 @@ MyPATMuonSelector::MyPATMuonSelector(edm::ParameterSet const& params)
     vertexSrc_(params.getParameter<edm::InputTag>("vertexSrc") ),
     isolatedLabel_(params.getParameter<std::string>("isolatedLabel") ),
     nonisolatedLabel_(params.getParameter<std::string>("nonisolatedLabel") ),
+    looseLabel_(params.getParameter<std::string>("looseLabel") ),
     muonID_(params.getParameter<std::string>("muonID") ),
     minPt_(params.getParameter<double>("minPt") ),
     maxEta_(params.getParameter<double>("maxEta") ),
     minNumValidHits_(params.getParameter<unsigned int>("minNumValidHits") ),
+    minNumValidMuonHits_(params.getParameter<int>("minNumValidMuonHits") ),
     maxNormChi2_(params.getParameter<double>("maxNormChi2") ),
     maxIsolation_(params.getParameter<double>("maxIsolation") ),
-    maxTransverseIP_(params.getParameter<double>("maxTransverseIP") )
+    maxTransverseIP_(params.getParameter<double>("maxTransverseIP") ),
+    maxDeltaZ_(params.getParameter<double>("maxDeltaZ") )
 {
   produces< std::vector<pat::Muon> >(isolatedLabel_);
   produces< std::vector<pat::Muon> >(nonisolatedLabel_);
+  produces< std::vector<pat::Muon> >(looseLabel_);
 }
 
 bool MyPATMuonSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -29,6 +33,7 @@ bool MyPATMuonSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
   // we are producing the following muons
   std::auto_ptr< std::vector<pat::Muon> > isolatedPatMuons(new std::vector<pat::Muon>() );
   std::auto_ptr< std::vector<pat::Muon> > nonisolatedPatMuons(new std::vector<pat::Muon>() );
+  std::auto_ptr< std::vector<pat::Muon> > loosePatMuons(new std::vector<pat::Muon>() );
 
   // the muons we are going to select from
   edm::Handle< edm::View<pat::Muon> > h_muons;
@@ -45,31 +50,41 @@ bool MyPATMuonSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
   for(edm::View<pat::Muon>::const_iterator it=h_muons->begin(); it!=h_muons->end(); ++it) {
     pat::Muon mu=(*it);
 
-    // select
-    if(!mu.muonID(muonID_)) continue;
-    std::cout << mu.pt() << " " << mu.globalTrack()->pt() << std::endl;
-    if(mu.pt()<=minPt_) continue;
-    if(fabs(mu.eta())>=maxEta_) continue;
-    if(mu.numberOfValidHits()<minNumValidHits_) continue;
-    if(mu.normChi2()>=maxNormChi2_) continue;
+    // loose selection
+    if(!(mu.muonID("AllGlobalMuons") || mu.muonID("AllTrackerMuons"))) continue;
+    if(mu.globalTrack().isNonnull() && mu.globalTrack()->pt()<minPt_) continue;
+    if(mu.globalTrack().isNull() && mu.track()->pt()<minPt_) continue;
+    if(mu.globalTrack().isNonnull() && fabs(mu.globalTrack()->eta())>=maxEta_) continue;
+    if(mu.globalTrack().isNull() && fabs(mu.track()->eta())>=maxEta_) continue;
 
-    // i.p. significance selection
+    bool isTight=true;
+    // tight selection
+    if(!mu.isGlobalMuon()) isTight=false;
+    if(!mu.muonID(muonID_)) isTight=false;
+    if(mu.numberOfValidHits()<minNumValidHits_) isTight=false;
+    if(mu.globalTrack().isNull() || mu.normChi2()>=maxNormChi2_) isTight=false;
+    if(mu.globalTrack().isNull() || mu.globalTrack()->hitPattern().numberOfValidMuonHits()<minNumValidMuonHits_) isTight=false;
+
+    // i.p. selection
     std::pair<bool, Measurement1D> val=ipcalc.absoluteTransverseImpactParameter(*mu.innerTrack());
-    if(!val.first) continue;
-    mu.setDB(val.second.value(), val.second.error());
-    if(mu.dB()>maxTransverseIP_) continue;
-
+    if(val.first) mu.setDB(val.second.value(), val.second.error());
+    else          mu.setDB(999., 999.);
+    if(mu.dB()>=maxTransverseIP_) isTight=false;
+    if(fabs(ipcalc.deltaZ(*mu.innerTrack()))>=maxDeltaZ_) isTight=false;
+    
     // isolation selection
     double isolation = (mu.trackIso() + mu.ecalIso() + mu.hcalIso()) / mu.pt();
     bool isolated = isolation<maxIsolation_;
     
     // this is a good muon
-    if(isolated) isolatedPatMuons->push_back(mu);
-    else         nonisolatedPatMuons->push_back(mu);
+    if(isolated && isTight) isolatedPatMuons->push_back(mu);
+    else if(isTight)        nonisolatedPatMuons->push_back(mu);
+    else                    loosePatMuons->push_back(mu);
   }
   
   iEvent.put(isolatedPatMuons, isolatedLabel_);
   iEvent.put(nonisolatedPatMuons, nonisolatedLabel_);
+  iEvent.put(loosePatMuons, looseLabel_);
 
   return true;
   

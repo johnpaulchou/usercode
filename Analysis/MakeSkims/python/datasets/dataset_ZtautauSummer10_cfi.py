@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 ## production release = CMSSW_3_7_0_patch3
 
-## dataset = /Ztautau/Summer10-START37_V5_S09-v1/GEN-SIM-RECO
+dataset = "/Ztautau/Summer10-START37_V5_S09-v1/GEN-SIM-RECO"
 
 ## global tag
 globaltag = cms.string('START37_V5::All')
@@ -18,3 +18,7 @@ outfile = cms.untracked.string('ZtautauSummer10.root')
 
 ## good run list
 lumisToProcess = cms.untracked.VLuminosityBlockRange()
+
+## do other stuff
+def doOtherStuff(process):
+    pass

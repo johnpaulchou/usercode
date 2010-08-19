@@ -1,5 +1,7 @@
 <use name="TrackingTools/TransientTrack"/>
 <use name="TrackingTools/IPTools"/>
+<use name="MagneticField/Engine"/>
+<use name="RecoEgamma/EgammaTools"/>
 <export>
   <lib name="1"/>
 </export>

@@ -22,6 +22,9 @@ class ImpactParameterCalculator
   std::pair<bool, Measurement1D> absoluteImpactParameter3D(const reco::Track& p) const;
   std::pair<bool, Measurement1D> absoluteImpactParameter3D(const reco::GsfTrack& p) const;
 
+  double deltaZ(const reco::Track& p) const;
+  double deltaZ(const reco::GsfTrack& p) const;
+
  protected:
   edm::ESHandle<TransientTrackBuilder> trackBuilder;
   const reco::Vertex* theVertex;

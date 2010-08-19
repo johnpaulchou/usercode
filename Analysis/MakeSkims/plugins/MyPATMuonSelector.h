@@ -21,13 +21,16 @@ namespace pat {
     edm::InputTag vertexSrc_;
     std::string isolatedLabel_;
     std::string nonisolatedLabel_;
+    std::string looseLabel_;
     std::string muonID_;
     double minPt_;
     double maxEta_;
     unsigned int minNumValidHits_;
+    int minNumValidMuonHits_;
     double maxNormChi2_;
     double maxIsolation_;
     double maxTransverseIP_;
+    double maxDeltaZ_;
   };
 }
 

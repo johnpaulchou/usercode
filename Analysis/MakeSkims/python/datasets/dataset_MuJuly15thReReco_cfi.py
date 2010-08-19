@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 ## production release = CMSSW_3_7_0_patch4
 
-## dataset = /Mu/Run2010A-Jul15thReReco-v1/RECO
+dataset = "/Mu/Run2010A-Jul15thReReco-v1/RECO"
 
 ## global tag
 globaltag = cms.string('GR_R_37X_V6D::All')
@@ -22,3 +22,7 @@ outfile = cms.untracked.string('MuJuly15thReReco.root')
 
 # good run list
 from Analysis.MakeSkims.datasets.json_July15thReReco_cfi import *
+
+## do other stuff
+def doOtherStuff(process):
+    pass
