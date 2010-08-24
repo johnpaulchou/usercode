@@ -22,6 +22,7 @@ namespace pat {
     std::string isolatedLabel_;
     std::string nonisolatedLabel_;
     std::string looseLabel_;
+    bool requireCaloDrivenSeed_;
     double minEt_;
     double minSuperClusterEt_;
     double maxEta_;

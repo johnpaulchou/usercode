@@ -17,25 +17,13 @@ linkDatasetIntoProcess(process, dataset)
 from Analysis.MakeSkims.mySelectorSequence_cfi import *
 ReplaceSequenceWithMySelectors(process)
 
+## this is the event selection we're using
+from Analysis.MakeSkims.dileptonEventSelection_cfi import *
+setupEventSelection(process)
+
 ## set other running options
 process.options.wantSummary = True
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
-process.maxEvents.input = 10
+process.maxEvents.input = 500
 process.out.outputCommands += ['keep *_towerMaker_*_*',
                                'keep *_generalTracks_*_*']
-#                               'keep *_patPhotons_*_*',
-#                               'keep *_patElectrons_*_*',
-#                               'keep *_patMuons_*_*',
-#                               'keep *_patTaus_*_*',
-#                               'keep *_patJets_*_*']
-
-## Filter out events
-process.load('Analysis.MakeSkims.custom_filters_cfi')
-process.out.SelectEvents = cms.untracked.PSet ( SelectEvents = cms.vstring('p') )
-
-## add electron correction stuff
-#process.load("RecoEgamma.EgammaTools.correctedElectronsProducer_cfi")
-#process.patElectrons.electronSource = cms.InputTag('gsfElectrons','','PAT')
-
-## let it run
-process.p = cms.Path(process.customFilterSequence*process.patDefaultSequence)

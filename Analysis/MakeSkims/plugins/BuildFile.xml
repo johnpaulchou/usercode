@@ -5,4 +5,5 @@
 <use name="DataFormats/PatCandidates"/>
 <use name="Analysis/MakeSkims"/>
 <use name="RecoLocalCalo/EcalRecAlgos"/>
+<use name="PhysicsTools/UtilAlgos"/>
 </library>

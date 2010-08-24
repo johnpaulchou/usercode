@@ -22,6 +22,7 @@ MyPATElectronSelector::MyPATElectronSelector(const edm::ParameterSet& params)
     isolatedLabel_(params.getParameter<std::string>("isolatedLabel") ),
     nonisolatedLabel_(params.getParameter<std::string>("nonisolatedLabel") ),
     looseLabel_(params.getParameter<std::string>("looseLabel") ),
+    requireCaloDrivenSeed_(params.getParameter<bool>("requireCaloDrivenSeed") ),
     minEt_(params.getParameter<double>("minEt") ),
     minSuperClusterEt_(params.getParameter<double>("minSuperClusterEt") ),
     maxEta_(params.getParameter<double>("maxEta") ),
@@ -97,7 +98,7 @@ bool MyPATElectronSelector::filter(edm::Event& iEvent, const edm::EventSetup& iS
     double eleet = ele.p4().Pt();
 
     // basic selection
-    //    if(ele.ecalDrivenSeed()>0) continue; // require calo-driven algorithm
+    if(requireCaloDrivenSeed_ && !ele.ecalDrivenSeed()) continue;
     if(eleet<minEt_) continue;
     if(ele.superCluster()->energy()/cosh(ele.superCluster()->eta())<minSuperClusterEt_) continue;
     if(fabs(ele.eta())>=maxEta_) continue;

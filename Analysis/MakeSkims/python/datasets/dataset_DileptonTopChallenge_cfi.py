@@ -28,14 +28,21 @@ def doOtherStuff(process):
     process.patTrigger.processName = "REDIGI"
     process.patTriggerEvent.processName = "REDIGI"
     removeSpecificPATObjects(process, ['Jets'])
-    process.countPatElectrons.src = cms.InputTag('selectedPatElectrons','isolated')
-    process.countPatMuons.src = cms.InputTag('selectedPatMuons','isolated')
-    process.countPatLeptons.electronSource = cms.InputTag('selectedPatElectrons','isolated')
-    process.countPatLeptons.muonSource = cms.InputTag('selectedPatMuons','isolated')
-    process.electronTriggerMatchHLTEle15LWL1R.src = cms.InputTag('selectedPatElectrons','isolated')
-    process.electronTriggerMatchHLTDoubleEle5SWL1R.src = cms.InputTag('selectedPatElectrons','isolated')
-    process.muonTriggerMatchL1Muon.src = cms.InputTag('selectedPatMuons','isolated')
-    process.muonTriggerMatchHLTMu3.src = cms.InputTag('selectedPatMuons','isolated')
-    process.muonTriggerMatchHLTIsoMu3.src = cms.InputTag('selectedPatMuons','isolated')
-    process.muonTriggerMatchHLTDoubleMu3.src = cms.InputTag('selectedPatMuons','isolated')
-    process.tauTriggerMatchHLTDoubleLooseIsoTau15.src = cms.InputTag('selectedPatTaus')
+    addCleaning(process)
+    process.patDefaultSequence.remove(process.cleanPatJets)
+    
+#    finalPatElectronsSrc=cms.InputTag('selectedPatElectrons','isolated')
+#    finalPatMuonsSrc=cms.InputTag('selectedPatMuons','isolated')
+#    finalPatTausSrc=cms.InputTag('selectedPatTaus')
+#    process.countPatElectrons.src = finalPatElectronsSrc
+#    process.countPatMuons.src = finalPatMuonsSrc
+#    process.countPatLeptons.electronSource = finalPatElectronsSrc
+#    process.countPatLeptons.muonSource = finalPatMuonsSrc
+#    process.electronTriggerMatchHLTEle15LWL1R.src = finalPatElectronsSrc
+#    process.electronTriggerMatchHLTDoubleEle5SWL1R.src = finalPatElectronsSrc
+#    process.muonTriggerMatchL1Muon.src = finalPatMuonsSrc
+#    process.muonTriggerMatchHLTMu3.src = finalPatMuonsSrc
+#    process.muonTriggerMatchHLTIsoMu3.src = finalPatMuonsSrc
+#    process.muonTriggerMatchHLTDoubleMu3.src = finalPatMuonsSrc
+#    process.tauTriggerMatchHLTDoubleLooseIsoTau15.src = finalPatTausSrc
+

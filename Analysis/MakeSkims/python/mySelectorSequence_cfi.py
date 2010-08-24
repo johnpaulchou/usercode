@@ -69,7 +69,7 @@ def ReplaceSequenceWithMySelectors(process):
     
     process.cleanPatJets.checkOverlaps = cms.PSet(
         electrons = cms.PSet(
-        src = cms.InputTag("cleanPatElectrons"),
+        src = cms.InputTag('cleanPatElectrons'),
         deltaR = cms.double(0.4),
         pairCut = cms.string(''),
         checkRecoComponents = cms.bool(False),
@@ -78,7 +78,7 @@ def ReplaceSequenceWithMySelectors(process):
         requireNoOverlaps = cms.bool(False)
         ),
         muons = cms.PSet(
-        src = cms.InputTag("cleanPatMuons"),
+        src = cms.InputTag('cleanPatMuons'),
         deltaR = cms.double(0.4),
         pairCut = cms.string(''),
         checkRecoComponents = cms.bool(False),
