@@ -16,6 +16,14 @@ void ParseGenTree::findLeptonicDaughters(const reco::GenParticleCollection& genp
     std::set<int>::const_iterator foundIter = motherids.find(mother->pdgId());
     if(foundIter==motherids.end()) continue;
 
+    // look for the original mother
+    bool foundSameMother=false;
+    for(unsigned int i=0; i<mother->numberOfMothers(); i++) {
+      const reco::GenParticle *grandmother=dynamic_cast<const reco::GenParticle*>(mother->mother(i));
+      if(mother->pdgId()==grandmother->pdgId()) foundSameMother=true;
+    }
+    if(foundSameMother) continue;
+
     // get all the unique daughters
     std::vector<const reco::GenParticle*> alldaughters;
     findUniqueDaughters(mother, alldaughters);
@@ -92,7 +100,7 @@ void ParseGenTree::findUniqueDaughters(const reco::GenParticle* mother, std::vec
 
   // zero out the counter
   findUniqueDaughtersRecursiveCounter=0;
-  
+
   // now run the recursive version
   return findUniqueDaughtersRecursive(mother, daughters);
 }
@@ -114,12 +122,14 @@ void ParseGenTree::findUniqueDaughtersRecursive(const reco::GenParticle* mother,
     if(daughter==mother) continue;
 
     // descend if the mother and daughter have the same ID
-    if(daughter->pdgId()==mother->pdgId())
+    if(daughter->pdgId()==mother->pdgId()) {
       findUniqueDaughtersRecursive(daughter, daughters);
+    }
 
     // otherwise, add the daughter to the list
-    else
+    else {
       daughters.push_back(daughter);
+    }
   }
   return;
 }
