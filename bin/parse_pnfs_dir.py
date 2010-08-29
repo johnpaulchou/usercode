@@ -22,7 +22,7 @@ files=[filename for filename in files if filename[0] != '.' and os.path.isfile(p
 
 cnt=0
 for file in files:
-    if cnt>=int(sys.argv[2]):
+    if len(sys.argv)>=3 and cnt>=int(sys.argv[2]):
         break
     cnt=cnt+1
     print '%s' % (newpath+'/'+file),
