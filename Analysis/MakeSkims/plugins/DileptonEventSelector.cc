@@ -24,6 +24,7 @@ DileptonEventSelector::DileptonEventSelector(edm::ParameterSet const& params)
     requiredTriggers_(params.getParameter<std::vector<std::string> >("requiredTriggers")),
     vertexSrc_(params.getParameter<edm::InputTag>("vertexSrc")),
     minNumGoodVertices_(params.getParameter<int>("minNumGoodVertices")),
+    doNoiseStep_(params.getParameter<bool>("doNoiseStep")),
     noiseResultSrc_(params.getParameter<edm::InputTag>("noiseResultSrc")),
     trackSrc_(params.getParameter<edm::InputTag>("trackSrc")),
     minHighQualityTrackFraction_(params.getParameter<double>("minHighQualityTrackFraction")),
@@ -181,14 +182,15 @@ bool DileptonEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iS
   // noise filter selection
   ////////////////////////////////////////////
 
-  edm::Handle<bool> noiseresult_h;
-  iEvent.getByLabel(noiseResultSrc_, noiseresult_h);
-  if(!noiseresult_h.isValid()) {
-    edm::LogError("DataNotFound") << "noise result not found";
-    return false;
+  if(doNoiseStep_) {
+    edm::Handle<bool> noiseresult_h;
+    iEvent.getByLabel(noiseResultSrc_, noiseresult_h);
+    if(!noiseresult_h.isValid()) {
+      edm::LogError("DataNotFound") << "noise result not found";
+      return false;
+    }
+    if(*noiseresult_h==false) b_eventSelectionBitSet |= 0x8;
   }
-  if(*noiseresult_h==false) b_eventSelectionBitSet |= 0x8;
-
 
   ////////////////////////////////////////////
   // monster event selection

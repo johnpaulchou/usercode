@@ -33,6 +33,7 @@ namespace pat {
     std::vector<std::string> requiredTriggers_;
     edm::InputTag vertexSrc_;
     int minNumGoodVertices_;
+    bool doNoiseStep_;
     edm::InputTag noiseResultSrc_;
     edm::InputTag trackSrc_;
     double minHighQualityTrackFraction_;

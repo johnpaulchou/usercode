@@ -16,6 +16,7 @@ def setupEventSelection(process):
                                                   requiredTriggers = cms.vstring('HLT_Mu9','HLT_Ele10_LW_L1R'),
                                                   vertexSrc = cms.InputTag('selectedVertices'),
                                                   minNumGoodVertices = cms.int32(1),
+                                                  doNoiseStep = cms.bool(True),
                                                   noiseResultSrc = cms.InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"),
                                                   trackSrc = cms.InputTag('generalTracks'),
                                                   minHighQualityTrackFraction = cms.double(0.25),
