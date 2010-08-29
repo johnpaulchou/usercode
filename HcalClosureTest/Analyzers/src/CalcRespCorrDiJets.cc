@@ -20,9 +20,10 @@
 #include "TClonesArray.h"
 
 #include <vector>
+#include <set>
 
 //
-// constructors and destructor
+// CalcrespCorrDiJets
 //
 
 CalcRespCorrDiJets::CalcRespCorrDiJets(const edm::ParameterSet& iConfig)
@@ -81,45 +82,51 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup& evS
   // determine which cut results in failure
   int passSel=0;
 
-  // find highest two et jets
-  const reco::CaloJet* tag=0;
-  const reco::CaloJet* probe=0;
+  // sort jets by corrected et
+  std::set<JetCorretPair, JetCorretPairComp> jetcorretpairset;
+  for(reco::CaloJetCollection::const_iterator it=calojets->begin(); it!=calojets->end(); ++it) {
+    const reco::CaloJet* jet=&(*it);
+    jetcorretpairset.insert( JetCorretPair(jet, corrector->correction(jet->p4())) );
+  }
+
+  // find highest two (corrected) et jets
+  JetCorretPair tag, probe;
   thirdjet_px_=thirdjet_py_=0.0;
   int cntr=0;
-  for(reco::CaloJetCollection::const_iterator it=calojets->begin(); it!=calojets->end(); ++it) {
+  for(std::set<JetCorretPair, JetCorretPairComp>::const_iterator it=jetcorretpairset.begin(); it!=jetcorretpairset.end(); ++it) {
+    JetCorretPair jet=(*it);
     ++cntr;
-    const reco::CaloJet* jet=&(*it);
     if(cntr==1) tag=jet;
     else if(cntr==2) probe=jet;
     else {
-      thirdjet_px_ += jet->px();
-      thirdjet_py_ += jet->py();
+      thirdjet_px_ += jet.scale()*jet.jet()->px();
+      thirdjet_py_ += jet.scale()*jet.jet()->py();
     }
   }
-  if(!tag || !probe) return;
+  if(!tag.jet() || !probe.jet()) return;
 
   // require that the first two jets are above some minimum,
   // and the rest are below some maximum
-  if((tag->et()+probe->et())<minSumJetEt_)         passSel |= 0x1;
-  if(tag->et()<minJetEt_ || probe->et()<minJetEt_) passSel |= 0x2;
+  if((tag.jet()->et()+probe.jet()->et())<minSumJetEt_)         passSel |= 0x1;
+  if(tag.jet()->et()<minJetEt_ || probe.jet()->et()<minJetEt_) passSel |= 0x2;
   if(sqrt(thirdjet_px_*thirdjet_px_ + thirdjet_py_*thirdjet_py_)>maxThirdJetEt_) passSel |= 0x4;
 
   // force the tag jet to have the smaller |eta|
-  if(std::fabs(tag->eta())>std::fabs(probe->eta())) {
-    const reco::CaloJet* temp=tag;
+  if(std::fabs(tag.jet()->eta())>std::fabs(probe.jet()->eta())) {
+    JetCorretPair temp=tag;
     tag=probe;
     probe=temp;
   }
 
   // eta cuts
-  double dAbsEta=std::fabs(std::fabs(tag->eta())-std::fabs(probe->eta()));
+  double dAbsEta=std::fabs(std::fabs(tag.jet()->eta())-std::fabs(probe.jet()->eta()));
   if(dAbsEta>maxDeltaEta_) passSel |= 0x8;
-  if(fabs(tag->eta())<minTagJetEta_) passSel |= 0x10;
-  if(fabs(tag->eta())>maxTagJetEta_) passSel |= 0x10;
+  if(fabs(tag.jet()->eta())<minTagJetEta_) passSel |= 0x10;
+  if(fabs(tag.jet()->eta())>maxTagJetEta_) passSel |= 0x10;
 
   // emf cuts
-  if(tag->emEnergyFraction()>maxJetEMF_) passSel |= 0x20;
-  if(probe->emEnergyFraction()>maxJetEMF_) passSel |= 0x20;
+  if(tag.jet()->emEnergyFraction()>maxJetEMF_) passSel |= 0x20;
+  if(probe.jet()->emEnergyFraction()>maxJetEMF_) passSel |= 0x20;
 
   // make the cuts
   hPassSel_->Fill(passSel);
@@ -130,24 +137,24 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup& evS
     std::cout << "Run: " << iEvent.id().run() << "; Event: " << iEvent.id().event() << std::endl;
     for(reco::CaloJetCollection::const_iterator it=calojets->begin(); it!=calojets->end(); ++it) {
       const reco::CaloJet *jet=&(*it);
-      std::cout << "istag=" << (jet==tag) << "; isprobe=" << (jet==probe) << "; et=" << jet->et() << "; eta=" << jet->eta() << std::endl;
+      std::cout << "istag=" << (jet==tag.jet()) << "; isprobe=" << (jet==probe.jet()) << "; et=" << jet->et() << "; eta=" << jet->eta() << std::endl;
     }
   }
 
   // fill tag jet variables
-  tjet_pt_    = tag->pt();
-  tjet_p_     = tag->p();
-  tjet_eta_   = tag->eta();
-  tjet_phi_   = tag->phi();
-  tjet_emf_   = tag->emEnergyFraction();
-  tjet_scale_ = corrector->correction(tag->p4());
-  tjet_EBE_   = tag->emEnergyInEB();
-  tjet_EEE_   = tag->emEnergyInEE();
-  tjet_HBE_   = tag->hadEnergyInHB();
-  tjet_HEE_   = tag->hadEnergyInHE();
-  tjet_HFE_   = tag->emEnergyInHF() + tag->hadEnergyInHF();
+  tjet_pt_    = tag.jet()->pt();
+  tjet_p_     = tag.jet()->p();
+  tjet_eta_   = tag.jet()->eta();
+  tjet_phi_   = tag.jet()->phi();
+  tjet_emf_   = tag.jet()->emEnergyFraction();
+  tjet_scale_ = tag.scale();
+  tjet_EBE_   = tag.jet()->emEnergyInEB();
+  tjet_EEE_   = tag.jet()->emEnergyInEE();
+  tjet_HBE_   = tag.jet()->hadEnergyInHB();
+  tjet_HEE_   = tag.jet()->hadEnergyInHE();
+  tjet_HFE_   = tag.jet()->emEnergyInHF() + tag.jet()->hadEnergyInHF();
   tjet_ntwrs_=0;
-  std::vector<CaloTowerPtr> tagconst=tag->getCaloConstituents();
+  std::vector<CaloTowerPtr> tagconst=tag.jet()->getCaloConstituents();
   for(std::vector<CaloTowerPtr>::const_iterator it=tagconst.begin(); it!=tagconst.end(); ++it) {
     int ieta=(*it)->id().ieta();
     int ietaAbs=(*it)->id().ietaAbs();
@@ -163,19 +170,19 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup& evS
   }
 
   // fill probe jet variables
-  pjet_pt_    = probe->pt();
-  pjet_p_     = probe->p();
-  pjet_eta_   = probe->eta();
-  pjet_phi_   = probe->phi();
-  pjet_emf_   = probe->emEnergyFraction();
-  pjet_scale_ = corrector->correction(probe->p4());
-  pjet_EBE_   = probe->emEnergyInEB();
-  pjet_EEE_   = probe->emEnergyInEE();
-  pjet_HBE_   = probe->hadEnergyInHB();
-  pjet_HEE_   = probe->hadEnergyInHE();
-  pjet_HFE_   = probe->emEnergyInHF() + probe->hadEnergyInHF();
+  pjet_pt_    = probe.jet()->pt();
+  pjet_p_     = probe.jet()->p();
+  pjet_eta_   = probe.jet()->eta();
+  pjet_phi_   = probe.jet()->phi();
+  pjet_emf_   = probe.jet()->emEnergyFraction();
+  pjet_scale_ = probe.scale();
+  pjet_EBE_   = probe.jet()->emEnergyInEB();
+  pjet_EEE_   = probe.jet()->emEnergyInEE();
+  pjet_HBE_   = probe.jet()->hadEnergyInHB();
+  pjet_HEE_   = probe.jet()->hadEnergyInHE();
+  pjet_HFE_   = probe.jet()->emEnergyInHF() + probe.jet()->hadEnergyInHF();
   pjet_ntwrs_=0;
-  std::vector<CaloTowerPtr> probeconst=probe->getCaloConstituents();
+  std::vector<CaloTowerPtr> probeconst=probe.jet()->getCaloConstituents();
   for(std::vector<CaloTowerPtr>::const_iterator it=probeconst.begin(); it!=probeconst.end(); ++it) {
     int ieta=(*it)->id().ieta();
     int ietaAbs=(*it)->id().ietaAbs();
@@ -199,13 +206,13 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup& evS
   pjet_genp_  = 0;
   for(reco::GenJetCollection::const_iterator it=genjets->begin(); it!=genjets->end(); ++it) {
     const reco::GenJet* jet=&(*it);
-    double dr=deltaR(jet, probe);
+    double dr=deltaR(jet, probe.jet());
     if(dr<pjet_gendr_) {
       pjet_gendr_ = dr;
       pjet_genpt_ = jet->pt();
       pjet_genp_ = jet->p();
     }
-    dr=deltaR(jet, tag);
+    dr=deltaR(jet, tag.jet());
     if(dr<tjet_gendr_) {
       tjet_gendr_ = dr;
       tjet_genpt_ = jet->pt();
@@ -214,8 +221,8 @@ CalcRespCorrDiJets::analyze(const edm::Event& iEvent, const edm::EventSetup& evS
   }
 
   // fill dijet variables
-  dijet_deta_=std::fabs(std::fabs(tag->eta())-std::fabs(probe->eta()));
-  dijet_dphi_=tag->phi()-probe->phi();
+  dijet_deta_=std::fabs(std::fabs(tag.jet()->eta())-std::fabs(probe.jet()->eta()));
+  dijet_dphi_=tag.jet()->phi()-probe.jet()->phi();
   if(dijet_dphi_>3.1415) dijet_dphi_ = 6.2832-dijet_dphi_;
   dijet_balance_ = (tjet_pt_-pjet_pt_)/(tjet_pt_+pjet_pt_);
 

@@ -32,8 +32,30 @@ class TFile;
 class TTree;
 
 //
-// class declaration
+// class declarations
 //
+
+class JetCorretPair : protected std::pair<const reco::CaloJet*, double> {
+ public:
+  JetCorretPair() {
+    first=0;
+    second=1.0;
+  }
+  JetCorretPair(const reco::CaloJet* j, double s) {
+    first=j;
+    second=s;
+  }
+  ~JetCorretPair() {}
+
+  inline const reco::CaloJet* jet(void) const { return first; }
+  inline void jet(const reco::CaloJet* j) { first=j; return; }
+  inline double scale(void) const { return second; }
+  inline void scale(double d) { second=d; return; }
+
+ private:
+  
+};
+
 
 class CalcRespCorrDiJets : public edm::EDAnalyzer {
  public:
@@ -83,6 +105,12 @@ class CalcRespCorrDiJets : public edm::EDAnalyzer {
 
   // helper functions
   double deltaR(const reco::Jet* j1, const reco::Jet* j2);
+
+  struct JetCorretPairComp {
+    inline bool operator() ( const JetCorretPair& a, const JetCorretPair& b) {
+      return (a.jet()->pt()*a.scale()) > (b.jet()->pt()*b.scale());
+    }
+  };
 
 };
 
