@@ -32,7 +32,7 @@ class parseopt:
 
         # parse command line options
         try:
-            opts, args = getopt.getopt(argv, 'hn:m:M:f:s:u:',['help','nevents=','minrun=','maxrun=','outputfile=',"scheduler=","dbsurl="])
+            opts, args = getopt.getopt(argv, 'hn:m:M:f:d:s:u:',['help','nevents=','minrun=','maxrun=','outputfile=','dataset=',"scheduler=","dbsurl="])
 
         # find exceptions
         except getopt.GetoptError, err:
@@ -72,6 +72,8 @@ class parseopt:
                     return
             elif o=="-f" or o=="--outputfile":
                 self.outputfile=a
+            elif o=="-d" or o=="--dataset":
+                self.dataset=a
             elif o=="-s" or o=="--scheduler":
                 self.scheduler=a
             elif o=="-u" or o=="--dbsurl":
@@ -84,8 +86,8 @@ class parseopt:
             self.status=False
             return
                 
-        # we need at least four arguments
-        if len(args)<4:
+        # we need at least 3 arguments
+        if len(args)<3:
             self.usage()
             self.status=False
             return
@@ -97,15 +99,14 @@ class parseopt:
             print "`%s\' is an invalid value for events_per_job argument: must be an integer" % args[1]
             self.status=False
             return
-        self.dataset = args[2]
-        self.outputdirectory = args[3]
+        self.outputdirectory = args[2]
 
     def usage(self):
-        print "Usage: %s [options] pythonfile events_per_job dataset output_dir" % self.basename
+        print "Usage: %s [options] pythonfile events_per_job output_dir" % self.basename
         print "Try `%s --help\' for more information" % self.basename
 
     def usagefull(self):
-        print "Usage: %s [options] pythonfile events_per_job dataset output_dir" % self.basename
+        print "Usage: %s [options] pythonfile events_per_job output_dir" % self.basename
         print """
 ARGUMENTS
        pythonfile
@@ -113,9 +114,6 @@ ARGUMENTS
 
        events_per_job
               The number of events to run over per job.
-
-       dataset
-              Dataset path name, as specified in DBS.
 
        output_dir
               Output directory.
@@ -133,15 +131,21 @@ OPTIONS
        -M NUM, --maxrun=NUM
               Maximum run number to traverse over.  By default, this is set to 99999999.
 
+       -d ARG, --dataset=ARG
+              Dataset path name, as specified in DBS.  The script  attempts to parse the pythonfile to determine this automa-
+              tically, looking for dataset.dataset.  If it cannot find this, it needs to be overwritten here.
+
        -f ARG, --outputfile=ARG
               Output filename.  Normally, the script attempts to parse the pythonfile to determine this automatically, but it
               can be overwritten here.  Use `none' if no output is given.
 
        -s ARG, --scheduler=ARG
-              Scheduler used to submit jobs.  condor is a local scheduler; glite is a global scheduler.
+              Scheduler used to submit  jobs (e.g., condor is a local  scheduler; glite is a global  scheduler).  By default,
+              condor is used.
 
        -u ARG, --dbsurl=ARG
-              DBS URL for the dataset.
+              DBS URL for the dataset.  The script attempts  to parse the pythonfile to determine this automatically, looking
+              for dataset.dbs_url.  If it cannot find this, the default global dbsurl is used.
                      
 """
 
@@ -168,6 +172,8 @@ class parsecfg:
     def __init__(self, pythonfile):
         self.pythonfile = pythonfile
         self.outputfile = ""
+        self.dataset = ""
+        self.dbsurl = ""
         self.status = True
 
         # check that the pythonfile file exists
@@ -194,6 +200,22 @@ class parsecfg:
                 self.outputfile = module.fileName.value()
         except:
             return
+
+        # get the dataset name
+        try:
+            self.dataset=self.library.dataset.dataset
+        except:
+            self.dataset=""
+            return
+
+        # get the dbs url name
+        try:
+            self.dbsurl=self.library.dataset.dbs_url
+        except:
+            self.dbsurl=""
+            return
+
+
 
 def makecrabconfig(options):
     configfileoutput = "[CRAB]\n"+ \
@@ -286,6 +308,20 @@ if __name__ == "__main__":
                 print "Using the outputfile `%s\' found in the config file `%s\'" % (options.outputfile, options.pythonfile)
             elif options.outputfile=="":
                 print "Unable to find an outputfile.  Are you sure this is right?"
+
+            if config.dataset!="" and options.dataset=="":
+                options.dataset=config.dataset
+                print "using the dataset `%s\' found in the config file `%s'\'" % (options.dataset, options.pythonfile)
+            elif options.dataset=="":
+                print "No dataset to run over was specified.  Are you sure this is right?"
+
+            if config.dbsurl!="" and options.dbsurl=="":
+                options.dbsurl=config.dbsurl
+                print "using the dbsurl `%s\' found in the config file `%s'\'" % (options.dbsurl, options.pythonfile)
+            elif options.dbsurl=="":
+                print "No dbsurl to run over was specified.  Are you sure this is right?"
+
+
 
             makecrabconfig(options)
         
