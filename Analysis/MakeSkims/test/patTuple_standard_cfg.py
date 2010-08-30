@@ -10,7 +10,7 @@ switchOnTrigger(process, True)
 #import Analysis.MakeSkims.datasets.dataset_ZtautauM20CTEQ66Summer10_cfi as dataset
 import Analysis.MakeSkims.datasets.dataset_DileptonTopChallenge_cfi as dataset
 from Analysis.MakeSkims.datasets.datasetTools import *
-linkDatasetIntoProcess(process, dataset)
+linkDatasetIntoPatProcess(process, dataset)
 
 ## overwrite default PAT selection with my own selection
 ## this includes adding PFJets/MET, cleaning, etc.
