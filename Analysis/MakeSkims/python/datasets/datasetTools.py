@@ -6,7 +6,7 @@ def linkDatasetIntoStandardProcess(process, dataset):
     process.source.fileNames = dataset.readFiles
     process.source.lumisToProcess = dataset.lumisToProcess
     for module in process._Process__outputmodules.values():
-        module.outfile = dataset.outfile
+        module.fileName = dataset.outfile
 
 def linkDatasetIntoPatProcess(process, dataset):
     ## do the basics
