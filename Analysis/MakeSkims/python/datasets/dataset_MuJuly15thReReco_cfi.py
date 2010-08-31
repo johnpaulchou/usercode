@@ -17,10 +17,10 @@ readFiles.append('/store/data/Run2010A/Mu/RECO/Jul15thReReco-v1/0047/005EBF62-86
 readFiles.append('/store/data/Run2010A/Mu/RECO/Jul15thReReco-v1/0047/008405A5-9B90-DF11-92A1-0026189438B8.root')
 readFiles.append('/store/data/Run2010A/Mu/RECO/Jul15thReReco-v1/0047/0232A353-6390-DF11-AE4B-002618FDA204.root')
 
-# out files
+## out files
 outfile = cms.untracked.string('MuJuly15thReReco.root')
 
-# good run list
+## good run list
 from Analysis.MakeSkims.datasets.json_July15thReReco_cfi import *
 
 ## do other stuff

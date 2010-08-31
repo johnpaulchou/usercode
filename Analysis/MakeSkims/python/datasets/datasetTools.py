@@ -1,8 +1,9 @@
 from PhysicsTools.PatAlgos.tools.coreTools import *
 
-def linkDatasetIntoStandardProcess(process, dataset):
+def linkDatasetIntoStandardProcess(process, dataset, setGlobalTag=True):
     ## link everything up here
-    process.GlobalTag.globaltag = dataset.globaltag
+    if setGlobalTag:
+        process.GlobalTag.globaltag = dataset.globaltag
     process.source.fileNames = dataset.readFiles
     process.source.lumisToProcess = dataset.lumisToProcess
     for module in process._Process__outputmodules.values():
