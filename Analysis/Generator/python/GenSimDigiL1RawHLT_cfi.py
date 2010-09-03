@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process('HLT8E29')
+process = cms.Process('HLTFULL')
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -15,7 +15,7 @@ process.load('Configuration.StandardSequences.SimIdeal_cff')
 process.load('Configuration.StandardSequences.Digi_cff')
 process.load('Configuration.StandardSequences.SimL1Emulator_cff')
 process.load('Configuration.StandardSequences.DigiToRaw_cff')
-process.load('HLTrigger.Configuration.HLT_8E29_cff')
+process.load('HLTrigger.Configuration.HLT_FULL_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Configuration.EventContent.EventContent_cff')

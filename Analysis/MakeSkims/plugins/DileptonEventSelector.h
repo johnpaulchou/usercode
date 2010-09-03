@@ -1,6 +1,8 @@
 #ifndef __ANALYSIS_MAKESKIMS_DILEPTONEVENTSELECTOR_H__
 #define __ANALYSIS_MAKESKIMS_DILEPTONEVENTSELECTOR_H__
 
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Framework/interface/EDFilter.h"
 
 #include "DataFormats/PatCandidates/interface/Electron.h"

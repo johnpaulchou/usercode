@@ -1,6 +1,7 @@
 #ifndef __ANALYSIS_MAKESKIMS_MYPATELECTRONSELECTOR_H__
 #define __ANALYSIS_MAKESKIMS_MYPATELECTRONSELECTOR_H__
 
+#include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/Framework/interface/EDFilter.h"
 
 namespace pat {
