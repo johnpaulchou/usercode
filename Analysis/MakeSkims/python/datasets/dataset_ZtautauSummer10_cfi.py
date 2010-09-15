@@ -5,7 +5,7 @@ import FWCore.ParameterSet.Config as cms
 dataset = "/Ztautau/Summer10-START37_V5_S09-v1/GEN-SIM-RECO"
 
 ## global tag
-globaltag = cms.string('START37_V5::All')
+globaltag = cms.string('START38_V10::All')
 
 ## is MC
 isMC = True
