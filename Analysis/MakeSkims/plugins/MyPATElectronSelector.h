@@ -20,9 +20,6 @@ namespace pat {
     edm::InputTag vertexSrc_;
     edm::InputTag tracksSrc_;
     edm::InputTag EBRecHitsSrc_;
-    std::string isolatedLabel_;
-    std::string nonisolatedLabel_;
-    std::string looseLabel_;
     bool requireCaloDrivenSeed_;
     double minEt_;
     double minSuperClusterEt_;

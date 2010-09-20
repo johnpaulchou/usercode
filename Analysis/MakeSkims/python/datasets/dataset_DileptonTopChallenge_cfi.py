@@ -25,24 +25,5 @@ lumisToProcess = cms.untracked.VLuminosityBlockRange()
 from PhysicsTools.PatAlgos.tools.coreTools import *
 def doOtherStuff(process):
     removeMCMatching(process) # turn this off, anyway, since the genjets are missing
-    process.patTrigger.processName = "REDIGI"
-    process.patTriggerEvent.processName = "REDIGI"
     removeSpecificPATObjects(process, ['Jets'])
-    addCleaning(process)
     process.patDefaultSequence.remove(process.cleanPatJets)
-    
-#    finalPatElectronsSrc=cms.InputTag('selectedPatElectrons','isolated')
-#    finalPatMuonsSrc=cms.InputTag('selectedPatMuons','isolated')
-#    finalPatTausSrc=cms.InputTag('selectedPatTaus')
-#    process.countPatElectrons.src = finalPatElectronsSrc
-#    process.countPatMuons.src = finalPatMuonsSrc
-#    process.countPatLeptons.electronSource = finalPatElectronsSrc
-#    process.countPatLeptons.muonSource = finalPatMuonsSrc
-#    process.electronTriggerMatchHLTEle15LWL1R.src = finalPatElectronsSrc
-#    process.electronTriggerMatchHLTDoubleEle5SWL1R.src = finalPatElectronsSrc
-#    process.muonTriggerMatchL1Muon.src = finalPatMuonsSrc
-#    process.muonTriggerMatchHLTMu3.src = finalPatMuonsSrc
-#    process.muonTriggerMatchHLTIsoMu3.src = finalPatMuonsSrc
-#    process.muonTriggerMatchHLTDoubleMu3.src = finalPatMuonsSrc
-#    process.tauTriggerMatchHLTDoubleLooseIsoTau15.src = finalPatTausSrc
-

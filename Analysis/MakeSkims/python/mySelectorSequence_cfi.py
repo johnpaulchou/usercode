@@ -1,10 +1,12 @@
 import FWCore.ParameterSet.Config as cms
 
+from PhysicsTools.PatAlgos.tools.coreTools import *
 from PhysicsTools.PatAlgos.tools.jetTools import *
 from PhysicsTools.PatAlgos.tools.metTools import *
 
 from Analysis.MakeSkims.myMuonSelector_cfi import *
 from Analysis.MakeSkims.myElectronSelector_cfi import *
+from Analysis.MakeSkims.myPhotonSelector_cfi import *
 from Analysis.MakeSkims.myVertexSelector_cfi import *
 
 def ReplaceSequenceWithMySelectors(process):
@@ -45,55 +47,21 @@ def ReplaceSequenceWithMySelectors(process):
     # do some replacing
     process.selectedPatMuons = mySelectedPatMuons
     process.selectedPatElectrons = mySelectedPatElectrons
+    process.selectedPatPhotons = mySelectedPatPhotons
     process.selectedPatJets.cut = 'pt()>10.0'
     process.selectedPatJetsAK5PF.cut = 'pt()>10.0'
 
     # essentially renaming the filter
     process.selectedVertices = mySelectedVertices
 
+    # remove cleaning
+    removeCleaning(process)
+
     # add vertex selection to sequence
     # assumes that we've kept patElectrons, and that it is still at the beginning
     process.patDefaultSequence.replace(process.patElectrons,process.selectedVertices+process.patElectrons)
 
-    # setup the cleaning
-    process.cleanPatMuons.src = cms.InputTag('selectedPatMuons','isolated')
-
-    process.cleanPatElectrons.src = cms.InputTag('selectedPatElectrons','isolated')
-    process.cleanPatElectrons.checkOverlaps = cms.PSet()
-
-    process.cleanPatPhotons.src = cms.InputTag('selectedPatPhotons')
-    process.cleanPatPhotons.checkOverlaps = cms.PSet()
-
-    process.cleanPatTaus.src = cms.InputTag('selectedPatTaus')
-    process.cleanPatTaus.checkOverlaps = cms.PSet()
-    
-    process.cleanPatJets.checkOverlaps = cms.PSet(
-        electrons = cms.PSet(
-        src = cms.InputTag('cleanPatElectrons'),
-        deltaR = cms.double(0.4),
-        pairCut = cms.string(''),
-        checkRecoComponents = cms.bool(False),
-        algorithm = cms.string('byDeltaR'),
-        preselection = cms.string(''),
-        requireNoOverlaps = cms.bool(False)
-        ),
-        muons = cms.PSet(
-        src = cms.InputTag('cleanPatMuons'),
-        deltaR = cms.double(0.4),
-        pairCut = cms.string(''),
-        checkRecoComponents = cms.bool(False),
-        algorithm = cms.string('byDeltaR'),
-        preselection = cms.string(''),
-        requireNoOverlaps = cms.bool(False)
-        ),
-        )
-    process.cleanPatJetsAK5PF.checkOverlaps = process.cleanPatJets.checkOverlaps
-    process.cleanPatJetsAK5JPT.checkOverlaps = process.cleanPatJets.checkOverlaps
-
     # updated output
-    process.out.outputCommands += ['keep *_selectedPatPhotons_*_*',
-                                   'keep *_selectedPatElectrons_*_*',
-                                   'keep *_selectedPatMuons_*_*',
-                                   'keep *_selectedPatTaus_*_*',
-                                   'keep *_selectedPatJets*_*_*',
-                                   'keep *_selectedVertices_*_*']
+    process.out.outputCommands += ['keep *_selectedVertices_*_*',
+                                   'keep *_generalTracks_*_*',
+                                   'keep *_towerMaker_*_*']
