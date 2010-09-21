@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
     // emulate jet/met triggers
     bool passJet15=false, passJet30=false, passJet50=false, passMet45=false, passMet100=false;
     for(int i=0; i<static_cast<int>(jets_h->size()); i++) {
-      const CaloJet* jet=&jets_h->at(i);
+      const reco::CaloJet* jet=&jets_h->at(i);
       if(jet->pt()>15) passJet15=true;
       if(jet->pt()>30) passJet30=true;
       if(jet->pt()>50) passJet50=true;
@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
       double ratio = e2/e10;
       int nrbxhits=rbx.numRecHits();
       int nhpdhits=0;
-      for(std::vector<HcalNoiseHPD>::const_iterator it=rbx.HPDsBegin(); it!=rbx.HPDsEnd(); ++it) {
+      for(std::vector<reco::HcalNoiseHPD>::const_iterator it=rbx.HPDsBegin(); it!=rbx.HPDsEnd(); ++it) {
 	int temp=it->numRecHits();
 	if(temp>nhpdhits) nhpdhits=temp;
       }
