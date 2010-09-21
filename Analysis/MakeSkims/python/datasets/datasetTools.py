@@ -5,7 +5,6 @@ def linkDatasetIntoStandardProcess(process, dataset, setGlobalTag=True):
     if setGlobalTag:
         process.GlobalTag.globaltag = dataset.globaltag
     process.source.fileNames = dataset.readFiles
-    process.source.lumisToProcess = dataset.lumisToProcess
     for module in process._Process__outputmodules.values():
         module.fileName = dataset.outfile
 

@@ -21,8 +21,8 @@ readFiles.append('/store/data/Commissioning10/MinimumBias/RECO/Jun9thReReco_v1/0
 ## out files
 outfile = cms.untracked.string('Commissioning10Jun9thReReco.root')
 
-## good run list
-from Analysis.MakeSkims.datasets.json_June9thReReco_cfi import *
+## JSON file
+JSON = 'Analysis/MakeSkims/python/datasets/json_June9thReReco.JSON'
 
 ## do other stuff
 def doOtherStuff(process):

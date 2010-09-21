@@ -20,8 +20,8 @@ readFiles.append('/store/data/Run2010A/EG/RECO/Jul15thReReco-v1/0000/00AE7C49-42
 ## out files
 outfile = cms.untracked.string('EGJuly15thReReco.root')
 
-## good run list
-from Analysis.MakeSkims.datasets.json_July15thReReco_cfi import *
+## JSON file
+JSON = 'Analysis/MakeSkims/python/datasets/json_July15thReReco.JSON'
 
 ## do other stuff
 def doOtherStuff(process):

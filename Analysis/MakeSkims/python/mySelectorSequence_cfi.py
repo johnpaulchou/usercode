@@ -21,7 +21,7 @@ def ReplaceSequenceWithMySelectors(process):
                      doBTagging   = True,
                      jetCorrLabel = ('AK5', 'PF'),
                      doType1MET   = False, ## there is no use to apply residual jet corrections on CaloMET
-                     doL1Cleaning = True,
+                     doL1Cleaning = False,
                      doL1Counters = False,
                      genJetCollection=cms.InputTag("ak5GenJets"),
                      doJetID      = False  ## there is no use of jetID for Pflow jets
@@ -34,7 +34,7 @@ def ReplaceSequenceWithMySelectors(process):
                      doBTagging   = True,
                      jetCorrLabel = ('AK5', 'JPT'),
                      doType1MET   = False,
-                     doL1Cleaning = True,
+                     doL1Cleaning = False,
                      doL1Counters = False,
                      genJetCollection=cms.InputTag('ak5GenJets'),
                      doJetID      = True
@@ -63,5 +63,5 @@ def ReplaceSequenceWithMySelectors(process):
 
     # updated output
     process.out.outputCommands += ['keep *_selectedVertices_*_*',
-                                   'keep *_generalTracks_*_*',
+                                   'keep recoTracks_generalTracks_*_*',
                                    'keep *_towerMaker_*_*']
