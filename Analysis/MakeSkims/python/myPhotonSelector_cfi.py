@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 mySelectedPatPhotons = cms.EDFilter("MyPATPhotonSelector",
                                     src = cms.InputTag("patPhotons"),
-                                    vertexSrc = cms.InputTag("selectedVertices"),
+                                    vertexSrc = cms.InputTag("offlinePrimaryVertices"),
                                     EBRecHitsSrc = cms.InputTag("ecalRecHit","EcalRecHitsEB"),
                                     vetoPixelSeed = cms.bool(True),
                                     minEt = cms.double(10.0),

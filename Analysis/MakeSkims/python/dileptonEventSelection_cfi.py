@@ -14,7 +14,7 @@ def setupEventSelection(process):
                                                   minNumGenLeptons = cms.int32(2),
                                                   motherPdgIds = cms.vint32(23, 24, -24),
                                                   requiredTriggers = cms.vstring('HLT_Mu9','HLT_Ele10_LW_L1R'),
-                                                  vertexSrc = cms.InputTag('selectedVertices'),
+                                                  vertexSrc = cms.InputTag('offlinePrimaryVertices'),
                                                   minNumGoodVertices = cms.int32(1),
                                                   doNoiseStep = cms.bool(True),
                                                   noiseResultSrc = cms.InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"),

@@ -7,7 +7,6 @@ from PhysicsTools.PatAlgos.tools.metTools import *
 from Analysis.MakeSkims.myMuonSelector_cfi import *
 from Analysis.MakeSkims.myElectronSelector_cfi import *
 from Analysis.MakeSkims.myPhotonSelector_cfi import *
-from Analysis.MakeSkims.myVertexSelector_cfi import *
 
 def ReplaceSequenceWithMySelectors(process):
     # print warning message
@@ -50,18 +49,10 @@ def ReplaceSequenceWithMySelectors(process):
     process.selectedPatPhotons = mySelectedPatPhotons
     process.selectedPatJets.cut = 'pt()>10.0'
     process.selectedPatJetsAK5PF.cut = 'pt()>10.0'
-
-    # essentially renaming the filter
-    process.selectedVertices = mySelectedVertices
+    process.selectedPatJetsAK5JPT.cut = 'pt()>10.0'
 
     # remove cleaning
     removeCleaning(process)
 
-    # add vertex selection to sequence
-    # assumes that we've kept patElectrons, and that it is still at the beginning
-    process.patDefaultSequence.replace(process.patElectrons,process.selectedVertices+process.patElectrons)
-
     # updated output
-    process.out.outputCommands += ['keep *_selectedVertices_*_*',
-                                   'keep recoTracks_generalTracks_*_*',
-                                   'keep *_towerMaker_*_*']
+    process.out.outputCommands += ['keep *_offlinePrimaryVertices_*_*']

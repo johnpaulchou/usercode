@@ -18,7 +18,9 @@ DijetEventSelector::DijetEventSelector(edm::ParameterSet const& params) :
   edm::EDFilter(),
   HLTSrc_(params.getParameter<edm::InputTag>("HLTSrc")),
   vertexSrc_(params.getParameter<edm::InputTag>("vertexSrc")),
-  minNumGoodVertices_(params.getParameter<int>("minNumGoodVertices")),
+  minVertexNDOF_(params.getParameter<int>("minVertexNDOF")),
+  maxVertexZ_(params.getParameter<double>("maxVertexZ")),
+  maxVertexRho_(params.getParameter<double>("maxVertexRho")),
   doNoiseStep_(params.getParameter<bool>("doNoiseStep")),
   noiseResultSrc_(params.getParameter<edm::InputTag>("noiseResultSrc")),
   trackSrc_(params.getParameter<edm::InputTag>("trackSrc")),
@@ -40,6 +42,9 @@ DijetEventSelector::DijetEventSelector(edm::ParameterSet const& params) :
 
   // setup tree
   mytree_ = fs->make<TTree>("dijettree","Dijet Event Selector TTree");
+  mytree_->Branch("nrun",&b_nrun,"nrun/I");
+  mytree_->Branch("nlumi",&b_nlumi,"nlumi/I");
+  mytree_->Branch("nevent",&b_nevent,"nevent/I");
   mytree_->Branch("eventSelectionBitSet",&b_eventSelectionBitSet,"eventSelectionBitSet/I");
   mytree_->Branch("triggerBitSet",&b_triggerBitSet,"triggerBitSet/I");
   mytree_->Branch("nGoodVertices",&b_nGoodVertices,"nGoodVertices/I");
@@ -71,7 +76,14 @@ DijetEventSelector::DijetEventSelector(edm::ParameterSet const& params) :
 
 bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  ////////////////////////////////////////////
+  // setup stuff
+  ////////////////////////////////////////////
+
   b_eventSelectionBitSet=0;
+  b_nrun=iEvent.id().run();
+  b_nlumi=iEvent.luminosityBlock();
+  b_nevent=iEvent.id().event();
 
   ////////////////////////////////////////////
   // trigger selection
@@ -79,22 +91,18 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
 
   edm::Handle<edm::TriggerResults> triggerResults_h;
   iEvent.getByLabel(edm::InputTag(HLTSrc_), triggerResults_h);
-  if(!triggerResults_h.isValid()) {
-    edm::LogError("DataNotFound") << "HLT Trigger " << HLTSrc_ << " not found";
-    return false;
-  }
 
   // get the jet trigger names
   const edm::TriggerNames &triggerNames = iEvent.triggerNames(*triggerResults_h);
   std::vector<std::string> names=triggerNames.triggerNames();
 
   b_triggerBitSet=0;
-  bool foundJet50U=false;
+  bool foundJet50U=false, foundJet100U=false;
   for(unsigned int i=0; i<names.size(); i++) {
 
     // this is a jet trigger that was fired
     if(triggerResults_h->accept(i) &&
-       (names[i].find("Jet")!=std::string::npos || names[i].find("HT")!=std::string::npos)) {
+       (names[i].find("Jet")!=std::string::npos)) {
 
       // if a jet trigger has not been used before, add it to the map in order of its addition
       if(jetTriggerMap.count(names[i])==0) {
@@ -106,9 +114,11 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
       // mark this trigger as fired
       b_triggerBitSet |= (1 << jetTriggerMap[names[i]]);
       if(names[i]=="HLT_Jet50U") foundJet50U=true;
+      if(names[i]=="HLT_Jet100U") foundJet100U=true;
     }
   }
-  if(!foundJet50U) b_eventSelectionBitSet |= 0x1;
+  if(b_nrun<=144114 && !foundJet50U) b_eventSelectionBitSet |= 0x1;
+  if(b_nrun>144114 && !foundJet100U) b_eventSelectionBitSet |= 0x1;
 
   ////////////////////////////////////////////
   // primary vertex selection
@@ -117,15 +127,16 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
   b_nGoodVertices=0;
   edm::Handle< std::vector<reco::Vertex> > vertices_h;
   iEvent.getByLabel(vertexSrc_, vertices_h);
-  if(vertices_h.isValid()) {
-    for(unsigned int i=0; i<vertices_h->size() && i<maxGoodVertices_; i++) {
-      ++b_nGoodVertices;
-      b_vertexNDOF[i] = vertices_h->at(i).ndof();
-      b_vertexZ[i] = vertices_h->at(i).z();
-      b_vertexRho[i] = vertices_h->at(i).position().rho();
-    }
+  for(unsigned int i=0; i<vertices_h->size() && i<maxGoodVertices_; i++) {
+    ++b_nGoodVertices;
+    b_vertexNDOF[i] = vertices_h->at(i).ndof();
+    b_vertexZ[i] = vertices_h->at(i).z();
+    b_vertexRho[i] = vertices_h->at(i).position().rho();
   }
-  if(b_nGoodVertices<minNumGoodVertices_) b_eventSelectionBitSet |= 0x2;
+  if(b_nGoodVertices<1 ||
+     b_vertexNDOF[0]<minVertexNDOF_ ||
+     fabs(b_vertexZ[0])>maxVertexZ_ ||
+     fabs(b_vertexRho[0])>maxVertexRho_)  b_eventSelectionBitSet |= 0x2;
 
   ////////////////////////////////////////////
   // noise filter selection
@@ -134,10 +145,6 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
   if(doNoiseStep_) {
     edm::Handle<bool> noiseresult_h;
     iEvent.getByLabel(noiseResultSrc_, noiseresult_h);
-    if(!noiseresult_h.isValid()) {
-      edm::LogError("DataNotFound") << "noise result not found";
-      return false;
-    }
     if(*noiseresult_h==false) b_eventSelectionBitSet |= 0x4;
   }
 
@@ -147,10 +154,6 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
 
   edm::Handle<reco::TrackCollection> tracks_h;
   iEvent.getByLabel(trackSrc_,tracks_h);
-  if(!tracks_h.isValid()) {
-    edm::LogError("DataNotFound") << "track collection not found";
-    return false;
-  }
   b_nTracks=tracks_h->size();
   b_nHighPurityTracks=0;
   for(unsigned int i=0; i<tracks_h->size(); i++)
@@ -166,11 +169,6 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
 
   edm::Handle<std::vector<pat::Jet> > jets_h;
   iEvent.getByLabel(jetSrc_, jets_h);
-  if(!jets_h.isValid()) {
-    edm::LogError("DataNotFound") << "jet collection not found";
-    return false;
-  }
-
 
   // fill the tree, first
   b_nJets=jets_h->size();
@@ -221,7 +219,11 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
 
   if(b_dijetMass<minDijetMass_ || b_dijetDeta>maxDijetDeta_) b_eventSelectionBitSet |= 0x40;
 
+
+  ////////////////////////////////////////////
   // we're done
+  ////////////////////////////////////////////
+
   mytree_->Fill();
   return (b_eventSelectionBitSet==0);
 }  

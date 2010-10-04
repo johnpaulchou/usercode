@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 mySelectedPatElectrons = cms.EDFilter("MyPATElectronSelector",
                                       src = cms.InputTag("patElectrons"),
-                                      vertexSrc = cms.InputTag("selectedVertices"),
+                                      vertexSrc = cms.InputTag("offlinePrimaryVertices"),
                                       EBRecHitsSrc = cms.InputTag("ecalRecHit","EcalRecHitsEB"),
                                       tracksSrc = cms.InputTag("generalTracks"),
                                       requireCaloDrivenSeed = cms.bool(True),

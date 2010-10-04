@@ -41,10 +41,6 @@ bool MyPATElectronSelector::filter(edm::Event& iEvent, const edm::EventSetup& iS
   // the electrons we are going to select from
   edm::Handle< edm::View<pat::Electron> > h_electrons;
   iEvent.getByLabel(src_, h_electrons);
-  if(!h_electrons.isValid()) {
-    edm::LogWarning("DataNotFound") << "patElectrons with tag " << src_.encode() << " not found in the event.";
-    return false;
-  }
 
   // get the EB rechits so we can do spike cleaning
   edm::Handle<EcalRecHitCollection> h_ebrechits;
@@ -57,10 +53,6 @@ bool MyPATElectronSelector::filter(edm::Event& iEvent, const edm::EventSetup& iS
   // the muons we use for a special cleaning
   edm::Handle< edm::View<pat::Muon> > h_muons;
   iEvent.getByLabel(muonCleaningSrc_, h_muons);
-  if(!h_muons.isValid()) {
-    edm::LogWarning("DataNotFound") << "patMuons with tag " << muonCleaningSrc_.encode() << " not found in the event.";
-    return false;
-  }
 
   // setup some tools
   ImpactParameterCalculator ipcalc(iEvent, iSetup, vertexSrc_ );

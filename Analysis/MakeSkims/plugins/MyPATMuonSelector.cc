@@ -25,10 +25,6 @@ bool MyPATMuonSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
   // the muons we are going to select from
   edm::Handle< edm::View<pat::Muon> > h_muons;
   iEvent.getByLabel(src_, h_muons);
-  if(!h_muons.isValid()) {
-    edm::LogWarning("DataNotFound") << "patMuons with tag " << src_.encode() << " not found in the event.";
-    return false;
-  }
 
   // setup some tools
   ImpactParameterCalculator ipcalc(iEvent, iSetup, vertexSrc_ );

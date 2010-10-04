@@ -2,9 +2,12 @@
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 
 ## this is the dataset we're going to run on
-import Analysis.MakeSkims.datasets.dataset_JetMETTauJuly15thReReco_cfi as dataset
 #import Analysis.MakeSkims.datasets.dataset_ZtautauM20CTEQ66Summer10_cfi as dataset
 #import Analysis.MakeSkims.datasets.dataset_DileptonTopChallenge_cfi as dataset
+#import Analysis.MakeSkims.datasets.dataset_Commissioning10Jun9thReReco_cfi as dataset
+#import Analysis.MakeSkims.datasets.dataset_JetMETTauJuly15thReReco_cfi as dataset
+#import Analysis.MakeSkims.datasets.dataset_JetMETTauPromptRecoV4_cfi as dataset
+import Analysis.MakeSkims.datasets.dataset_JetMETPromptRecoV4_cfi as dataset
 from Analysis.MakeSkims.datasets.datasetTools import *
 linkDatasetIntoPatProcess(process, dataset)
 

@@ -29,7 +29,9 @@ namespace pat {
     // parameters
     edm::InputTag HLTSrc_;
     edm::InputTag vertexSrc_;
-    int minNumGoodVertices_;
+    int minVertexNDOF_;
+    double maxVertexZ_;
+    double maxVertexRho_;
     bool doNoiseStep_;
     edm::InputTag noiseResultSrc_;
     edm::InputTag trackSrc_;
@@ -44,6 +46,9 @@ namespace pat {
 
     // Tree to be filled
     TTree* mytree_;
+    int b_nrun;
+    int b_nlumi;
+    int b_nevent;
     int b_eventSelectionBitSet;
     int b_triggerBitSet;
     static const unsigned int maxGoodVertices_=50;

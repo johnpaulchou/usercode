@@ -34,28 +34,34 @@ def setupEventSelection(process):
                      doJetID      = False  ## there is no use of jetID for Pflow jets
                      )
 
+    ## do some basic preselection
+    process.selectedPatJetsAK7Calo.cut = 'pt()>10.0'
+    process.selectedPatJetsAK7PF.cut = 'pt()>10.0'
+
     ## HB/HE noise filter
     process.load('CommonTools.RecoAlgos.HBHENoiseFilterResultProducer_cfi')
 
     ## dijet event selection
     process.dijetEventSelection = cms.EDFilter('DijetEventSelector',
                                                HLTSrc = cms.InputTag('TriggerResults','','HLT'),
-                                               vertexSrc = cms.InputTag('selectedVertices'),
-                                               minNumGoodVertices = cms.int32(1),
+                                               vertexSrc = cms.InputTag('offlinePrimaryVertices'),
+                                               minVertexNDOF = cms.int32(5),
+                                               maxVertexZ = cms.double(24.0),
+                                               maxVertexRho = cms.double(2.0),
                                                doNoiseStep = cms.bool(True),
                                                noiseResultSrc = cms.InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"),
                                                trackSrc = cms.InputTag('generalTracks'),
                                                minHighQualityTrackFraction = cms.double(0.25),
                                                minNumTracksForMonsterEventCut = cms.int32(11),
                                                jetSrc = cms.InputTag('selectedPatJetsAK7Calo'),
-                                               leadJetMinRawPt = cms.double(15.0),
-                                               leadJetMinCorrPt = cms.double(15.0),
+                                               leadJetMinRawPt = cms.double(10.0),
+                                               leadJetMinCorrPt = cms.double(50.0),
                                                leadJetMaxAbsEta = cms.double(2.5),
-                                               subLeadJetMinRawPt = cms.double(15.0),
-                                               subLeadJetMinCorrPt = cms.double(15.0),
+                                               subLeadJetMinRawPt = cms.double(10.0),
+                                               subLeadJetMinCorrPt = cms.double(50.0),
                                                subLeadJetMaxAbsEta = cms.double(2.5),
-                                               minDijetMass = cms.double(100.0),
-                                               maxDijetDeta = cms.double(1.3),
+                                               minDijetMass = cms.double(200.0),
+                                               maxDijetDeta = cms.double(9999.9),
                                                )
     # rename output file
     oldname = os.path.splitext(process.out.fileName.value())[0]

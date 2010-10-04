@@ -41,10 +41,6 @@ bool MyPATPhotonSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSet
   // the photons we are going to select from
   edm::Handle< edm::View<pat::Photon> > h_photons;
   iEvent.getByLabel(src_, h_photons);
-  if(!h_photons.isValid()) {
-    edm::LogWarning("DataNotFound") << "patPhotons with tag " << src_.encode() << " not found in the event.";
-    return false;
-  }
 
   // get the vertex
   edm::Handle<std::vector<reco::Vertex> > h_vertices;
@@ -63,10 +59,6 @@ bool MyPATPhotonSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSet
   // the muons we use for a special cleaning
   edm::Handle< edm::View<pat::Muon> > h_muons;
   iEvent.getByLabel(muonCleaningSrc_, h_muons);
-  if(!h_muons.isValid()) {
-    edm::LogWarning("DataNotFound") << "patMuons with tag " << muonCleaningSrc_.encode() << " not found in the event.";
-    return false;
-  }
 
   // setup some tools
   ImpactParameterCalculator ipcalc(iEvent, iSetup, vertexSrc_ );
