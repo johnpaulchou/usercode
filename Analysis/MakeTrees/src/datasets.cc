@@ -184,36 +184,159 @@ void datasets::specialInsert(dataset& d)
 datasets::datasets()
 {
   dataset d;
-  d.name="JetMETPromptRecoV4DijetSelection370p4";
-  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetMETPromptRecoV4DijetSelection370p4.list", d.files);
+
+  d.name="JetMETSep17thReRecoDijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetMETSep17thReRecoDijetSelection384p2.list", d.files);
   d.isMC=false;
-  d.luminosity=2.649980731;
+  d.luminosity=2.889134263;
   d.luminosityError=d.luminosity*0.11;
   d.numEvents=0;
   d.xSection=0.0;
   d.xSectionError=0.0;
   specialInsert(d);
 
-
-  d.name="JetMETTauPromptRecoV4DijetSelection370p4";
-  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetMETTauPromptRecoV4DijetSelection370p4.list", d.files);
+  d.name="JetMETTauSep17thReRecoDijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetMETTauSep17thReRecoDijetSelection384p2.list", d.files);
   d.isMC=false;
-  d.luminosity=0.100376564;
+  d.luminosity=0.172082870;
   d.luminosityError=d.luminosity*0.11;
   d.numEvents=0;
   d.xSection=0.0;
   d.xSectionError=0.0;
   specialInsert(d);
 
-  d.name="JetMETTauJuly15thReRecoDijetSelection370p4";
-  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetMETTauJuly15thReRecoDijetSelection370p4.list", d.files);
+  d.name="JetRun2010BPromptRecoV2DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetRun2010BPromptRecoV2DijetSelection384p2.list", d.files);
   d.isMC=false;
-  d.luminosity=0.066199297;
+  d.luminosity=3.567454396;
   d.luminosityError=d.luminosity*0.11;
   d.numEvents=0;
   d.xSection=0.0;
   d.xSectionError=0.0;
   specialInsert(d);
+
+  d.name="QCDPt30to50Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt30to50Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=1100000;
+  d.xSection=50329230.0;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt50to80Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt50to80Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=1091306;
+  d.xSection=6026504.0;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt80to120Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt80to120Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=1094036;
+  d.xSection=751043.9;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt120to170Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt120to170Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=880000;
+  d.xSection=111930.2;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt170to300Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt170to300Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=880000;
+  d.xSection=24085.04;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt300to470Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt300to470Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=547370;
+  d.xSection=1201.385;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt470to600Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt470to600Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=544917;
+  d.xSection=74.15958;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt600to800Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt600to800Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=543140;
+  d.xSection=16.71798;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt800to1000Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt800to1000Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=436652;
+  d.xSection=2.002449;
+  d.xSectionError=0;
+  specialInsert(d);
+
+
+  d.name="QCDPt1000to1400Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt1000to1400Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=387112;
+  d.xSection=0.3625033;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt1400to1800Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt1400to1800Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=210496;
+  d.xSection=0.01179865;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt1800Pythia8Fall10DijetSelection384p2";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt1800Pythia8Fall10DijetSelection384p2.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=218065;
+  d.xSection=0.0003802342;
+  d.xSectionError=0;
+  specialInsert(d);
+
+
 
 }
 

@@ -89,36 +89,38 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
   // trigger selection
   ////////////////////////////////////////////
 
-  edm::Handle<edm::TriggerResults> triggerResults_h;
-  iEvent.getByLabel(edm::InputTag(HLTSrc_), triggerResults_h);
-
-  // get the jet trigger names
-  const edm::TriggerNames &triggerNames = iEvent.triggerNames(*triggerResults_h);
-  std::vector<std::string> names=triggerNames.triggerNames();
-
   b_triggerBitSet=0;
-  bool foundJet50U=false, foundJet100U=false;
-  for(unsigned int i=0; i<names.size(); i++) {
-
-    // this is a jet trigger that was fired
-    if(triggerResults_h->accept(i) &&
-       (names[i].find("Jet")!=std::string::npos)) {
-
-      // if a jet trigger has not been used before, add it to the map in order of its addition
-      if(jetTriggerMap.count(names[i])==0) {
-	unsigned int bit=jetTriggerMap.size();
-	jetTriggerMap[names[i]]=bit;
-	hTriggerBitSetDefs->GetXaxis()->SetBinLabel(bit+1, names[i].c_str());
+  if(iEvent.isRealData()) {
+    edm::Handle<edm::TriggerResults> triggerResults_h;
+    iEvent.getByLabel(edm::InputTag(HLTSrc_), triggerResults_h);
+    
+    // get the jet trigger names
+    const edm::TriggerNames &triggerNames = iEvent.triggerNames(*triggerResults_h);
+    std::vector<std::string> names=triggerNames.triggerNames();
+    
+    bool foundJet50U=false, foundJet100U=false;
+    for(unsigned int i=0; i<names.size(); i++) {
+      
+      // this is a jet trigger that was fired
+      if(triggerResults_h->accept(i) &&
+	 (names[i].find("Jet")!=std::string::npos)) {
+	
+	// if a jet trigger has not been used before, add it to the map in order of its addition
+	if(jetTriggerMap.count(names[i])==0) {
+	  unsigned int bit=jetTriggerMap.size();
+	  jetTriggerMap[names[i]]=bit;
+	  hTriggerBitSetDefs->GetXaxis()->SetBinLabel(bit+1, names[i].c_str());
+	}
+	
+	// mark this trigger as fired
+	b_triggerBitSet |= (1 << jetTriggerMap[names[i]]);
+	if(names[i]=="HLT_Jet50U") foundJet50U=true;
+	if(names[i]=="HLT_Jet100U") foundJet100U=true;
       }
-
-      // mark this trigger as fired
-      b_triggerBitSet |= (1 << jetTriggerMap[names[i]]);
-      if(names[i]=="HLT_Jet50U") foundJet50U=true;
-      if(names[i]=="HLT_Jet100U") foundJet100U=true;
     }
+    if(b_nrun<=144114 && !foundJet50U) b_eventSelectionBitSet |= 0x1;
+    if(b_nrun>144114 && !foundJet100U) b_eventSelectionBitSet |= 0x1;
   }
-  if(b_nrun<=144114 && !foundJet50U) b_eventSelectionBitSet |= 0x1;
-  if(b_nrun>144114 && !foundJet100U) b_eventSelectionBitSet |= 0x1;
 
   ////////////////////////////////////////////
   // primary vertex selection

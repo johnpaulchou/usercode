@@ -46,6 +46,9 @@ class dataset {
 // container class for multiple datasets
 class datasetContainer {
  public:
+  typedef std::set<dataset>::const_iterator const_iterator;
+  typedef std::set<dataset>::iterator iterator;
+
   datasetContainer() {}
   ~datasetContainer() {}
 

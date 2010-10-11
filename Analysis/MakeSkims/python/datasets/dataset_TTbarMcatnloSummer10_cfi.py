@@ -10,7 +10,7 @@ globaltag = cms.string('START38_V10::All')
 ## is MC
 isMC = True
 
-## read files (no files are found locally)
+## read files
 readFiles = cms.untracked.vstring()
 readFiles.append('/store/mc/Summer10/TTbar-mcatnlo/GEN-SIM-RECO/START37_V5_S09-v1/0000/0268EFE9-DC85-DF11-ABC0-002618943902.root')
 readFiles.append('/store/mc/Summer10/TTbar-mcatnlo/GEN-SIM-RECO/START37_V5_S09-v1/0000/02C33E82-EA85-DF11-A055-0026189437FE.root')
