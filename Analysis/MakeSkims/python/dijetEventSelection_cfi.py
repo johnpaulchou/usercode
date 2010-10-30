@@ -3,9 +3,14 @@ import FWCore.ParameterSet.Config as cms
 import os;
 
 from PhysicsTools.PatAlgos.tools.jetTools import *
+from PhysicsTools.PatAlgos.tools.metTools import *
+from PhysicsTools.PatAlgos.tools.coreTools import *
 
 def setupEventSelection(process):
     tag = 'DijetSelection'
+
+    ## specifically removes taus
+    removeSpecificPATObjects(process, ['Taus'])
 
     ## add AK7 calojets
     addJetCollection(process,cms.InputTag('ak7CaloJets'),
@@ -34,9 +39,13 @@ def setupEventSelection(process):
                      doJetID      = False  ## there is no use of jetID for Pflow jets
                      )
 
+    ## add extra MET categories
+    addPfMET(process, 'PF')
+
     ## do some basic preselection
-    process.selectedPatJetsAK7Calo.cut = 'pt()>10.0'
-    process.selectedPatJetsAK7PF.cut = 'pt()>10.0'
+    process.selectedPatJetsAK7Calo.cut = 'pt()>30.0'
+    process.selectedPatJetsAK7PF.cut = 'pt()>30.0'
+    process.selectedPatJets.cut = 'pt()>30.0'
 
     ## HB/HE noise filter
     process.load('CommonTools.RecoAlgos.HBHENoiseFilterResultProducer_cfi')
@@ -55,13 +64,13 @@ def setupEventSelection(process):
                                                minNumTracksForMonsterEventCut = cms.int32(11),
                                                jetSrc = cms.InputTag('selectedPatJetsAK7Calo'),
                                                leadJetMinRawPt = cms.double(10.0),
-                                               leadJetMinCorrPt = cms.double(50.0),
+                                               leadJetMinCorrPt = cms.double(100.0),
                                                leadJetMaxAbsEta = cms.double(2.5),
                                                subLeadJetMinRawPt = cms.double(10.0),
-                                               subLeadJetMinCorrPt = cms.double(50.0),
+                                               subLeadJetMinCorrPt = cms.double(100.0),
                                                subLeadJetMaxAbsEta = cms.double(2.5),
-                                               minDijetMass = cms.double(200.0),
-                                               maxDijetDeta = cms.double(9999.9),
+                                               minDijetMass = cms.double(500.0),
+                                               maxDijetDeta = cms.double(2.0),
                                                )
     # rename output file
     oldname = os.path.splitext(process.out.fileName.value())[0]
