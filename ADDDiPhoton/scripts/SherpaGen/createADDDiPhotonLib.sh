@@ -10,7 +10,6 @@ set NED=$2
 set KKCONVENTION=$3
 set LOWMASSCUT=$4
 set HIGHMASSCUT=$5
-set RANDOMSEED=$6
 set PROCESS = "MS${MSSCALE}_NED${NED}_KK${KKCONVENTION}_MASSCUT_${LOWMASSCUT}_${HIGHMASSCUT}"
 
 #======create library==========
@@ -44,11 +43,27 @@ scram b
 cmsDriver.py $LIBNAME/$PROCESS/sherpa_${PROCESS}_cff.py -s GEN,SIM,DIGI,L1,DIGI2RAW,RAW2DIGI,RECO --conditions ${CONDITIONS}::All --datatier GEN-SIM-RECO --eventcontent RECOSIM  --customise $LIBNAME/$PROCESS/sherpa_custom.py -n ${NEVENTS} --no_exec --fileout output_${PROCESS}.root
 
 # modify config script
-echo "process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )" > modified.py
-echo "process.RandomNumberGeneratorService = cms.Service('RandomNumberGeneratorService'," >> modified.py
-echo "   moduleSeeds = cms.PSet(generator = cms.untracked.uint32(${RANDOMSEED})))" >> modified.py
-
+echo "from FWCore.ParameterSet.VarParsing import VarParsing" > modified.py
+echo "options = VarParsing ('analysis')" >> modified.py
+echo "options.register('seed',1,VarParsing.multiplicity.singleton,VarParsing.varType.int,'seed')" >> modified.py
+echo "options.maxEvents=20" >> modified.py
+echo "options.parseArguments()" >> modified.py
+echo "process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )" >> modified.py
+echo "process.RandomNumberGeneratorService.generator = cms.PSet(initialSeed=cms.untracked.uint32(options.seed), engineName = cms.untracked.string('HepJamesRandom'))" >> modified.py
+echo "process.maxEvents.input = cms.untracked.int32(options.maxEvents)" >> modified.py
 cat sherpa_${PROCESS}_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_RAW2DIGI_RECO.py modified.py > runSherpa.py
+
+# create runscript
+echo '#\!/bin/tcsh -f' > run.tcsh
+echo 'set CWD=${PWD}' >> run.tcsh
+echo 'set WD=`dirname $0`' >> run.tcsh
+echo 'cd $WD' >> run.tcsh
+echo 'cmsRun runSherpa.py maxEvents=$1 seed=$2' >> run.tcsh
+echo cp output_${PROCESS}.root \$CWD/output_${PROCESS}_\$2.root >> run.tcsh
+chmod 777 run.tcsh
+
+# run runscript to process library
+./run.tcsh 1 1
 
 # final result
 echo "MS, NED, KK, LOWMASS, HIGHMASS:"
