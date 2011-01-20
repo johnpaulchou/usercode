@@ -39,11 +39,9 @@ const pat::JetCorrFactors::CorrStep JetCorrLevel=pat::JetCorrFactors::L3;
 const std::string jetcoll="selectedPatJetsAK7Calo";
 const std::string metcoll="patMETs";
 const std::string muoncoll="selectedPatMuons";
-const std::string trkcntcoll="trackCountingHighEffBJetTags";
-const std::string secvtxcoll="simpleSecondaryVertexHighEffBJetTags";
 const double jetptcut=30.0;
-const double dijetmasscut=400.0;
-const double dijetdetacut=2.2;
+const double dijetmasscut=500.0;
+const double dijetdetacut=2.0;
 
 enum ANATYPES { ANA_DATA=0, ANA_JETMC, NANATYPES };
 
@@ -96,9 +94,12 @@ int main(int argc, char* argv[])
   int b_leadJet, b_subLeadJet, b_nJets;
   const int maxjets=100;
   double b_jetRawPt[maxjets], b_jetCorrPt[maxjets], b_jetEta[maxjets], b_jetPhi[maxjets], b_jetEMF[maxjets], b_jetIDEMF[maxjets], b_jetFHPD[maxjets];
-  int b_jetN90Hits[maxjets], b_jetNTrkVtx[maxjets], b_jetPassJetID[maxjets];
-  double b_jetSecVtxTagDisc[maxjets], b_jetTrkCntTagDisc[maxjets];
-  int b_jetSecVtxTag[maxjets], b_jetTrkCntTag[maxjets];
+  int b_jetN90Hits[maxjets], b_jetNTrkVtx[maxjets], b_jetPassJetID[maxjets], b_jetFlavor[maxjets];
+  double b_jetSecVtxTagLooseDisc[maxjets], b_jetTrkCntTagLooseDisc[maxjets], b_jetSecVtxTagTightDisc[maxjets], b_jetTrkCntTagTightDisc[maxjets];
+  double b_jetSecVtxFlightDist[maxjets], b_jetSecVtxFlightDistSig[maxjets], b_jetSecVtxMass[maxjets];
+  double b_jetFirstTrkIP3d[maxjets], b_jetFirstTrkIP3dSig[maxjets], b_jetFirstTrkIP2d[maxjets], b_jetFirstTrkIP2dSig[maxjets];
+  double b_jetSecondTrkIP3d[maxjets], b_jetSecondTrkIP3dSig[maxjets], b_jetSecondTrkIP2d[maxjets], b_jetSecondTrkIP2dSig[maxjets];
+  double b_jetThirdTrkIP3d[maxjets], b_jetThirdTrkIP3dSig[maxjets], b_jetThirdTrkIP2d[maxjets], b_jetThirdTrkIP2dSig[maxjets];
   double b_dijetMass, b_dijetDeta, b_dijetDphi;
   double b_met, b_sumEt, b_metSig;
   int b_nMuons;
@@ -127,10 +128,26 @@ int main(int argc, char* argv[])
   mytree->Branch("jetN90Hits",b_jetN90Hits,"jetN90Hits[nJets]/I");
   mytree->Branch("jetNTrkVtx",b_jetNTrkVtx,"jetNTrkVtx[nJets]/I");
   mytree->Branch("jetPassJetID",b_jetPassJetID,"jetPassJetID[nJets]/I");
-  mytree->Branch("jetSecVtxTagDisc",b_jetSecVtxTagDisc,"jetSecVtxTagDisc[nJets]/D");
-  mytree->Branch("jetTrkCntTagDisc",b_jetTrkCntTagDisc,"jetTrkCntTagDisc[nJets]/D");
-  mytree->Branch("jetSecVtxTag",b_jetSecVtxTag,"jetSecVtxTag[nJets]/I");
-  mytree->Branch("jetTrkCntTag",b_jetTrkCntTag,"jetTrkCntTag[nJets]/I");
+  mytree->Branch("jetFlavor",b_jetFlavor,"jetFlavor[nJets]/I");
+  mytree->Branch("jetSecVtxTagLooseDisc",b_jetSecVtxTagLooseDisc,"jetSecVtxTagLooseDisc[nJets]/D");
+  mytree->Branch("jetTrkCntTagLooseDisc",b_jetTrkCntTagLooseDisc,"jetTrkCntTagLooseDisc[nJets]/D");
+  mytree->Branch("jetSecVtxTagTightDisc",b_jetSecVtxTagTightDisc,"jetSecVtxTagTightDisc[nJets]/D");
+  mytree->Branch("jetTrkCntTagTightDisc",b_jetTrkCntTagTightDisc,"jetTrkCntTagTightDisc[nJets]/D");
+  mytree->Branch("jetSecVtxFlightDist",b_jetSecVtxFlightDist,"jetSecVtxFlightDist[nJets]/D");
+  mytree->Branch("jetSecVtxFlightDistSig",b_jetSecVtxFlightDistSig,"jetSecVtxFlightDistSig[nJets]/D");
+  mytree->Branch("jetSecVtxMass",b_jetSecVtxMass,"jetSecVtxMass[nJets]/D");
+  mytree->Branch("jetFirstTrkIP3d",b_jetFirstTrkIP3d,"jetFirstTrkIP3d[nJets]/D");
+  mytree->Branch("jetFirstTrkIP3dSig",b_jetFirstTrkIP3dSig,"jetFirstTrkIP3dSig[nJets]/D");
+  mytree->Branch("jetFirstTrkIP2d",b_jetFirstTrkIP2d,"jetFirstTrkIP2d[nJets]/D");
+  mytree->Branch("jetFirstTrkIP2dSig",b_jetFirstTrkIP2dSig,"jetFirstTrkIP2dSig[nJets]/D");
+  mytree->Branch("jetSecondTrkIP3d",b_jetSecondTrkIP3d,"jetSecondTrkIP3d[nJets]/D");
+  mytree->Branch("jetSecondTrkIP3dSig",b_jetSecondTrkIP3dSig,"jetSecondTrkIP3dSig[nJets]/D");
+  mytree->Branch("jetSecondTrkIP2d",b_jetSecondTrkIP2d,"jetSecondTrkIP2d[nJets]/D");
+  mytree->Branch("jetSecondTrkIP2dSig",b_jetSecondTrkIP2dSig,"jetSecondTrkIP2dSig[nJets]/D");
+  mytree->Branch("jetThirdTrkIP3d",b_jetThirdTrkIP3d,"jetThirdTrkIP3d[nJets]/D");
+  mytree->Branch("jetThirdTrkIP3dSig",b_jetThirdTrkIP3dSig,"jetThirdTrkIP3dSig[nJets]/D");
+  mytree->Branch("jetThirdTrkIP2d",b_jetThirdTrkIP2d,"jetThirdTrkIP2d[nJets]/D");
+  mytree->Branch("jetThirdTrkIP2dSig",b_jetThirdTrkIP2dSig,"jetThirdTrkIP2dSig[nJets]/D");
   mytree->Branch("dijetMass",&b_dijetMass,"dijetMass/D");
   mytree->Branch("dijetDeta",&b_dijetDeta,"dijetDeta/D");
   mytree->Branch("dijetDphi",&b_dijetDphi,"dijetDphi/D");
@@ -153,22 +170,20 @@ int main(int argc, char* argv[])
   ////////////////////////////////////////////////////////////////////////////////
 
   std::vector<std::string> datasetnames[NANATYPES];
-  datasetnames[ANA_DATA].push_back("JetMETSep17thReRecoDijetSelection384p2");
-  datasetnames[ANA_DATA].push_back("JetMETTauSep17thReRecoDijetSelection384p2");
-  datasetnames[ANA_DATA].push_back("JetRun2010BPromptRecoV2DijetSelection384p2");
+  datasetnames[ANA_DATA].push_back("JetMETTauNov4thReRecoDijetSelection385p3");
+  datasetnames[ANA_DATA].push_back("JetMETNov4thReRecoDijetSelection385p3");
+  datasetnames[ANA_DATA].push_back("JetNov4thReRecoDijetSelection385p3");
 
-  datasetnames[ANA_JETMC].push_back("QCDPt30to50Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt50to80Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt80to120Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt120to170Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt170to300Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt300to470Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt470to600Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt600to800Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt800to1000Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt1000to1400Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt1400to1800Pythia8Fall10DijetSelection384p2");
-  datasetnames[ANA_JETMC].push_back("QCDPt1800Pythia8Fall10DijetSelection384p2");
+  datasetnames[ANA_JETMC].push_back("QCDPt80to120Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt120to170Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt170to300Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt300to470Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt470to600Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt600to800Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt800to1000Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt1000to1400Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt1400to1800Pythia6Fall10DijetSelection385p3");
+  datasetnames[ANA_JETMC].push_back("QCDPt1800Pythia6Fall10DijetSelection385p3");
 
   // get the relevant dataset containers
   datasetContainer datasetConts[NANATYPES];
@@ -252,11 +267,65 @@ int main(int argc, char* argv[])
       b_jetFHPD[b_nJets] = jet->jetID().fHPD;
       b_jetN90Hits[b_nJets] = jet->jetID().n90Hits;
       b_jetNTrkVtx[b_nJets] = jet->associatedTracks().size();
+      b_jetNTrkVtx[b_nJets] = 0;
       b_jetPassJetID[b_nJets] = (b_jetIDEMF[b_nJets]>0.01 && b_jetFHPD[b_nJets]<0.98 && b_jetN90Hits[b_nJets]>1);
-      b_jetSecVtxTagDisc[b_nJets] = jet->bDiscriminator(secvtxcoll);
-      b_jetTrkCntTagDisc[b_nJets] = jet->bDiscriminator(trkcntcoll);
-      b_jetSecVtxTag[b_nJets] = jet->bDiscriminator(secvtxcoll)>1.74;
-      b_jetTrkCntTag[b_nJets] = jet->bDiscriminator(trkcntcoll)>3.3;
+      b_jetFlavor[b_nJets] = jet->partonFlavour();
+
+      b_jetSecVtxTagLooseDisc[b_nJets] = jet->bDiscriminator("simpleSecondaryVertexHighEffBJetTags");
+      b_jetTrkCntTagLooseDisc[b_nJets] = jet->bDiscriminator("trackCountingHighEffBJetTags");
+      b_jetSecVtxTagTightDisc[b_nJets] = jet->bDiscriminator("simpleSecondaryVertexHighPurBJetTags");
+      b_jetTrkCntTagTightDisc[b_nJets] = jet->bDiscriminator("trackCountingHighPurBJetTags");
+
+      // get the secvtx tagged info
+      /*      const reco::SecondaryVertexTagInfo* secvtxinfo = jet->tagInfoSecondaryVertex();
+      if(secvtxinfo->nVertices()>0) {
+	b_jetSecVtxFlightDist[b_nJets] = secvtxinfo->flightDistance(0).value();
+	b_jetSecVtxFlightDistSig[b_nJets] = secvtxinfo->flightDistance(0).significance();
+	//	b_jetSecVtxMass[b_nJets] = secvtxinfo->secondaryVertex(0).p4().M();
+      } else {
+	b_jetSecVtxFlightDist[b_nJets] = -999.;
+	b_jetSecVtxFlightDistSig[b_nJets] = -999.;
+	b_jetSecVtxMass[b_nJets] = -999.;
+      }
+
+      // get the ip tagged info
+      const reco::TrackIPTagInfo* ipinfo = jet->tagInfoTrackIP();
+      const std::vector<reco::TrackIPTagInfo::TrackIPData> ipdata = ipinfo->impactParameterData();
+      if(ipdata.size()>=1) {
+	b_jetFirstTrkIP3d[b_nJets] = ipdata[0].ip3d.value();
+	b_jetFirstTrkIP3dSig[b_nJets] = ipdata[0].ip3d.significance();
+	b_jetFirstTrkIP2d[b_nJets] = ipdata[0].ip2d.value();
+	b_jetFirstTrkIP2dSig[b_nJets] = ipdata[0].ip2d.significance();
+      } else {
+	b_jetFirstTrkIP3d[b_nJets] = -999;
+	b_jetFirstTrkIP3dSig[b_nJets] = -999;
+	b_jetFirstTrkIP2d[b_nJets] = -999;
+	b_jetFirstTrkIP2dSig[b_nJets] = -999;
+      }
+      if(ipdata.size()>=2) {
+	b_jetSecondTrkIP3d[b_nJets] = ipdata[1].ip3d.value();
+	b_jetSecondTrkIP3dSig[b_nJets] = ipdata[1].ip3d.significance();
+	b_jetSecondTrkIP2d[b_nJets] = ipdata[1].ip2d.value();
+	b_jetSecondTrkIP2dSig[b_nJets] = ipdata[1].ip2d.significance();
+      } else {
+	b_jetSecondTrkIP3d[b_nJets] = -999;
+	b_jetSecondTrkIP3dSig[b_nJets] = -999;
+	b_jetSecondTrkIP2d[b_nJets] = -999;
+	b_jetSecondTrkIP2dSig[b_nJets] = -999;
+      }
+      if(ipdata.size()>=3) {
+	b_jetThirdTrkIP3d[b_nJets] = ipdata[2].ip3d.value();
+	b_jetThirdTrkIP3dSig[b_nJets] = ipdata[2].ip3d.significance();
+	b_jetThirdTrkIP2d[b_nJets] = ipdata[2].ip2d.value();
+	b_jetThirdTrkIP2dSig[b_nJets] = ipdata[2].ip2d.significance();
+      } else {
+	b_jetThirdTrkIP3d[b_nJets] = -999;
+	b_jetThirdTrkIP3dSig[b_nJets] = -999;
+	b_jetThirdTrkIP2d[b_nJets] = -999;
+	b_jetThirdTrkIP2dSig[b_nJets] = -999;
+	} */
+
+
       ++b_nJets;
     }
 

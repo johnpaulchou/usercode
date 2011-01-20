@@ -82,6 +82,11 @@ def setupEventSelection(process):
                                        closeFileFast = cms.untracked.bool(True)
                                        )
 
+    # drop large data
+    process.out.outputCommands += ['drop CaloTowers_*_*_*',
+                                   'drop recoPFCandidates_*_*_*',
+                                   'drop recoBaseTagInfos_selectedPatJets_*_*',
+                                   'drop recoBaseTagInfos_selectedPatJetsAK7PF_*_*']
     # setup sequence
     process.dijetEventSelectionSequence = cms.Sequence(process.HBHENoiseFilterResultProducer*process.dijetEventSelection)
     process.out.SelectEvents = cms.untracked.PSet ( SelectEvents = cms.vstring('p') )

@@ -1,5 +1,6 @@
 #include "Analysis/MakeTrees/interface/datasets.h"
 
+#include <iostream>
 #include <fstream>
 #include <cassert>
 
@@ -151,13 +152,22 @@ void datasets::getFilelistFromFile(std::string filename, std::vector<std::string
   const int maxlen=1000;
   std::ifstream ifs;
   ifs.open(filename.c_str(), std::ifstream::in);
+  int cnt=0;
   char s[maxlen];
   while(ifs) {
     ifs.getline(s, maxlen);
-    if(ifs) filelist.push_back(s);
+    if(ifs) {
+      filelist.push_back(s);
+      ++cnt;
+    }
   }
   ifs.close();
   
+  if(cnt<=0) {
+    std::cout << "Warning: no files were found in " << filename << std::endl;
+    assert(cnt>0);
+  }
+
   return;
 }
 
@@ -209,6 +219,36 @@ datasets::datasets()
   getFilelistFromFile("/uscms/home/johnpaul/datasets/JetRun2010BPromptRecoV2DijetSelection384p2.list", d.files);
   d.isMC=false;
   d.luminosity=3.567454396;
+  d.luminosityError=d.luminosity*0.11;
+  d.numEvents=0;
+  d.xSection=0.0;
+  d.xSectionError=0.0;
+  specialInsert(d);
+
+  d.name="JetMETTauNov4thReRecoDijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetMETTauNov4thReRecoDijetSelection385p3.list", d.files);
+  d.isMC=false;
+  d.luminosity=0.167488688;
+  d.luminosityError=d.luminosity*0.11;
+  d.numEvents=0;
+  d.xSection=0.0;
+  d.xSectionError=0.0;
+  specialInsert(d);
+
+  d.name="JetMETNov4thReRecoDijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetMETNov4thReRecoDijetSelection385p3.list", d.files);
+  d.isMC=false;
+  d.luminosity=2.895797321;
+  d.luminosityError=d.luminosity*0.11;
+  d.numEvents=0;
+  d.xSection=0.0;
+  d.xSectionError=0.0;
+  specialInsert(d);
+
+  d.name="JetNov4thReRecoDijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/JetNov4thReRecoDijetSelection385p3.list", d.files);
+  d.isMC=false;
+  d.luminosity=30.687634908;
   d.luminosityError=d.luminosity*0.11;
   d.numEvents=0;
   d.xSection=0.0;
@@ -336,7 +376,105 @@ datasets::datasets()
   d.xSectionError=0;
   specialInsert(d);
 
+  d.name="QCDPt80to120Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt80to120Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=3208299;
+  d.xSection=784265.2;
+  d.xSectionError=0;
+  specialInsert(d);
 
+  d.name="QCDPt120to170Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt120to170Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=3045200;
+  d.xSection=115133.5;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt170to300Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt170to300Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=3220080;
+  d.xSection=24262.83;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt300to470Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt300to470Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=3171240;
+  d.xSection=1168.494;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt470to600Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt470to600Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=2019732;
+  d.xSection=70.22421;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt600to800Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt600to800Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=1979055;
+  d.xSection=15.55374;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt800to1000Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt800to1000Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=2084404;
+  d.xSection=1.843688;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt1000to1400Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt1000to1400Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=150000;
+  d.xSection=0.3321052;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt1400to1800Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt1400to1800Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=100000;
+  d.xSection=0.01087214;
+  d.xSectionError=0;
+  specialInsert(d);
+
+  d.name="QCDPt1800Pythia6Fall10DijetSelection385p3";
+  getFilelistFromFile("/uscms/home/johnpaul/datasets/QCDPt1800Pythia6Fall10DijetSelection385p3.list", d.files);
+  d.isMC=true;
+  d.luminosity=0;
+  d.luminosityError=0;
+  d.numEvents=100000;
+  d.xSection=0.000357463;
+  d.xSectionError=0;
+  specialInsert(d);
 
 }
 
