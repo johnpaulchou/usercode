@@ -11,7 +11,6 @@
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/Math/interface/Point3D.h"
 
-#include "RecoLocalCalo/EcalRecAlgos/interface/EcalSeverityLevelAlgo.h"
 
 using namespace pat;
 
@@ -62,7 +61,6 @@ bool MyPATPhotonSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSet
 
   // setup some tools
   ImpactParameterCalculator ipcalc(iEvent, iSetup, vertexSrc_ );
-  EcalSeverityLevelAlgo ecalseverity;
 
   // loop over the photons
   for(edm::View<pat::Photon>::const_iterator it=h_photons->begin(); it!=h_photons->end(); ++it) {
@@ -76,11 +74,6 @@ bool MyPATPhotonSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSet
     if(pho.p4().Pt()<minEt_) continue;
     if(fabs(pho.p4().eta())>maxEta_) continue;
     if(!pho.isEB() && !pho.isEE()) continue;
-
-    // do swiss-cross cleaning
-    const DetId seedId=pho.superCluster()->seed()->seed();
-    double swissCross = ecalseverity.swissCross(seedId, *h_ebrechits);
-    if(swissCross>=maxSwissCross_) continue;
 
     // muon cleaning - loop over the muons
     bool foundMuon=false;

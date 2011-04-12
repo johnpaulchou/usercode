@@ -5,7 +5,6 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
-#include "RecoLocalCalo/EcalRecAlgos/interface/EcalSeverityLevelAlgo.h"
 
 #include "RecoEgamma/EgammaTools/interface/ConversionFinder.h"
 
@@ -24,7 +23,6 @@ MyPATElectronSelector::MyPATElectronSelector(const edm::ParameterSet& params)
     minEt_(params.getParameter<double>("minEt") ),
     minSuperClusterEt_(params.getParameter<double>("minSuperClusterEt") ),
     maxEta_(params.getParameter<double>("maxEta") ),
-    maxSwissCross_(params.getParameter<double>("maxSwissCross") ),
     muonCleaningSrc_(params.getParameter<edm::InputTag>("muonCleaningSrc") ),
     muonCleaningIDs_(params.getParameter<std::vector<std::string> >("muonCleaningIDs") ),
     muonCleaningMinNumValidHits_(params.getParameter<unsigned int>("muonCleaningMinNumValidHits") ),
@@ -56,7 +54,6 @@ bool MyPATElectronSelector::filter(edm::Event& iEvent, const edm::EventSetup& iS
 
   // setup some tools
   ImpactParameterCalculator ipcalc(iEvent, iSetup, vertexSrc_ );
-  EcalSeverityLevelAlgo ecalseverity;
 
   // calculate the b-field
   double bfield=BFieldCalculator::calculate(iEvent, iSetup);
@@ -73,11 +70,6 @@ bool MyPATElectronSelector::filter(edm::Event& iEvent, const edm::EventSetup& iS
     if(eleet<minEt_) continue;
     if(ele.superCluster()->energy()/cosh(ele.superCluster()->eta())<minSuperClusterEt_) continue;
     if(fabs(ele.eta())>=maxEta_) continue;
-
-    // do swiss-cross cleaning
-    const DetId seedId=ele.superCluster()->seed()->seed();
-    double swissCross = ecalseverity.swissCross(seedId, *h_ebrechits);
-    if(swissCross>=maxSwissCross_) continue;
 
     // muon cleaning - loop over the muons
     bool foundMuon=false;
