@@ -35,7 +35,6 @@
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 
-const pat::JetCorrFactors::CorrStep JetCorrLevel=pat::JetCorrFactors::L3;
 const std::string jetcoll="selectedPatJetsAK7Calo";
 const std::string metcoll="patMETs";
 const std::string muoncoll="selectedPatMuons";
@@ -91,15 +90,11 @@ int main(int argc, char* argv[])
   char b_datasetName[maxstrsize];
   double b_lumi, b_lumiErr;
   double b_eventWeight;
-  int b_leadJet, b_subLeadJet, b_nJets;
+  int b_nJets;
   const int maxjets=100;
   double b_jetRawPt[maxjets], b_jetCorrPt[maxjets], b_jetEta[maxjets], b_jetPhi[maxjets], b_jetEMF[maxjets], b_jetIDEMF[maxjets], b_jetFHPD[maxjets];
   int b_jetN90Hits[maxjets], b_jetNTrkVtx[maxjets], b_jetPassJetID[maxjets], b_jetFlavor[maxjets];
   double b_jetSecVtxTagLooseDisc[maxjets], b_jetTrkCntTagLooseDisc[maxjets], b_jetSecVtxTagTightDisc[maxjets], b_jetTrkCntTagTightDisc[maxjets];
-  double b_jetSecVtxFlightDist[maxjets], b_jetSecVtxFlightDistSig[maxjets], b_jetSecVtxMass[maxjets];
-  double b_jetFirstTrkIP3d[maxjets], b_jetFirstTrkIP3dSig[maxjets], b_jetFirstTrkIP2d[maxjets], b_jetFirstTrkIP2dSig[maxjets];
-  double b_jetSecondTrkIP3d[maxjets], b_jetSecondTrkIP3dSig[maxjets], b_jetSecondTrkIP2d[maxjets], b_jetSecondTrkIP2dSig[maxjets];
-  double b_jetThirdTrkIP3d[maxjets], b_jetThirdTrkIP3dSig[maxjets], b_jetThirdTrkIP2d[maxjets], b_jetThirdTrkIP2dSig[maxjets];
   double b_dijetMass, b_dijetDeta, b_dijetDphi;
   double b_met, b_sumEt, b_metSig;
   int b_nMuons;
@@ -116,8 +111,6 @@ int main(int argc, char* argv[])
   mytree->Branch("lumi",&b_lumi,"lumi/D");
   mytree->Branch("lumiErr",&b_lumiErr,"lumiErr/D");
   mytree->Branch("nJets",&b_nJets,"nJets/I");
-  mytree->Branch("leadJet",&b_leadJet,"leadJet/I");
-  mytree->Branch("subLeadJet",&b_subLeadJet,"subLeadJet/I");
   mytree->Branch("jetRawPt",b_jetRawPt,"jetRawPt[nJets]/D");
   mytree->Branch("jetCorrPt",b_jetCorrPt,"jetCorrPt[nJets]/D");
   mytree->Branch("jetEta",b_jetEta,"jetEta[nJets]/D");
@@ -133,21 +126,6 @@ int main(int argc, char* argv[])
   mytree->Branch("jetTrkCntTagLooseDisc",b_jetTrkCntTagLooseDisc,"jetTrkCntTagLooseDisc[nJets]/D");
   mytree->Branch("jetSecVtxTagTightDisc",b_jetSecVtxTagTightDisc,"jetSecVtxTagTightDisc[nJets]/D");
   mytree->Branch("jetTrkCntTagTightDisc",b_jetTrkCntTagTightDisc,"jetTrkCntTagTightDisc[nJets]/D");
-  mytree->Branch("jetSecVtxFlightDist",b_jetSecVtxFlightDist,"jetSecVtxFlightDist[nJets]/D");
-  mytree->Branch("jetSecVtxFlightDistSig",b_jetSecVtxFlightDistSig,"jetSecVtxFlightDistSig[nJets]/D");
-  mytree->Branch("jetSecVtxMass",b_jetSecVtxMass,"jetSecVtxMass[nJets]/D");
-  mytree->Branch("jetFirstTrkIP3d",b_jetFirstTrkIP3d,"jetFirstTrkIP3d[nJets]/D");
-  mytree->Branch("jetFirstTrkIP3dSig",b_jetFirstTrkIP3dSig,"jetFirstTrkIP3dSig[nJets]/D");
-  mytree->Branch("jetFirstTrkIP2d",b_jetFirstTrkIP2d,"jetFirstTrkIP2d[nJets]/D");
-  mytree->Branch("jetFirstTrkIP2dSig",b_jetFirstTrkIP2dSig,"jetFirstTrkIP2dSig[nJets]/D");
-  mytree->Branch("jetSecondTrkIP3d",b_jetSecondTrkIP3d,"jetSecondTrkIP3d[nJets]/D");
-  mytree->Branch("jetSecondTrkIP3dSig",b_jetSecondTrkIP3dSig,"jetSecondTrkIP3dSig[nJets]/D");
-  mytree->Branch("jetSecondTrkIP2d",b_jetSecondTrkIP2d,"jetSecondTrkIP2d[nJets]/D");
-  mytree->Branch("jetSecondTrkIP2dSig",b_jetSecondTrkIP2dSig,"jetSecondTrkIP2dSig[nJets]/D");
-  mytree->Branch("jetThirdTrkIP3d",b_jetThirdTrkIP3d,"jetThirdTrkIP3d[nJets]/D");
-  mytree->Branch("jetThirdTrkIP3dSig",b_jetThirdTrkIP3dSig,"jetThirdTrkIP3dSig[nJets]/D");
-  mytree->Branch("jetThirdTrkIP2d",b_jetThirdTrkIP2d,"jetThirdTrkIP2d[nJets]/D");
-  mytree->Branch("jetThirdTrkIP2dSig",b_jetThirdTrkIP2dSig,"jetThirdTrkIP2dSig[nJets]/D");
   mytree->Branch("dijetMass",&b_dijetMass,"dijetMass/D");
   mytree->Branch("dijetDeta",&b_dijetDeta,"dijetDeta/D");
   mytree->Branch("dijetDphi",&b_dijetDphi,"dijetDphi/D");
@@ -255,13 +233,13 @@ int main(int argc, char* argv[])
     b_nJets=0;
     for(unsigned int i=0; i<jets_h->size(); i++) {
       const pat::Jet *jet=&jets_h->at(i);
-      double corrpt = jet->correctedP4(JetCorrLevel).Pt();
+      double corrpt = jet->pt();
       if(corrpt<jetptcut) continue;
 
-      b_jetRawPt[b_nJets] = jet->correctedP4(pat::JetCorrFactors::Raw).Pt();
+      b_jetRawPt[b_nJets] = jet->correctedP4("raw").Pt();
       b_jetCorrPt[b_nJets] = corrpt;
-      b_jetEta[b_nJets] = jet->correctedP4(JetCorrLevel).Eta();
-      b_jetPhi[b_nJets] = jet->correctedP4(JetCorrLevel).Phi();
+      b_jetEta[b_nJets] = jet->eta();
+      b_jetPhi[b_nJets] = jet->phi();
       b_jetEMF[b_nJets] = jet->emEnergyFraction();
       b_jetIDEMF[b_nJets] = jet->jetID().restrictedEMF;
       b_jetFHPD[b_nJets] = jet->jetID().fHPD;
@@ -276,84 +254,18 @@ int main(int argc, char* argv[])
       b_jetSecVtxTagTightDisc[b_nJets] = jet->bDiscriminator("simpleSecondaryVertexHighPurBJetTags");
       b_jetTrkCntTagTightDisc[b_nJets] = jet->bDiscriminator("trackCountingHighPurBJetTags");
 
-      // get the secvtx tagged info
-      /*      const reco::SecondaryVertexTagInfo* secvtxinfo = jet->tagInfoSecondaryVertex();
-      if(secvtxinfo->nVertices()>0) {
-	b_jetSecVtxFlightDist[b_nJets] = secvtxinfo->flightDistance(0).value();
-	b_jetSecVtxFlightDistSig[b_nJets] = secvtxinfo->flightDistance(0).significance();
-	//	b_jetSecVtxMass[b_nJets] = secvtxinfo->secondaryVertex(0).p4().M();
-      } else {
-	b_jetSecVtxFlightDist[b_nJets] = -999.;
-	b_jetSecVtxFlightDistSig[b_nJets] = -999.;
-	b_jetSecVtxMass[b_nJets] = -999.;
-      }
-
-      // get the ip tagged info
-      const reco::TrackIPTagInfo* ipinfo = jet->tagInfoTrackIP();
-      const std::vector<reco::TrackIPTagInfo::TrackIPData> ipdata = ipinfo->impactParameterData();
-      if(ipdata.size()>=1) {
-	b_jetFirstTrkIP3d[b_nJets] = ipdata[0].ip3d.value();
-	b_jetFirstTrkIP3dSig[b_nJets] = ipdata[0].ip3d.significance();
-	b_jetFirstTrkIP2d[b_nJets] = ipdata[0].ip2d.value();
-	b_jetFirstTrkIP2dSig[b_nJets] = ipdata[0].ip2d.significance();
-      } else {
-	b_jetFirstTrkIP3d[b_nJets] = -999;
-	b_jetFirstTrkIP3dSig[b_nJets] = -999;
-	b_jetFirstTrkIP2d[b_nJets] = -999;
-	b_jetFirstTrkIP2dSig[b_nJets] = -999;
-      }
-      if(ipdata.size()>=2) {
-	b_jetSecondTrkIP3d[b_nJets] = ipdata[1].ip3d.value();
-	b_jetSecondTrkIP3dSig[b_nJets] = ipdata[1].ip3d.significance();
-	b_jetSecondTrkIP2d[b_nJets] = ipdata[1].ip2d.value();
-	b_jetSecondTrkIP2dSig[b_nJets] = ipdata[1].ip2d.significance();
-      } else {
-	b_jetSecondTrkIP3d[b_nJets] = -999;
-	b_jetSecondTrkIP3dSig[b_nJets] = -999;
-	b_jetSecondTrkIP2d[b_nJets] = -999;
-	b_jetSecondTrkIP2dSig[b_nJets] = -999;
-      }
-      if(ipdata.size()>=3) {
-	b_jetThirdTrkIP3d[b_nJets] = ipdata[2].ip3d.value();
-	b_jetThirdTrkIP3dSig[b_nJets] = ipdata[2].ip3d.significance();
-	b_jetThirdTrkIP2d[b_nJets] = ipdata[2].ip2d.value();
-	b_jetThirdTrkIP2dSig[b_nJets] = ipdata[2].ip2d.significance();
-      } else {
-	b_jetThirdTrkIP3d[b_nJets] = -999;
-	b_jetThirdTrkIP3dSig[b_nJets] = -999;
-	b_jetThirdTrkIP2d[b_nJets] = -999;
-	b_jetThirdTrkIP2dSig[b_nJets] = -999;
-	} */
-
-
       ++b_nJets;
     }
 
-    // find the leading jet
-    b_leadJet=-1;
-    for(int i=0; i<b_nJets; i++) {
-      if(fabs(b_jetEta[i])>2.5) continue;
-      if(b_leadJet<0 || b_jetCorrPt[i]>b_jetCorrPt[b_leadJet])
-	b_leadJet=i;
-    }
-    if(b_leadJet<0) continue;
-    
-    // find the subleading jet
-    b_subLeadJet=-1;
-    for(int i=0; i<b_nJets; i++) {
-      if(i==b_leadJet) continue;
-      if(fabs(b_jetEta[i])>2.5) continue;
-      if(b_subLeadJet<0 || b_jetCorrPt[i]>b_jetCorrPt[b_subLeadJet])
-	b_subLeadJet=i;
-    }
-    if(b_subLeadJet<0) continue;
+    // require two jets
+    if(b_nJets<2) continue;
 
     ////////////////////////////////////////////
     // dijet selection
     ////////////////////////////////////////////
     
-    math::XYZTLorentzVector p1=jets_h->at(b_leadJet).correctedP4(JetCorrLevel);
-    math::XYZTLorentzVector p2=jets_h->at(b_subLeadJet).correctedP4(JetCorrLevel);
+    math::XYZTLorentzVector p1=jets_h->at(0).p4();
+    math::XYZTLorentzVector p2=jets_h->at(1).p4();
     math::XYZTLorentzVector p=p1+p2;
     b_dijetMass=p.mass();
     b_dijetDeta=p1.Eta()-p2.Eta();
@@ -387,8 +299,8 @@ int main(int argc, char* argv[])
       //      if(fabs(mu->pv2dImpactParam())>0.02) continue;
       //      if(fabs(mu->deltaZ())>1.0) continue;
 
-      double dR1=deltaR(eta, phi, b_jetEta[b_leadJet], b_jetPhi[b_leadJet]);
-      double dR2=deltaR(eta, phi, b_jetEta[b_subLeadJet], b_jetPhi[b_subLeadJet]);
+      double dR1=deltaR(eta, phi, b_jetEta[0], b_jetPhi[0]);
+      double dR2=deltaR(eta, phi, b_jetEta[1], b_jetPhi[1]);
 
       b_muonPt[b_nMuons] = pt;
       b_muonEta[b_nMuons] = mu->globalTrack()->eta();
@@ -399,8 +311,8 @@ int main(int argc, char* argv[])
       b_muonNValidHits[b_nMuons] = mu->numberOfValidHits();
       b_muonNValidMuonHits[b_nMuons] = mu->globalTrack()->hitPattern().numberOfValidMuonHits();
 
-      if(dR1<0.7) b_muonJetMatch[b_nMuons]=b_leadJet;
-      else if(dR2<0.7) b_muonJetMatch[b_nMuons]=b_subLeadJet;
+      if(dR1<0.7) b_muonJetMatch[b_nMuons]=0;
+      else if(dR2<0.7) b_muonJetMatch[b_nMuons]=1;
       else b_muonJetMatch[b_nMuons]=-1;
 
       ++b_nMuons;

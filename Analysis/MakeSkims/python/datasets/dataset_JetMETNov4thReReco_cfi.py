@@ -4,9 +4,6 @@ import FWCore.ParameterSet.Config as cms
 
 dataset = '/JetMET/Run2010A-Nov4ReReco_v1/RECO'
 
-## global tag
-globaltag = cms.string('FT_R_38X_V14A::All')
-
 ## is MC
 isMC = False
 

@@ -54,8 +54,6 @@ DijetEventSelector::DijetEventSelector(edm::ParameterSet const& params) :
   mytree_->Branch("nTracks",&b_nTracks,"nTracks/I");
   mytree_->Branch("nHighPurityTracks",&b_nHighPurityTracks,"nHighPurityTracks/I");
   mytree_->Branch("nJets",&b_nJets,"nJets/I");
-  mytree_->Branch("leadJet",&b_leadJet,"leadJet/I");
-  mytree_->Branch("subLeadJet",&b_subLeadJet,"subLeadJet/I");
   mytree_->Branch("jetRawPt",b_jetRawPt,"jetRawPt[nJets]/F");
   mytree_->Branch("jetCorrPt",b_jetCorrPt,"jetCorrPt[nJets]/F");
   mytree_->Branch("jetEta",b_jetEta,"jetEta[nJets]/F");
@@ -63,7 +61,7 @@ DijetEventSelector::DijetEventSelector(edm::ParameterSet const& params) :
   mytree_->Branch("dijetDeta",&b_dijetDeta,"dijetDeta/F");
 
   // setup histograms
-  hTriggerBitSetDefs = fs->make<TH1D>("hTriggerBitSetDefs","Trigger Bit Set Definitions",50,-0.5,49.5);
+  hTriggerBitSetDefs = fs->make<TH1D>("hTriggerBitSetDefs","Trigger Bit Set Definitions",1000,-0.5,999.5);
   hEventSelectionBitSetDefs = fs->make<TH1D>("hEventSelectionBitSetDefs","Event Selection Bit Set Definitions", 7,0.5,7.5);
   hEventSelectionBitSetDefs->GetXaxis()->SetBinLabel(1,"trigger");
   hEventSelectionBitSetDefs->GetXaxis()->SetBinLabel(2,"vertices");
@@ -180,34 +178,26 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
   b_nJets=jets_h->size();
   for(unsigned int i=0; i<jets_h->size(); i++) {
     const Jet *jet=&jets_h->at(i);
-    b_jetRawPt[i] = jet->correctedP4(JetCorrFactors::Raw).Pt();
-    b_jetCorrPt[i] = jet->correctedP4(JetCorrFactors::L3).Pt();
-    b_jetEta[i] = jet->correctedP4(JetCorrFactors::L3).Eta();
+    b_jetRawPt[i] = jet->correctedP4(0).Pt();
+    b_jetCorrPt[i] = jet->pt();
+    b_jetEta[i] = jet->eta();
   }
 
-  // find the leading jet
-  b_leadJet=-1;
-  for(int i=0; i<b_nJets; i++) {
-    if(b_jetRawPt[i]<leadJetMinRawPt_) continue;
-    if(b_jetCorrPt[i]<leadJetMinCorrPt_) continue;
-    if(fabs(b_jetEta[i])>leadJetMaxAbsEta_) continue;
-    if(b_leadJet<0 || b_jetCorrPt[i]>b_jetCorrPt[b_leadJet])
-      b_leadJet=i;
+  if(b_nJets<1) {
+    b_eventSelectionBitSet |= 0x10;
+  } else if(b_nJets<2) {
+    b_eventSelectionBitSet |= 0x20;
+  } else {
+    if(b_jetRawPt[0]<leadJetMinRawPt_) b_eventSelectionBitSet |= 0x10;
+    if(b_jetCorrPt[0]<leadJetMinCorrPt_) b_eventSelectionBitSet |= 0x10;
+    if(fabs(b_jetEta[0])>leadJetMaxAbsEta_) b_eventSelectionBitSet |= 0x10;
+    
+    if(1<0) b_eventSelectionBitSet |= 0x20;
+    if(b_jetRawPt[1]<subLeadJetMinRawPt_) b_eventSelectionBitSet |= 0x20;
+    if(b_jetCorrPt[1]<subLeadJetMinCorrPt_) b_eventSelectionBitSet |= 0x20;
+    if(fabs(b_jetEta[1])>subLeadJetMaxAbsEta_) b_eventSelectionBitSet |= 0x20;
   }
 
-  // find the subleading jet
-  b_subLeadJet=-1;
-  for(int i=0; i<b_nJets; i++) {
-    if(i==b_leadJet) continue;
-    if(b_jetRawPt[i]<subLeadJetMinRawPt_) continue;
-    if(b_jetCorrPt[i]<subLeadJetMinCorrPt_) continue;
-    if(fabs(b_jetEta[i])>subLeadJetMaxAbsEta_) continue;
-    if(b_subLeadJet<0 || b_jetCorrPt[i]>b_jetCorrPt[b_subLeadJet])
-      b_subLeadJet=i;
-  }
-
-  if(b_leadJet<0) b_eventSelectionBitSet |= 0x10;
-  if(b_subLeadJet<0) b_eventSelectionBitSet |= 0x20;
   
   ////////////////////////////////////////////
   // dijet selection
@@ -215,9 +205,9 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
 
   b_dijetMass=-999.0;
   b_dijetDeta=999.0;
-  if(b_leadJet>=0 && b_subLeadJet>=0) {
-    math::XYZTLorentzVector p1=jets_h->at(b_leadJet).correctedP4(JetCorrFactors::L3);
-    math::XYZTLorentzVector p2=jets_h->at(b_subLeadJet).correctedP4(JetCorrFactors::L3);
+  if(b_nJets>=2) {
+    math::XYZTLorentzVector p1=jets_h->at(0).p4();
+    math::XYZTLorentzVector p2=jets_h->at(1).p4();
     math::XYZTLorentzVector p=p1+p2;
     b_dijetMass=p.mass();
     b_dijetDeta=fabs(p1.Eta()-p2.Eta());

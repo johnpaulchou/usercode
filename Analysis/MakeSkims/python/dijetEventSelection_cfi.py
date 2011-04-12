@@ -1,23 +1,26 @@
 import FWCore.ParameterSet.Config as cms
 
-import os;
+import os
 
 from PhysicsTools.PatAlgos.tools.jetTools import *
 from PhysicsTools.PatAlgos.tools.metTools import *
 from PhysicsTools.PatAlgos.tools.coreTools import *
 
-def setupEventSelection(process):
+def setupEventSelection(process, dataset):
     tag = 'DijetSelection'
 
-    ## specifically removes taus
-    removeSpecificPATObjects(process, ['Taus'])
+    ## pick the right set of corrections
+    if dataset.isMC:
+        corrs=cms.vstring('L2Relative', 'L3Absolute','L5Flavor','L7Parton')
+    else:
+        corrs=cms.vstring('L2Relative', 'L3Absolute','L2L3Residual','L5Flavor','L7Parton')
 
     ## add AK7 calojets
     addJetCollection(process,cms.InputTag('ak7CaloJets'),
-                     'AK7', "Calo",
+                     'AK7', 'Calo',
                      doJTA        = True,
-                     doBTagging   = True,
-                     jetCorrLabel = ('AK7', 'Calo'),
+                     doBTagging   = False,
+                     jetCorrLabel = ('AK5Calo', corrs),
                      doType1MET   = False,
                      doL1Cleaning = False,
                      doL1Counters = False,
@@ -30,14 +33,26 @@ def setupEventSelection(process):
     addJetCollection(process,cms.InputTag('ak7PFJets'),
                      'AK7', 'PF',
                      doJTA        = True,
-                     doBTagging   = True,
-                     jetCorrLabel = ('AK7', 'PF'),
-                     doType1MET   = False, ## there is no use to apply residual jet corrections on CaloMET
+                     doBTagging   = False,
+                     jetCorrLabel = ('AK5PF', corrs),
+                     doType1MET   = False,
                      doL1Cleaning = False,
                      doL1Counters = False,
                      genJetCollection=cms.InputTag("ak7GenJets"),
-                     doJetID      = False  ## there is no use of jetID for Pflow jets
+                     doJetID      = True,
                      )
+
+    ## add AK5 calojets
+    switchJetCollection(process,
+                        cms.InputTag('ak5CaloJets'),
+                        doJTA        = True,
+                        doBTagging   = False,
+                        jetCorrLabel = ('AK5Calo', corrs),
+                        doType1MET   = False,
+                        genJetCollection=cms.InputTag("ak5GenJets"),
+                        doJetID      = True,
+                        jetIdLabel   = 'ak5'
+                        )
 
     ## add extra MET categories
     addPfMET(process, 'PF')
