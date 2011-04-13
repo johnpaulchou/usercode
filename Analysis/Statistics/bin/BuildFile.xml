@@ -1,0 +1,4 @@
+<use   name="Analysis/Statistics"/>
+<environment>
+  <bin   file="dijetStats.cc"></bin>
+</environment>
