@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
     ws->var("pc1")->setConstant(true);
     ws->var("pc2")->setConstant(true);
   }
-  RooFitResult* fit=doFit(std::string("b1fit")+label, ws->pdf("model"), binnedData, invmass, NBINS-1, BOUNDARIES);
+  RooFitResult* fit=doFit(std::string("b1fit")+label, ws->pdf("model"), binnedData, invmass, ws->var("nbkg")->getVal(), NBINS-1, BOUNDARIES);
   //  RooFitResult* fitb=doFit(std::string("b2fit")+label, ws->pdf("modelb"), binnedData, invmass, NBINS-1, BOUNDARIES);
   //  RooFitResult* fitc=doFit(std::string("b3fit")+label, ws->pdf("modelc"), binnedData, invmass, NBINS-1, BOUNDARIES);
 
@@ -229,7 +229,7 @@ int main(int argc, char* argv[])
   // do the background+signal fit
   xs->setConstant(false);
   if(!usePseudodata) {
-    fit=doFit(std::string("bsfit")+label, ws->pdf("model"), binnedData, invmass, NBINS-1, BOUNDARIES);
+    fit=doFit(std::string("bsfit")+label, ws->pdf("model"), binnedData, invmass, ws->var("nbkg")->getVal()+ws->function("nsig")->getVal(), NBINS-1, BOUNDARIES);
     std::cout << "B+S STATUS = " << fit->status() << std::endl;
   }
 
@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
   // do a final fit (with a fixed lumi nuisance parameter, since it is always anti-correlated to the POI)
   bool isLumiFixed = ws->var("lumi")->isConstant();
   ws->var("lumi")->setConstant(true);
-  fit=doFit(std::string("finalfit")+label, ws->pdf("model"), binnedData, invmass, NBINS-1, BOUNDARIES);  
+  fit=doFit(std::string("finalfit")+label, ws->pdf("model"), binnedData, invmass, ws->function("nsig")->getVal()+ws->var("nbkg")->getVal(), NBINS-1, BOUNDARIES);  
   ws->var("lumi")->setConstant(isLumiFixed);
   ws->writeToFile("ws.root");
 

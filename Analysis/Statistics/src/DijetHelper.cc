@@ -119,18 +119,18 @@ double DijetHelper::calcPDF1DIntegral(RooAbsPdf* pdf, RooRealVar* var, double mi
 }
 
 
-RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, int nbins, double xlo, double xhi)
+RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, double count, int nbins, double xlo, double xhi)
 {
   double *binsx=new double[nbins+1];
   for(int i=0; i<nbins+1; i++) {
     binsx[i]=xlo+i*(xhi-xlo)/nbins;
   }
-  RooFitResult* result=DijetHelper::doFit(name, pdf, data, var, nbins, binsx);
+  RooFitResult* result=DijetHelper::doFit(name, pdf, data, var, count, nbins, binsx);
   delete[] binsx;
   return result;
 }
 
-RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, int nbins, double *binsx)
+RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, double count, int nbins, double *binsx)
 {
   TString label=name.c_str();
   RooFitResult *fit = pdf->fitTo(*data, Save(kTRUE), Extended(kTRUE), Strategy(2), PrintLevel(1));
@@ -150,11 +150,6 @@ RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* d
   cfit->SaveAs(label+".gif");
   delete plot;
 
-  // get the number of background events
-  //  double nbkg=DijetHelper::getParFinalValue(fit, "nbkg");
-  double nbkg=pdf->getVal();
-  std::cout << "nbkg=" << nbkg << std::endl;
-  
   // calculate pull and diff
   TH1* hist=data->createHistogram(TString("dataHist")+name,*var,Binning(RooBinning(nbins,binsx)));
   TH1D* pull=(TH1D*)hist->Clone(TString("pull")+name);
@@ -168,7 +163,7 @@ RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* d
     double error = DijetHelper::calcPoissonError(content);
 
     // compute the integral
-    double weightedpdf=DijetHelper::calcPDF1DIntegral(pdf, var, loedge, upedge)*nbkg;
+    double weightedpdf=DijetHelper::calcPDF1DIntegral(pdf, var, loedge, upedge)*count;
     double pullval=error==0 ? 0 : (content-weightedpdf)/error;
     double diffval=(content-weightedpdf)/weightedpdf;
     double differr=error/weightedpdf;

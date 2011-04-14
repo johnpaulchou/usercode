@@ -130,7 +130,7 @@ class JPMCCalculator : public RooStats::IntervalCalculator, public TNamed {
     
     
     TString fIntegrationType; 
-
+    
     ClassDef(JPMCCalculator, 1)
 
   };

@@ -543,3 +543,4 @@ void JPMCCalculator::ComputeIntervalFromPdf(double lowerCutOff, double upperCutO
 }
 
 
+ClassImp(JPMCCalculator)

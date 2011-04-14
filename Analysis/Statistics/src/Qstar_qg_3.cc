@@ -20,8 +20,6 @@
 
 #include "Analysis/Statistics/interface/LineShapeDensityPdf.h"
 
-//ClassImp(Qstar_qg_3) 
-
 
 //--------------------------------------------------------------------
 //  The main constructor.
@@ -182,3 +180,5 @@ void Qstar_qg_3::generateEvent(Int_t code)
   assert(0) ; 
   return; 
 } 
+
+ClassImp(Qstar_qg_3)
