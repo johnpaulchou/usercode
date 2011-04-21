@@ -220,8 +220,7 @@ int main(int argc, char* argv[])
 
   // integrate over model to get xs estimate as input to the B+S fit
   double pdfIntegral=ws->var("nbkg")->getVal()*calcPDF1DIntegral(ws->pdf("model"), invmass, signalMass*0.9, signalMass*1.1);
-  double expectedNEvents = pdfIntegral*ws->var("lumi")->getVal();
-  double maxXS = sqrt(expectedNEvents)*5;
+  double maxXS = sqrt(pdfIntegral)*5/ws->var("lumi")->getVal();
   RooRealVar* xs=ws->var("xs");
   xs->setRange(0,maxXS);
   xs->setVal(maxXS/5.0);
