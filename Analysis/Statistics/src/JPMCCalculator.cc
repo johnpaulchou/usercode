@@ -108,17 +108,22 @@ void JPMCCalculator::SetModel(const RooStats::ModelConfig & model) {
 
 TH1D* JPMCCalculator::GetPosteriorHistTestUpper(double poiVal, int nbins) const
 {
-  return GetPosteriorHistInternal(1, poiVal, nbins);
+  return GetPosteriorHistInternal(1, poiVal, nbins, false);
 }
 
 TH1D* JPMCCalculator::GetPosteriorHist(int nbins) const
 {
-  return GetPosteriorHistInternal(0, 0.0, nbins);
+  return GetPosteriorHistInternal(0, 0.0, nbins, false);
 }
 
-TH1D* JPMCCalculator::GetPosteriorHistInternal(int testtype, double poiVal, int nbins) const
+TH1D* JPMCCalculator::GetPosteriorHistForce(int nbins) const
 {
-  if(fPosteriorHist) return fPosteriorHist;
+  return GetPosteriorHistInternal(0, 0.0, nbins, true);
+}
+
+TH1D* JPMCCalculator::GetPosteriorHistInternal(int testtype, double poiVal, int nbins, bool force) const
+{
+  if(!force && fPosteriorHist) return fPosteriorHist;
 
   // run some sanity checks
   if(!fPdf ) {

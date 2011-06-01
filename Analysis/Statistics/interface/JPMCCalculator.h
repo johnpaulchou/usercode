@@ -38,6 +38,7 @@ class JPMCCalculator : public RooStats::IntervalCalculator, public TNamed {
   virtual ~JPMCCalculator();
   
   TH1D* GetPosteriorHist(int nbins=100) const;
+  TH1D* GetPosteriorHistForce(int nbins=100) const;
   TH1D* GetPosteriorHistTestUpper(double poiVal, int nbins=100) const;
   
   RooAbsReal* GetPosterior(void) const;
@@ -89,7 +90,7 @@ class JPMCCalculator : public RooStats::IntervalCalculator, public TNamed {
   void ComputeIntervalFromHist(double c1, double c2) const;
   void ComputeIntervalFromPdf(double c1, double c2) const;
   
-    TH1D* GetPosteriorHistInternal(int testtype, double poiVal, int nbins) const;
+  TH1D* GetPosteriorHistInternal(int testtype, double poiVal, int nbins, bool force) const;
     
  private:
     
