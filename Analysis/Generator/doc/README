@@ -1,6 +1,0 @@
-Using the cardfiles here may require some modifications.  In particular, the particle table may need to be modified.  For instance, the excited tau must be definied.  This can be done by checking out the files:
-
-SimGeneral/HepPDTESSource/data/particle.tbl
-SimGeneral/HepPDTESSource/data/Pythia6Table.tbl
-
-and modifying them directly.  Alternatively, already modified files can be found in Analysis/Generator/data/ and should be copied over to the above location.

@@ -1,8 +1,0 @@
-<use name="TrackingTools/TransientTrack"/>
-<use name="TrackingTools/IPTools"/>
-<use name="MagneticField/Engine"/>
-<use name="RecoEgamma/EgammaTools"/>
-<use name="DataFormats/HepMCCandidate"/>
-<export>
-  <lib name="1"/>
-</export>
