@@ -10,6 +10,7 @@ class RooRealVar;
 class RooAbsData;
 class RooFitResult;
 class TH1D;
+class RooAbsReal;
 
 namespace DijetHelper {
 
@@ -25,8 +26,8 @@ namespace DijetHelper {
 
   double calcPDF1DIntegral(RooAbsPdf* pdf, RooRealVar* var, double min, double max);
 
-  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, double count, int nbins, double *binsx);
-  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, double count, int nbins, double xlo, double xhi);
+  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx);
+  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi);
 
   double getParFinalValue(RooFitResult* fit, std::string parname);
 

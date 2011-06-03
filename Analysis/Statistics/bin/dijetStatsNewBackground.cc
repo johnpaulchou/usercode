@@ -69,10 +69,6 @@ int main(int argc, char* argv[])
   double JER=1.0;        // JER "value"
   double JESERROR=0.1;   // relative error on JES
   double JERERROR=0.1;   // relative error on JER
-  double PD_NBKG=414131; // background normalization for pseudo-experiments
-  double PD_P1=7.0655;   // parameter #1 for PEs
-  double PD_P2=6.4766;   // parameter #2 for PEs
-  double PD_P3=1.9936;   // parameter #3 for PEs
   double NSIGCUTOFF=3.0; // number of +/- "sigma" to cutoff integration of nuisance parameters
 
   bool USELOGNORM=true;  // use lognormal or gaussian nuisance prior pdfs
@@ -92,7 +88,7 @@ int main(int argc, char* argv[])
 
 
   if(argc<2) {
-    std::cout << "Usage: dijetStatsNewBackground signalMass statlevel [usePseudoData=false]" << std::endl;
+    std::cout << "Usage: dijetStatsNewBackground signalMass statlevel [usePseudoData=0]" << std::endl;
     return -1;
   }
 
@@ -116,17 +112,13 @@ int main(int argc, char* argv[])
   ws->factory("EXPR::background('pow(1.0-invmass/7000.0,p1)/pow(invmass/7000.0,p2+p3*log(invmass/7000.0))', p1[10,-40,40], p2[7,-20,20], p3[0.1,-20,20],invmass)");
   ws->factory("EXPR::backgroundb('pow(1-invmass/7000.0+pb3*(invmass/7000.0)*(invmass/7000.0),pb1)/pow(invmass/7000,pb2)',pb1[20,0,100],pb2[5,-100,100], pb3[0.8,0,2],invmass)");
   ws->factory("EXPR::backgroundc('pow(1-invmass/7000.0,pc1)/pow(invmass/7000,pc2)',pc1[13,-100,100],pc2[5,-100,100],invmass)");
-  // set the background to the seed (this will later get set by the fit)
-  ws->var("p1")->setVal(PD_P1);
-  ws->var("p2")->setVal(PD_P2);
-  ws->var("p3")->setVal(PD_P3);
 
   // data
   RooDataHist* binnedData;
   RooDataSet* unbinnedData;
   unbinnedData=makeUnbinnedData(DATASETFN, "unbinnedData", invmass);
   if(usePseudodata)
-    binnedData=makeBinnedPseudoData(ws->pdf("background"), PD_NBKG, "binnedPseudoData", invmass, MAXINVMASS-MININVMASS, MININVMASS, MAXINVMASS);
+    binnedData=makeBinnedPseudoData(ws->pdf("background"), 432342, "binnedPseudoData", invmass, MAXINVMASS-MININVMASS, MININVMASS, MAXINVMASS);
   else
     binnedData=makeBinnedData(DATASETFN, "binnedData", invmass, (MAXINVMASS-MININVMASS), MININVMASS, MAXINVMASS);
   ws->import(*binnedData);
@@ -168,7 +160,6 @@ int main(int argc, char* argv[])
 
   // model
   ws->factory("SUM::modela(nsig*signal, nbkg[1000,0,1E6]*background)");
-  ws->var("nbkg")->setVal(PD_NBKG);
   ws->factory("SUM::modelb(nsig*signal, nbkg*backgroundb)");
   ws->factory("SUM::modelc(nsig*signal, nbkg*backgroundc)");
   ws->defineSet("observables","invmass");
@@ -205,12 +196,12 @@ int main(int argc, char* argv[])
     ws->var("pc1")->setConstant(true);
     ws->var("pc2")->setConstant(true);
   }
-  RooFitResult* fit=doFit(std::string("bfita")+label, ws->pdf("modela"), binnedData, invmass, ws->var("nbkg")->getVal(), NBINS-1, BOUNDARIES);
-  fit=doFit(std::string("bfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->var("nbkg")->getVal(), NBINS-1, BOUNDARIES);
-  fit=doFit(std::string("bfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->var("nbkg")->getVal(), NBINS-1, BOUNDARIES);
+  RooFitResult* fit=doFit(std::string("bfita")+label, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  fit=doFit(std::string("bfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  fit=doFit(std::string("bfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
 
   // integrate over model to get xs estimate as input to the B+S fit
-  double pdfIntegral=PD_NBKG*calcPDF1DIntegral(ws->pdf("modela"), invmass, signalMass*0.9, signalMass*1.1);
+  double pdfIntegral=ws->var("nbkg")->getVal()*calcPDF1DIntegral(ws->pdf("modela"), invmass, signalMass*0.9, signalMass*1.1);
   double maxXS = sqrt(pdfIntegral)*5/ws->var("lumi")->getVal();
   RooRealVar* xs=ws->var("xs");
   xs->setRange(0,maxXS);
@@ -218,11 +209,9 @@ int main(int argc, char* argv[])
 
   // do the background+signal fit
   xs->setConstant(false);
-  if(!usePseudodata) {
-    fit=doFit(std::string("bsfita")+label, ws->pdf("modela"), binnedData, invmass, ws->var("nbkg")->getVal()+ws->function("nsig")->getVal(), NBINS-1, BOUNDARIES);
-    fit=doFit(std::string("bsfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->var("nbkg")->getVal()+ws->function("nsig")->getVal(), NBINS-1, BOUNDARIES);
-    fit=doFit(std::string("bsfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->var("nbkg")->getVal()+ws->function("nsig")->getVal(), NBINS-1, BOUNDARIES);
-  }
+  fit=doFit(std::string("bsfita")+label, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  fit=doFit(std::string("bsfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  fit=doFit(std::string("bsfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
 
   // set parameters for limit calculation
   ws->var("p1")->setConstant(true);
@@ -317,7 +306,7 @@ int main(int argc, char* argv[])
   JPMCCalculator mcC(*binnedData, *modelConfigC);
   mcC.SetNumIterations(niters);
   mcC.SetConfidenceLevel(1-alpha);
-  mcC.SetLeftSideTailFraction(lstail); 
+  mcC.SetLeftSideTailFraction(lstail);
 
   double p1val=ws->var("p1")->getVal(); double p1err=ws->var("p1")->getError();
   double p2val=ws->var("p2")->getVal(); double p2err=ws->var("p2")->getError();
@@ -333,13 +322,14 @@ int main(int argc, char* argv[])
     ws->var("p2")->setVal(std::max(0.0,p2val-p2err));
     ws->var("p3")->setVal(std::max(0.0,p3val-p3err));
     TH1D* histALo=dynamic_cast<TH1D*>(mcA.GetPosteriorHistForce()->Clone("histALo"));
-    TH1D* histB=dynamic_cast<TH1D*>(mcB.GetPosteriorHist()->Clone("histB"));
-    TH1D* histC=dynamic_cast<TH1D*>(mcC.GetPosteriorHist()->Clone("histC"));
+    //    TH1D* histB=dynamic_cast<TH1D*>(mcB.GetPosteriorHist()->Clone("histB"));
+    //    TH1D* histC=dynamic_cast<TH1D*>(mcC.GetPosteriorHist()->Clone("histC"));
 
     histA->Add(histAHi);
     histA->Add(histALo);
-    histA->Add(histB);
-    histA->Add(histC);
+    //    histA->Add(histB);
+    //    histA->Add(histC);
+
   }
   TH1* hPosteriorHist=histA;
   TCanvas* canvas = new TCanvas("mcPost","Posterior Distribution",500,500);
@@ -372,7 +362,7 @@ int main(int argc, char* argv[])
   }
   delete hCdf;
 
-  //print the results
+  // print the results
   cout << "m0 = " << signalMass << " ; "
        << "statlevel = " << statlevel << " ; "
        << "lowerlimit = " << lower << " ; "

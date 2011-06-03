@@ -8,6 +8,7 @@
 #include "RooPlot.h"
 #include "RooFitResult.h"
 #include "RooBinning.h"
+#include "RooAbsReal.h"
 
 #include "TH1.h"
 #include "TString.h"
@@ -119,23 +120,23 @@ double DijetHelper::calcPDF1DIntegral(RooAbsPdf* pdf, RooRealVar* var, double mi
 }
 
 
-RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, double count, int nbins, double xlo, double xhi)
+RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi)
 {
   double *binsx=new double[nbins+1];
   for(int i=0; i<nbins+1; i++) {
     binsx[i]=xlo+i*(xhi-xlo)/nbins;
   }
-  RooFitResult* result=DijetHelper::doFit(name, pdf, data, var, count, nbins, binsx);
+  RooFitResult* result=DijetHelper::doFit(name, pdf, data, var, nsig, nbkg, nbins, binsx);
   delete[] binsx;
   return result;
 }
 
-RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, double count, int nbins, double *binsx)
+RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx)
 {
   TString label=name.c_str();
   RooFitResult *fit = pdf->fitTo(*data, Save(kTRUE), Extended(kTRUE), Strategy(2), PrintLevel(1));
   fit->Print();
-  
+
   // plot fit
   TCanvas* cfit = new TCanvas(TString("cfit")+label,"fit",500,500);
   RooPlot* plot = var->frame();
@@ -151,23 +152,24 @@ RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* d
   delete plot;
 
   // calculate pull and diff
+  RooArgSet observables(*var);
   TH1* hist=data->createHistogram(TString("dataHist")+name,*var,Binning(RooBinning(nbins,binsx)));
   TH1D* pull=(TH1D*)hist->Clone(TString("pull")+name);
   TH1D* diff=(TH1D*)hist->Clone(TString("diff")+name);
   double chi2=0;
   for(int i=1; i<=hist->GetNbinsX(); i++) {
-    double loedge = hist->GetBinLowEdge(i);
-    double upedge = hist->GetBinLowEdge(i+1);
-    //    double binwidth = hist->GetXaxis()->GetBinWidth(i);
     double content = hist->GetBinContent(i);
-    double error = DijetHelper::calcPoissonError(content);
+    double error = content>25 ? sqrt(content) :
+      (TMath::ChisquareQuantile(0.95,2*(content+1)-TMath::ChisquareQuantile(0.05,2*content)))/4.0;
 
-    // compute the integral
-    double weightedpdf=DijetHelper::calcPDF1DIntegral(pdf, var, loedge, upedge)*count;
-    double pullval=error==0 ? 0 : (content-weightedpdf)/error;
-    double diffval=(content-weightedpdf)/weightedpdf;
-    double differr=error/weightedpdf;
+    // evaluate the pdf
+    var->setVal(hist->GetBinCenter(i));
+    double fitval = pdf->getVal(&observables)*(nsig->getVal()+nbkg->getVal())*hist->GetBinWidth(i);
 
+    // calculate the pull and diff
+    double pullval=error==0 ? 0 : (content-fitval)/error;
+    double diffval=(content-fitval)/fitval;
+    double differr=error/fitval;
     chi2+=fabs(pullval);
 
     pull->SetBinContent(i, pullval);

@@ -37,9 +37,9 @@ class JPMCCalculator : public RooStats::IntervalCalculator, public TNamed {
   // destructor
   virtual ~JPMCCalculator();
   
-  TH1D* GetPosteriorHist(int nbins=100) const;
-  TH1D* GetPosteriorHistForce(int nbins=100) const;
-  TH1D* GetPosteriorHistTestUpper(double poiVal, int nbins=100) const;
+  TH1D* GetPosteriorHist(int nbins=1000) const;
+  TH1D* GetPosteriorHistForce(int nbins=1000) const;
+  TH1D* GetPosteriorHistTestUpper(double poiVal, int nbins=1000) const;
   
   RooAbsReal* GetPosterior(void) const;
   RooAbsPdf* GetPosteriorPdf(void) const;
