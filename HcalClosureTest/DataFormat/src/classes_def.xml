@@ -1,7 +1,0 @@
-<lcgdict>
-
-  <class name="SingleParticleCluster"/>
-  <class name="SingleParticleClusterCollection"/>
-  <class name="edm::Wrapper<SingleParticleClusterCollection>"/>
-
-</lcgdict>
