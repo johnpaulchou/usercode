@@ -16,6 +16,9 @@
 #include "TCanvas.h"
 #include "TLatex.h"
 
+#include "RooWorkspace.h"
+#include "TFile.h"
+
 using namespace RooFit;
 
 RooDataHist* DijetHelper::makeBinnedData(std::string filename, std::string objectname, RooRealVar* var, int nbins, double *binsx)
@@ -81,17 +84,26 @@ RooDataHist* DijetHelper::makeBinnedPseudoData(RooAbsPdf* pdf, int nevents, std:
 
 RooDataHist* DijetHelper::makeBinnedPseudoData(RooAbsPdf* pdf, int nevents, std::string objectname, RooRealVar* var, TH1D* hist)
 {
-  for(int i=1; i<=hist->GetNbinsX(); i++) {
-    double xlo=hist->GetBinLowEdge(i);
-    double xhi=hist->GetBinLowEdge(i+1);
-    double integral=DijetHelper::calcPDF1DIntegral(pdf, var, xlo, xhi);
-    hist->Fill(0.5*(xlo+xhi), integral*nevents);
+  // generate a pseudo dataset
+  RooDataSet* dataset = pdf->generate(RooArgSet(*var), RooFit::NumEvents(nevents), RooFit::Name("tempdata"));
+
+  // create a histogram out of the template data histogram and empty it
+  if(hist->GetXaxis()->GetXbins()->GetArray()) {
+    std::cerr << "You cannot use variable binning!!" << std::endl;
+    assert(0);
   }
+  RooBinning binning(hist->GetNbinsX(), hist->GetXaxis()->GetXmin(), hist->GetXaxis()->GetXmax());
+  var->setBinning(binning);
+  hist = (TH1D*)dataset->fillHistogram(hist, RooArgList(*var));
 
-  // create a new binned data object
-  RooDataHist *binnedData = new RooDataHist(objectname.c_str(), "binned pseudo-data", RooArgSet(*var), Import(*hist, kFALSE));
+  // create the new histogrammed data
+  RooDataHist* datahist=new RooDataHist(objectname.c_str(), "binned pseudodata", RooArgSet(*var), RooFit::Import(*hist, kFALSE));
 
-  return binnedData;
+  // delete temporaries
+  delete dataset;
+  delete hist;
+
+  return datahist;
 }
 
 RooDataSet* DijetHelper::makeUnbinnedData(std::string filename, std::string objectname, RooRealVar* var)
@@ -120,18 +132,18 @@ double DijetHelper::calcPDF1DIntegral(RooAbsPdf* pdf, RooRealVar* var, double mi
 }
 
 
-RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi)
+RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi, RooWorkspace* ws)
 {
   double *binsx=new double[nbins+1];
   for(int i=0; i<nbins+1; i++) {
     binsx[i]=xlo+i*(xhi-xlo)/nbins;
   }
-  RooFitResult* result=DijetHelper::doFit(name, pdf, data, var, nsig, nbkg, nbins, binsx);
+  RooFitResult* result=DijetHelper::doFit(name, pdf, data, var, nsig, nbkg, nbins, binsx, ws);
   delete[] binsx;
   return result;
 }
 
-RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx)
+RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx, RooWorkspace* ws)
 {
   TString label=name.c_str();
   RooFitResult *fit = pdf->fitTo(*data, Save(kTRUE), Extended(kTRUE), Strategy(2), PrintLevel(1));
@@ -142,12 +154,53 @@ RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* d
   RooPlot* plot = var->frame();
   data->plotOn(plot, Binning(RooBinning(nbins, binsx)));
   pdf->plotOn(plot, LineColor(kBlue+2));
+  pdf->plotOn(plot, RooFit::Components("signal"), RooFit::LineColor(kBlue+2));
+  pdf->plotOn(plot, RooFit::Components("background"), RooFit::LineColor(kBlue+2), RooFit::LineStyle(kDotted));
   pdf->paramOn(plot, Layout(0.43, 0.88, 0.92), Format("NEU",AutoPrecision(1)) ); 
   gPad->SetLogy();
   gPad->SetGrid(1,1);
   plot->GetYaxis()->SetRangeUser(0.1,plot->GetMaximum()*2.0);
   plot->GetYaxis()->SetTitleOffset(1.2);
   plot->Draw();
+
+  if(ws) {
+    std::cout << "ASDF JPC: ";
+    printVal(*ws->var("xs"));
+    TFile* rootfile=new TFile(TString("jpc_")+label+TString(".root"), "RECREATE");
+    double p1val=ws->var("p1")->getVal(); double p1err=ws->var("p1")->getError(); bool p1const=ws->var("p1")->isConstant();
+    double p2val=ws->var("p2")->getVal(); double p2err=ws->var("p2")->getError(); bool p2const=ws->var("p2")->isConstant();
+    double p3val=ws->var("p3")->getVal(); double p3err=ws->var("p3")->getError(); bool p3const=ws->var("p3")->isConstant();
+    ws->var("p1")->setVal(std::max(0.0,p1val-p1err));
+    ws->var("p2")->setVal(p2val+p2err);
+    ws->var("p3")->setVal(p3val+p3err);
+    ws->var("p1")->setConstant(true);
+    ws->var("p2")->setConstant(true);
+    ws->var("p3")->setConstant(true);
+    fit = pdf->fitTo(*data, Save(kTRUE), Extended(kTRUE), Strategy(2), PrintLevel(1));
+    std::cout << "ASDF JPC: ";
+    printVal(*ws->var("xs"));
+    pdf->plotOn(plot, LineColor(kGreen+2));
+    pdf->plotOn(plot, RooFit::Components("signal"), RooFit::LineColor(kGreen+2));
+    pdf->plotOn(plot, RooFit::Components("background"), RooFit::LineColor(kGreen+2), RooFit::LineStyle(kDotted));
+    ws->var("p1")->setVal(std::max(0.0,p1val+p1err));
+    ws->var("p2")->setVal(p2val-p2err);
+    ws->var("p3")->setVal(p3val-p3err);
+    fit = pdf->fitTo(*data, Save(kTRUE), Extended(kTRUE), Strategy(2), PrintLevel(1));
+    std::cout << "ASDF JPC: ";
+    printVal(*ws->var("xs"));
+    pdf->plotOn(plot, LineColor(kRed+2));
+    pdf->plotOn(plot, RooFit::Components("signal"), RooFit::LineColor(kRed+2));
+    pdf->plotOn(plot, RooFit::Components("background"), RooFit::LineColor(kRed+2), RooFit::LineStyle(kDotted));
+    rootfile->cd();
+    plot->Write();
+    rootfile->Close();
+
+    // set everything back
+    ws->var("p1")->setVal(p1val); ws->var("p1")->setConstant(p1const);
+    ws->var("p2")->setVal(p2val); ws->var("p2")->setConstant(p2const);
+    ws->var("p3")->setVal(p3val); ws->var("p3")->setConstant(p3const);
+  }
+
   cfit->SaveAs(label+".gif");
   delete plot;
 
@@ -183,6 +236,9 @@ RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* d
   pull->SetMarkerStyle(20);
   pull->Draw("E");
   pull->GetYaxis()->SetTitle("Pull");
+  pull->SetMaximum(4.0);
+  pull->SetMinimum(-4.0);
+  pull->GetYaxis()->SetRangeUser(-4.,4.);
   char title[100];
   sprintf(title, "#chi^{2} = %2.2f", chi2);
   TLatex tex;

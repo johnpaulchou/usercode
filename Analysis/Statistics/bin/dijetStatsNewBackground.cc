@@ -57,20 +57,19 @@ using namespace DijetHelper;
 int main(int argc, char* argv[])
 {
   // this is needed to setup the auto-compile for the workspace
-  gSystem->SetIncludePath("-I$ROOFITSYS/include");
 
+  gSystem->SetIncludePath("-I$ROOFITSYS/include");
   // Declare magic numbers here
-  double MININVMASS=220.;
-  double MAXINVMASS=3147.;
-  std::string DATASETFN="/uscms/physics_grp/lpcjj/Dijet/7TeV/Sep3rd2010_2p875pbm1/dijet_mass_2p875pbm1.txt";
-  double LUMI=2.875;     // total integrated luminosity
-  double LUMIERROR=0.11; // relative error on luminosity
+  double MININVMASS=838.; // 189.469
+  double MAXINVMASS = 5000.;
+  std::string DATASETFN="/uscms/physics_grp/lpcjj/Dijet/7TeV/2011Jun03_382p703pbm1/dijet_mass_calo_382p703pbm1.txt";
+  double LUMI = 382.703;
+  double LUMIERROR=0.04; // relative error on luminosity
   double JES=1.0;        // JES "value"
   double JER=1.0;        // JER "value"
-  double JESERROR=0.1;   // relative error on JES
+  double JESERROR=0.05;   // relative error on JES
   double JERERROR=0.1;   // relative error on JER
   double NSIGCUTOFF=3.0; // number of +/- "sigma" to cutoff integration of nuisance parameters
-
   bool USELOGNORM=true;  // use lognormal or gaussian nuisance prior pdfs
   
   // histogram binning (for display only)
@@ -80,21 +79,20 @@ int main(int argc, char* argv[])
 				 890, 944, 1000, 1058, 1118, 1181, 1246, 1313, 1383,
 				 1455, 1530, 1607, 1687, 1770, 1856, 1945, 2037, 2132,
 				 2231, 2332, 2438, 2546, 2659, 2775, 2895, 3019, 3147 };
-
-
+  
   // start the timer
   TStopwatch t;
   t.Start();
 
 
   if(argc<2) {
-    std::cout << "Usage: dijetStatsNewBackground signalMass statlevel [usePseudoData=0]" << std::endl;
+    std::cout << "Usage: dijetStatsNewBackground signalMass statlevel [numPEs=0]" << std::endl;
     return -1;
   }
 
   double signalMass = atof(argv[1]);
   int statlevel = atoi(argv[2]);
-  bool usePseudodata = argc>=4 ? atoi(argv[3]) : false;
+  int numPEs = argc>=4 ? atoi(argv[3]) : 0;
 
   // setup label
   char label[100];
@@ -109,18 +107,13 @@ int main(int argc, char* argv[])
   invmass->setRange(MININVMASS, MAXINVMASS);
 
   // background
-  ws->factory("EXPR::background('pow(1.0-invmass/7000.0,p1)/pow(invmass/7000.0,p2+p3*log(invmass/7000.0))', p1[10,-40,40], p2[7,-20,20], p3[0.1,-20,20],invmass)");
-  ws->factory("EXPR::backgroundb('pow(1-invmass/7000.0+pb3*(invmass/7000.0)*(invmass/7000.0),pb1)/pow(invmass/7000,pb2)',pb1[20,0,100],pb2[5,-100,100], pb3[0.8,0,2],invmass)");
-  ws->factory("EXPR::backgroundc('pow(1-invmass/7000.0,pc1)/pow(invmass/7000,pc2)',pc1[13,-100,100],pc2[5,-100,100],invmass)");
+  ws->factory("EXPR::background('pow(1.0-invmass/7000.0,p1)/pow(invmass/7000.0,p2+p3*log(invmass/7000.0))', p1[12,-30,30], p2[2,-20,20], p3[-0.6,-5,5],invmass)");
+  ws->factory("EXPR::backgroundb('pow(1-invmass/7000.0+pb3*(invmass/7000.0)*(invmass/7000.0),pb1)/pow(invmass/7000,pb2)',pb1[5.1,0,100],pb2[5.72,-100,100], pb3[-0.553,0,2],invmass)");
+  ws->factory("EXPR::backgroundc('pow(1-invmass/7000.0,pc1)/pow(invmass/7000,pc2)',pc1[7.8,-100,100],pc2[5.4,-100,100],invmass)");
 
   // data
-  RooDataHist* binnedData;
-  RooDataSet* unbinnedData;
-  unbinnedData=makeUnbinnedData(DATASETFN, "unbinnedData", invmass);
-  if(usePseudodata)
-    binnedData=makeBinnedPseudoData(ws->pdf("background"), 432342, "binnedPseudoData", invmass, MAXINVMASS-MININVMASS, MININVMASS, MAXINVMASS);
-  else
-    binnedData=makeBinnedData(DATASETFN, "binnedData", invmass, (MAXINVMASS-MININVMASS), MININVMASS, MAXINVMASS);
+  int ndatabins=(MAXINVMASS-MININVMASS);
+  RooDataHist* binnedData=makeBinnedData(DATASETFN, "binnedData", invmass, ndatabins, MININVMASS, MAXINVMASS);
   ws->import(*binnedData);
   
   // signal rate
@@ -159,7 +152,7 @@ int main(int argc, char* argv[])
   ws->factory("Qstar_qg_3::signal(invmass, sigMassDelta, sigWidthDelta, sigMass)");
 
   // model
-  ws->factory("SUM::modela(nsig*signal, nbkg[1000,0,1E6]*background)");
+  ws->factory("SUM::modela(nsig*signal, nbkg[81429,60000,100000]*background)");
   ws->factory("SUM::modelb(nsig*signal, nbkg*backgroundb)");
   ws->factory("SUM::modelc(nsig*signal, nbkg*backgroundc)");
   ws->defineSet("observables","invmass");
@@ -186,7 +179,53 @@ int main(int argc, char* argv[])
   if(statlevel==9) ws->defineSet("nuisSet","lumi");
 
   // do a background-only fit first
-  if(usePseudodata) {
+  RooFitResult* fit=doFit(std::string("bfita")+label, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  //  fit=doFit(std::string("bfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  //  fit=doFit(std::string("bfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+
+  // integrate over model to get xs estimate as input to the B+S fit
+  double pdfIntegral=ws->var("nbkg")->getVal()*calcPDF1DIntegral(ws->pdf("modela"), invmass, signalMass*0.9, signalMass*1.1);
+  double maxXS = sqrt(pdfIntegral)*5/ws->var("lumi")->getVal();
+  RooRealVar* xs=ws->var("xs");
+  if (signalMass>1199 && signalMass<1401) maxXS = maxXS*2.2;
+  if (signalMass>1599 && signalMass<1601) maxXS = maxXS*2.1;
+  if (signalMass>1699 && signalMass<2201) maxXS = maxXS*4.0;
+  if (signalMass>2299 && signalMass<3401) maxXS = maxXS*8.0;
+  if (signalMass>3499 && signalMass<3501) maxXS = maxXS*8.4;
+  if (signalMass>3599 && signalMass<3701) maxXS = maxXS*16.0;
+  if (signalMass>3799 && signalMass<3801) maxXS = maxXS*16.8;
+  if (signalMass>3899 && signalMass<4001) maxXS = maxXS*32.0;
+  xs->setRange(0,maxXS);
+  xs->setVal(maxXS/5.0);
+
+  double nbkgValInit=ws->var("nbkg")->getVal();
+  double p1ValInit=ws->var("p1")->getVal();
+  double p2ValInit=ws->var("p2")->getVal();
+  double p3ValInit=ws->var("p3")->getVal();
+
+  for(int PE=0; PE<=numPEs; PE++) {
+    if(numPEs>0 && PE==0) continue; // skip the 0th entry if we are running PEs
+
+    // replace with pseudodata if we are doing more than zero PE's
+    if(numPEs>0) {
+      ws->var("nbkg")->setVal(nbkgValInit);
+      ws->var("p1")->setVal(p1ValInit);
+      ws->var("p2")->setVal(p2ValInit);
+      ws->var("p3")->setVal(p3ValInit);
+      binnedData=makeBinnedPseudoData(ws->pdf("background"), ws->var("nbkg")->getVal(), "binnedData", invmass, ndatabins, MININVMASS, MAXINVMASS);
+      ws->import(*binnedData, kTRUE);
+    }
+
+    // do the background+signal fit
+    xs->setConstant(false);
+    char pelabel[120];
+    sprintf(pelabel, "%s_pe%d", label, PE);
+
+    fit=doFit(std::string("bsfita")+pelabel, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+    //    fit=doFit(std::string("bsfitb")+pelabel, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+    //    fit=doFit(std::string("bsfitc")+pelabel, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+
+    // set parameters for limit calculation
     ws->var("p1")->setConstant(true);
     ws->var("p2")->setConstant(true);
     ws->var("p3")->setConstant(true);
@@ -195,179 +234,156 @@ int main(int argc, char* argv[])
     ws->var("pb3")->setConstant(true);
     ws->var("pc1")->setConstant(true);
     ws->var("pc2")->setConstant(true);
-  }
-  RooFitResult* fit=doFit(std::string("bfita")+label, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-  fit=doFit(std::string("bfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-  fit=doFit(std::string("bfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-
-  // integrate over model to get xs estimate as input to the B+S fit
-  double pdfIntegral=ws->var("nbkg")->getVal()*calcPDF1DIntegral(ws->pdf("modela"), invmass, signalMass*0.9, signalMass*1.1);
-  double maxXS = sqrt(pdfIntegral)*5/ws->var("lumi")->getVal();
-  RooRealVar* xs=ws->var("xs");
-  xs->setRange(0,maxXS);
-  xs->setVal(maxXS/5.0);
-
-  // do the background+signal fit
-  xs->setConstant(false);
-  fit=doFit(std::string("bsfita")+label, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-  fit=doFit(std::string("bsfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-  fit=doFit(std::string("bsfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-
-  // set parameters for limit calculation
-  ws->var("p1")->setConstant(true);
-  ws->var("p2")->setConstant(true);
-  ws->var("p3")->setConstant(true);
-  ws->var("pb1")->setConstant(true);
-  ws->var("pb2")->setConstant(true);
-  ws->var("pb3")->setConstant(true);
-  ws->var("pc1")->setConstant(true);
-  ws->var("pc2")->setConstant(true);
-  ws->var("nbkg")->setConstant(true);
-  if(statlevel==1) {
-  } else if(statlevel==2) {
-    ws->var("lumi")->setConstant(false);
-  } else if(statlevel==3) {
-    ws->var("sigMassDelta")->setConstant(false);
-  } else if(statlevel==4) {
-    ws->var("sigWidthDelta")->setConstant(false);
-  } else if(statlevel==5) {
-    ws->var("lumi")->setConstant(false);
-    ws->var("sigMassDelta")->setConstant(false);
-  } else if(statlevel==6) {
-    ws->var("lumi")->setConstant(false);
-    ws->var("sigMassDelta")->setConstant(false);
-    ws->var("sigWidthDelta")->setConstant(false);
-  } else if(statlevel==7) {
-    ws->var("sigMassDelta")->setConstant(false);
-  } else if(statlevel==8) {
-    ws->var("lumi")->setConstant(false);
-    ws->var("sigMassDelta")->setConstant(false);
-  } else if(statlevel==9) {
-    ws->var("lumi")->setConstant(false);
-  }
-
-  // setup model config
-  ModelConfig *modelConfigA = new ModelConfig("modelConfigA");
-  modelConfigA->SetWorkspace(*ws);
-  modelConfigA->SetPdf(*ws->pdf("modela"));
-  modelConfigA->SetPriorPdf(*ws->pdf("prior"));
-  modelConfigA->SetParametersOfInterest(*ws->set("POI"));
-  modelConfigA->SetNuisanceParameters(*ws->set("nuisSet"));
-  ModelConfig *modelConfigB = new ModelConfig("modelConfigB");
-  modelConfigB->SetWorkspace(*ws);
-  modelConfigB->SetPdf(*ws->pdf("modelb"));
-  modelConfigB->SetPriorPdf(*ws->pdf("prior"));
-  modelConfigB->SetParametersOfInterest(*ws->set("POI"));
-  modelConfigB->SetNuisanceParameters(*ws->set("nuisSet"));
-  ModelConfig *modelConfigC = new ModelConfig("modelConfigC");
-  modelConfigC->SetWorkspace(*ws);
-  modelConfigC->SetPdf(*ws->pdf("modelc"));
-  modelConfigC->SetPriorPdf(*ws->pdf("prior"));
-  modelConfigC->SetParametersOfInterest(*ws->set("POI"));
-  modelConfigC->SetNuisanceParameters(*ws->set("nuisSet"));
-
-  ws->import(*modelConfigA);
-  ws->import(*modelConfigB);
-  ws->import(*modelConfigC);
-  ws->Print();
-  printVal(*ws->var("xs"));
-  printVal(*ws->var("nbkg"));
-  printVal(*ws->var("lumi"));
-  printVal(*ws->var("lumiM0"));
-  printVal(*ws->var("lumiK0"));
-  printVal(*ws->var("sigMassDelta"));
-  printVal(*ws->var("sigMassDeltaM0"));
-  printVal(*ws->var("sigMassDeltaK0"));
-  printVal(*ws->var("sigWidthDelta"));
-  printVal(*ws->var("sigWidthDeltaM0"));
-  printVal(*ws->var("sigWidthDeltaK0"));
-  printVal(*ws->var("p1"));
-  printVal(*ws->var("p2"));
-  printVal(*ws->var("p3"));
-  printVal(*ws->var("pb1"));
-  printVal(*ws->var("pb2"));
-  printVal(*ws->var("pb3"));
-  printVal(*ws->var("pc1"));
-  printVal(*ws->var("pc2"));
-  ws->writeToFile("ws.root");
-
-  double lower=-1, upper=-1;
-  int niters=1000;
-  double alpha=0.05;
-  double lstail=0.0;
-  JPMCCalculator mcA(*binnedData, *modelConfigA);
-  mcA.SetNumIterations(niters);
-  mcA.SetConfidenceLevel(1-alpha);
-  mcA.SetLeftSideTailFraction(lstail);
-  JPMCCalculator mcB(*binnedData, *modelConfigB);
-  mcB.SetNumIterations(niters);
-  mcB.SetConfidenceLevel(1-alpha);
-  mcB.SetLeftSideTailFraction(lstail);
-  JPMCCalculator mcC(*binnedData, *modelConfigC);
-  mcC.SetNumIterations(niters);
-  mcC.SetConfidenceLevel(1-alpha);
-  mcC.SetLeftSideTailFraction(lstail);
-
-  double p1val=ws->var("p1")->getVal(); double p1err=ws->var("p1")->getError();
-  double p2val=ws->var("p2")->getVal(); double p2err=ws->var("p2")->getError();
-  double p3val=ws->var("p3")->getVal(); double p3err=ws->var("p3")->getError();
-
-  TH1D* histA=dynamic_cast<TH1D*>(mcA.GetPosteriorHist()->Clone("histA"));
-  if(statlevel==1 || statlevel==5 || statlevel==6 || statlevel==7 || statlevel==9) {
-    ws->var("p1")->setVal(std::max(0.0,p1val-p1err));
-    ws->var("p2")->setVal(std::max(0.0,p2val+p2err));
-    ws->var("p3")->setVal(std::max(0.0,p3val+p3err));
-    TH1D* histAHi=dynamic_cast<TH1D*>(mcA.GetPosteriorHistForce()->Clone("histAHi"));
-    ws->var("p1")->setVal(std::max(0.0,p1val+p1err));
-    ws->var("p2")->setVal(std::max(0.0,p2val-p2err));
-    ws->var("p3")->setVal(std::max(0.0,p3val-p3err));
-    TH1D* histALo=dynamic_cast<TH1D*>(mcA.GetPosteriorHistForce()->Clone("histALo"));
-    //    TH1D* histB=dynamic_cast<TH1D*>(mcB.GetPosteriorHist()->Clone("histB"));
-    //    TH1D* histC=dynamic_cast<TH1D*>(mcC.GetPosteriorHist()->Clone("histC"));
-
-    histA->Add(histAHi);
-    histA->Add(histALo);
-    //    histA->Add(histB);
-    //    histA->Add(histC);
-
-  }
-  TH1* hPosteriorHist=histA;
-  TCanvas* canvas = new TCanvas("mcPost","Posterior Distribution",500,500);
-  hPosteriorHist->Draw();
-  canvas->SaveAs(TString("MCpost")+label+".gif");
-
-  // Calculate the interval by hand
-  double lowerCutOff = lstail*alpha;
-  double upperCutOff = 1.-(1.-lstail)*alpha;
-  TH1D* hCdf = (TH1D*)hPosteriorHist->Clone("hCdf");
-  for(int bin=1; bin<=hCdf->GetNbinsX()+1; ++bin) {
-    double last=hCdf->GetBinContent(bin-1);
-    double next=hPosteriorHist->GetBinContent(bin);
-    hCdf->SetBinContent(bin, last+next);
-  }
-  hCdf->Scale(1./hPosteriorHist->GetSumOfWeights());
-
-  for(int bin=1; bin<=hCdf->GetNbinsX(); bin++) {
-    if(lowerCutOff<=hCdf->GetBinContent(bin)) {
-      lower=hCdf->GetBinLowEdge(bin);
-      break;
+    ws->var("nbkg")->setConstant(true);
+    if(statlevel==1) {
+    } else if(statlevel==2) {
+      ws->var("lumi")->setConstant(false);
+    } else if(statlevel==3) {
+      ws->var("sigMassDelta")->setConstant(false);
+    } else if(statlevel==4) {
+      ws->var("sigWidthDelta")->setConstant(false);
+    } else if(statlevel==5) {
+      ws->var("lumi")->setConstant(false);
+      ws->var("sigMassDelta")->setConstant(false);
+    } else if(statlevel==6) {
+      ws->var("lumi")->setConstant(false);
+      ws->var("sigMassDelta")->setConstant(false);
+      ws->var("sigWidthDelta")->setConstant(false);
+    } else if(statlevel==7) {
+      ws->var("sigMassDelta")->setConstant(false);
+    } else if(statlevel==8) {
+      ws->var("lumi")->setConstant(false);
+      ws->var("sigMassDelta")->setConstant(false);
+    } else if(statlevel==9) {
+      ws->var("lumi")->setConstant(false);
     }
-  }
-
-  for(int bin=hCdf->GetNbinsX(); bin>=1; --bin) {
-    if(upperCutOff>=hCdf->GetBinContent(bin)) {
-      upper=hCdf->GetBinLowEdge(bin+1);
-      break;
+    
+    // setup model config
+    ModelConfig modelConfigA("modelConfigA");
+    modelConfigA.SetWorkspace(*ws);
+    modelConfigA.SetPdf(*ws->pdf("modela"));
+    modelConfigA.SetPriorPdf(*ws->pdf("prior"));
+    modelConfigA.SetParametersOfInterest(*ws->set("POI"));
+    modelConfigA.SetNuisanceParameters(*ws->set("nuisSet"));
+    ModelConfig modelConfigB("modelConfigB");
+    modelConfigB.SetWorkspace(*ws);
+    modelConfigB.SetPdf(*ws->pdf("modelb"));
+    modelConfigB.SetPriorPdf(*ws->pdf("prior"));
+    modelConfigB.SetParametersOfInterest(*ws->set("POI"));
+    modelConfigB.SetNuisanceParameters(*ws->set("nuisSet"));
+    ModelConfig modelConfigC("modelConfigC");
+    modelConfigC.SetWorkspace(*ws);
+    modelConfigC.SetPdf(*ws->pdf("modelc"));
+    modelConfigC.SetPriorPdf(*ws->pdf("prior"));
+    modelConfigC.SetParametersOfInterest(*ws->set("POI"));
+    modelConfigC.SetNuisanceParameters(*ws->set("nuisSet"));
+    
+    ws->import(modelConfigA);
+    ws->import(modelConfigB);
+    ws->import(modelConfigC);
+    ws->Print();
+    printVal(*ws->var("xs"));
+    printVal(*ws->var("nbkg"));
+    printVal(*ws->var("lumi"));
+    printVal(*ws->var("lumiM0"));
+    printVal(*ws->var("lumiK0"));
+    printVal(*ws->var("sigMassDelta"));
+    printVal(*ws->var("sigMassDeltaM0"));
+    printVal(*ws->var("sigMassDeltaK0"));
+    printVal(*ws->var("sigWidthDelta"));
+    printVal(*ws->var("sigWidthDeltaM0"));
+    printVal(*ws->var("sigWidthDeltaK0"));
+    printVal(*ws->var("p1"));
+    printVal(*ws->var("p2"));
+    printVal(*ws->var("p3"));
+    printVal(*ws->var("pb1"));
+    printVal(*ws->var("pb2"));
+    printVal(*ws->var("pb3"));
+    printVal(*ws->var("pc1"));
+    printVal(*ws->var("pc2"));
+    ws->writeToFile("ws.root");
+    
+    double lower=-1, upper=-1;
+    int niters=1000;
+    double alpha=0.05;
+    double lstail=0.0;
+    JPMCCalculator mcA(*binnedData, modelConfigA);
+    mcA.SetNumIterations(niters);
+    mcA.SetConfidenceLevel(1-alpha);
+    mcA.SetLeftSideTailFraction(lstail);
+    JPMCCalculator mcB(*binnedData, modelConfigB);
+    mcB.SetNumIterations(niters);
+    mcB.SetConfidenceLevel(1-alpha);
+    mcB.SetLeftSideTailFraction(lstail);
+    JPMCCalculator mcC(*binnedData, modelConfigC);
+    mcC.SetNumIterations(niters);
+    mcC.SetConfidenceLevel(1-alpha);
+    mcC.SetLeftSideTailFraction(lstail);
+    
+    double p1val=ws->var("p1")->getVal(); double p1err=ws->var("p1")->getError();
+    double p2val=ws->var("p2")->getVal(); double p2err=ws->var("p2")->getError();
+    double p3val=ws->var("p3")->getVal(); double p3err=ws->var("p3")->getError();
+    
+    TH1D* histA=dynamic_cast<TH1D*>(mcA.GetPosteriorHist()->Clone("histA"));
+    if(statlevel==1 || statlevel==5 || statlevel==6 || statlevel==7 || statlevel==9) {
+      ws->var("p1")->setVal(std::max(0.0,p1val-p1err));
+      ws->var("p2")->setVal(p2val+p2err);
+      ws->var("p3")->setVal(p3val+p3err);
+      TH1D* histAHi=dynamic_cast<TH1D*>(mcA.GetPosteriorHistForce()->Clone("histAHi"));
+      ws->var("p1")->setVal(std::max(0.0,p1val+p1err));
+      ws->var("p2")->setVal(p2val-p2err);
+      ws->var("p3")->setVal(p3val-p3err);
+      TH1D* histALo=dynamic_cast<TH1D*>(mcA.GetPosteriorHistForce()->Clone("histALo"));
+      //    TH1D* histB=dynamic_cast<TH1D*>(mcB.GetPosteriorHist()->Clone("histB"));
+      //    TH1D* histC=dynamic_cast<TH1D*>(mcC.GetPosteriorHist()->Clone("histC"));
+      
+      histA->Add(histAHi);
+      histA->Add(histALo);
+      //    histA->Add(histB);
+      //    histA->Add(histC);
+      delete histAHi;
+      delete histALo;
     }
+    TH1* hPosteriorHist=histA;
+    TCanvas* canvas = new TCanvas("mcPost","Posterior Distribution",500,500);
+    hPosteriorHist->Draw();
+    canvas->SaveAs(TString("MCpost")+pelabel+".gif");
+    
+    // Calculate the interval by hand
+    double lowerCutOff = lstail*alpha;
+    double upperCutOff = 1.-(1.-lstail)*alpha;
+    TH1D* hCdf = (TH1D*)hPosteriorHist->Clone("hCdf");
+    for(int bin=1; bin<=hCdf->GetNbinsX()+1; ++bin) {
+      double last=hCdf->GetBinContent(bin-1);
+      double next=hPosteriorHist->GetBinContent(bin);
+      hCdf->SetBinContent(bin, last+next);
+    }
+    hCdf->Scale(1./hPosteriorHist->GetSumOfWeights());
+    
+    for(int bin=1; bin<=hCdf->GetNbinsX(); bin++) {
+      if(lowerCutOff<=hCdf->GetBinContent(bin)) {
+	lower=hCdf->GetBinLowEdge(bin);
+	break;
+      }
+    }
+    
+    for(int bin=hCdf->GetNbinsX(); bin>=1; --bin) {
+      if(upperCutOff>=hCdf->GetBinContent(bin)) {
+	upper=hCdf->GetBinLowEdge(bin+1);
+	break;
+      }
+    }
+    delete hCdf;
+    delete histA;
+
+    // print the results
+    cout << "PE = " << PE << " ; "
+	 << "m0 = " << signalMass << " ; "
+	 << "statlevel = " << statlevel << " ; "
+	 << "lowerlimit = " << lower << " ; "
+	 << "upperlimit = " << upper << endl;
+    
+    t.Print();
   }
-  delete hCdf;
-
-  // print the results
-  cout << "m0 = " << signalMass << " ; "
-       << "statlevel = " << statlevel << " ; "
-       << "lowerlimit = " << lower << " ; "
-       << "upperlimit = " << upper << endl;
-
-  t.Print();
 
 }

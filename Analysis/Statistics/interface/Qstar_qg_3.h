@@ -16,10 +16,10 @@
 #include "TH1F.h"
 
 //--- Number of mass points = number of signal resonance shapes.
-#define N_MASS_POINTS 21
-#define INIT_MASS 500.0
+#define N_MASS_POINTS 32
+#define INIT_MASS 900.0
 #define MASS_STEPS 100.0
-#define N_SHAPE_BINS 760
+#define N_SHAPE_BINS 1000
 #define SHAPE_BINS_MIN 200.0
 #define SHAPE_BINS_STEPS 5
 

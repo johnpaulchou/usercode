@@ -12,6 +12,8 @@ class RooFitResult;
 class TH1D;
 class RooAbsReal;
 
+class RooWorkspace;
+
 namespace DijetHelper {
 
   RooDataHist* makeBinnedData(std::string filename, std::string objectname, RooRealVar* var, int nbins, double *binsx);
@@ -26,8 +28,8 @@ namespace DijetHelper {
 
   double calcPDF1DIntegral(RooAbsPdf* pdf, RooRealVar* var, double min, double max);
 
-  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx);
-  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi);
+  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx, RooWorkspace* ws=0);
+  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi, RooWorkspace* ws=0);
 
   double getParFinalValue(RooFitResult* fit, std::string parname);
 

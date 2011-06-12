@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
   // Declare magic numbers here
   double MININVMASS=220.;
   double MAXINVMASS=3147.;
-  std::string DATASETFN="/uscms/physics_grp/lpcjj/Dijet/7TeV/Sep3rd2010_2p875pbm1/dijet_mass_2p875pbm1.txt";
+std::string DATASETFN="/uscms/physics_grp/lpcjj/Dijet/7TeV/Sep3rd2010_2p875pbm1/dijet_mass_2p875pbm1.txt";  
   double LUMI=2.875;     // total integrated luminosity
   double LUMIERROR=0.11; // relative error on luminosity
   double NBKGERROR=0.01; // relative error on background normalization
