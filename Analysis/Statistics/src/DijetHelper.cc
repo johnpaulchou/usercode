@@ -132,30 +132,30 @@ double DijetHelper::calcPDF1DIntegral(RooAbsPdf* pdf, RooRealVar* var, double mi
 }
 
 
-RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi, RooWorkspace* ws)
+RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi, const char* range, RooWorkspace* ws)
 {
   double *binsx=new double[nbins+1];
   for(int i=0; i<nbins+1; i++) {
     binsx[i]=xlo+i*(xhi-xlo)/nbins;
   }
-  RooFitResult* result=DijetHelper::doFit(name, pdf, data, var, nsig, nbkg, nbins, binsx, ws);
+  RooFitResult* result=DijetHelper::doFit(name, pdf, data, var, nsig, nbkg, nbins, binsx, range, ws);
   delete[] binsx;
   return result;
 }
 
-RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx, RooWorkspace* ws)
+RooFitResult* DijetHelper::doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx, const char* range, RooWorkspace* ws)
 {
   TString label=name.c_str();
-  RooFitResult *fit = pdf->fitTo(*data, Save(kTRUE), Extended(kTRUE), Strategy(2), PrintLevel(1));
+  RooFitResult *fit = pdf->fitTo(*data, Save(kTRUE), Extended(kTRUE), Strategy(2), PrintLevel(1), RooFit::Range(range));
   fit->Print();
 
   // plot fit
   TCanvas* cfit = new TCanvas(TString("cfit")+label,"fit",500,500);
   RooPlot* plot = var->frame();
   data->plotOn(plot, Binning(RooBinning(nbins, binsx)));
-  pdf->plotOn(plot, LineColor(kBlue+2));
-  pdf->plotOn(plot, RooFit::Components("signal"), RooFit::LineColor(kBlue+2));
-  pdf->plotOn(plot, RooFit::Components("background"), RooFit::LineColor(kBlue+2), RooFit::LineStyle(kDotted));
+  pdf->plotOn(plot, LineColor(kBlue+2), RooFit::NormRange(range), RooFit::Range(range));
+  pdf->plotOn(plot, RooFit::Components("signal"), RooFit::LineColor(kBlue+2), RooFit::NormRange(range), RooFit::Range(range));
+  pdf->plotOn(plot, RooFit::Components("background"), RooFit::LineColor(kBlue+2), RooFit::LineStyle(kDotted), RooFit::NormRange(range), RooFit::Range(range));
   pdf->paramOn(plot, Layout(0.43, 0.88, 0.92), Format("NEU",AutoPrecision(1)) ); 
   gPad->SetLogy();
   gPad->SetGrid(1,1);

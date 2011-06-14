@@ -56,8 +56,9 @@ using namespace DijetHelper;
 
 int main(int argc, char* argv[])
 {
-  // this is needed to setup the auto-compile for the workspace
+  bool doAggressiveBkgFit=true;
 
+  // this is needed to setup the auto-compile for the workspace
   gSystem->SetIncludePath("-I$ROOFITSYS/include");
   // Declare magic numbers here
   double MININVMASS=838.; // 189.469
@@ -152,7 +153,7 @@ int main(int argc, char* argv[])
   ws->factory("Qstar_qg_3::signal(invmass, sigMassDelta, sigWidthDelta, sigMass)");
 
   // model
-  ws->factory("SUM::modela(nsig*signal, nbkg[81429,60000,100000]*background)");
+  ws->factory("SUM::modela(nsig*signal, nbkg[1000,0,1E8]*background)");
   ws->factory("SUM::modelb(nsig*signal, nbkg*backgroundb)");
   ws->factory("SUM::modelc(nsig*signal, nbkg*backgroundc)");
   ws->defineSet("observables","invmass");
@@ -179,9 +180,26 @@ int main(int argc, char* argv[])
   if(statlevel==9) ws->defineSet("nuisSet","lumi");
 
   // do a background-only fit first
-  RooFitResult* fit=doFit(std::string("bfita")+label, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-  //  fit=doFit(std::string("bfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-  //  fit=doFit(std::string("bfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  // exclude window +20% -20% units in width
+  double mininvmass=ws->var("invmass")->getMin();
+  double maxinvmass=ws->var("invmass")->getMax();
+  ws->var("invmass")->setRange("FULL", mininvmass,maxinvmass);
+  RooFitResult* fit;
+  if(doAggressiveBkgFit) {
+    double minexclude = std::max(mininvmass, ws->var("sigMass")->getVal()*0.8);
+    double maxexclude = std::min(maxinvmass, ws->var("sigMass")->getVal()*1.1);
+    ws->var("invmass")->setRange("SB1", mininvmass, minexclude);
+    ws->var("invmass")->setRange("SB2", maxexclude, maxinvmass);
+    fit=doFit(std::string("bfita")+label, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "SB1,SB2");
+    //  fit=doFit(std::string("bfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "SB1,SB2");
+    //  fit=doFit(std::string("bfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "SB1,SB2");
+    ws->var("invmass")->removeRange("SB1");
+    ws->var("invmass")->removeRange("SB2");
+  } else {
+    fit=doFit(std::string("bfita")+label, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+    fit=doFit(std::string("bfitb")+label, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+    fit=doFit(std::string("bfitc")+label, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+  }
 
   // integrate over model to get xs estimate as input to the B+S fit
   double pdfIntegral=ws->var("nbkg")->getVal()*calcPDF1DIntegral(ws->pdf("modela"), invmass, signalMass*0.9, signalMass*1.1);
@@ -221,20 +239,37 @@ int main(int argc, char* argv[])
     char pelabel[120];
     sprintf(pelabel, "%s_pe%d", label, PE);
 
-    fit=doFit(std::string("bsfita")+pelabel, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-    //    fit=doFit(std::string("bsfitb")+pelabel, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
-    //    fit=doFit(std::string("bsfitc")+pelabel, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+    if(doAggressiveBkgFit) {
+      ws->var("p1")->setConstant(true);
+      ws->var("p2")->setConstant(true);
+      ws->var("p3")->setConstant(true);
+      ws->var("pb1")->setConstant(true);
+      ws->var("pb2")->setConstant(true);
+      ws->var("pb3")->setConstant(true);
+      ws->var("pc1")->setConstant(true);
+      ws->var("pc2")->setConstant(true);
+      ws->var("nbkg")->setConstant(true);
+      
+      fit=doFit(std::string("bsfita")+pelabel, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+      //    fit=doFit(std::string("bsfitb")+pelabel, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+      //    fit=doFit(std::string("bsfitc")+pelabel, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+    } else {
+      fit=doFit(std::string("bsfita")+pelabel, ws->pdf("modela"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+      //    fit=doFit(std::string("bsfitb")+pelabel, ws->pdf("modelb"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+      //    fit=doFit(std::string("bsfitc")+pelabel, ws->pdf("modelc"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
+
+      ws->var("p1")->setConstant(true);
+      ws->var("p2")->setConstant(true);
+      ws->var("p3")->setConstant(true);
+      ws->var("pb1")->setConstant(true);
+      ws->var("pb2")->setConstant(true);
+      ws->var("pb3")->setConstant(true);
+      ws->var("pc1")->setConstant(true);
+      ws->var("pc2")->setConstant(true);
+      ws->var("nbkg")->setConstant(true);
+    }
 
     // set parameters for limit calculation
-    ws->var("p1")->setConstant(true);
-    ws->var("p2")->setConstant(true);
-    ws->var("p3")->setConstant(true);
-    ws->var("pb1")->setConstant(true);
-    ws->var("pb2")->setConstant(true);
-    ws->var("pb3")->setConstant(true);
-    ws->var("pc1")->setConstant(true);
-    ws->var("pc2")->setConstant(true);
-    ws->var("nbkg")->setConstant(true);
     if(statlevel==1) {
     } else if(statlevel==2) {
       ws->var("lumi")->setConstant(false);

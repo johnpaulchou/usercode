@@ -28,8 +28,8 @@ namespace DijetHelper {
 
   double calcPDF1DIntegral(RooAbsPdf* pdf, RooRealVar* var, double min, double max);
 
-  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx, RooWorkspace* ws=0);
-  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi, RooWorkspace* ws=0);
+  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double *binsx, const char* range, RooWorkspace* ws=0);
+  RooFitResult* doFit(std::string name, RooAbsPdf* pdf, RooAbsData* data, RooRealVar* var, RooAbsReal* nsig, RooAbsReal* nbkg, int nbins, double xlo, double xhi, const char* range, RooWorkspace* ws=0);
 
   double getParFinalValue(RooFitResult* fit, std::string parname);
 

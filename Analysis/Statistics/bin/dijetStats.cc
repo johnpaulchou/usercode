@@ -214,7 +214,10 @@ std::string DATASETFN="/uscms/physics_grp/lpcjj/Dijet/7TeV/Sep3rd2010_2p875pbm1/
     ws->var("pc1")->setConstant(true);
     ws->var("pc2")->setConstant(true);
   }
-  RooFitResult* fit=doFit(std::string("b1fit")+label, ws->pdf("model"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  double mininvmass=ws->var("invmass")->getMin();
+  double maxinvmass=ws->var("invmass")->getMax();
+  ws->var("invmass")->setRange("FULL", mininvmass,maxinvmass);
+  RooFitResult* fit=doFit(std::string("b1fit")+label, ws->pdf("model"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
 
   // integrate over model to get xs estimate as input to the B+S fit
   double pdfIntegral=ws->var("nbkg")->getVal()*calcPDF1DIntegral(ws->pdf("model"), invmass, signalMass*0.9, signalMass*1.1);
@@ -226,7 +229,7 @@ std::string DATASETFN="/uscms/physics_grp/lpcjj/Dijet/7TeV/Sep3rd2010_2p875pbm1/
   // do the background+signal fit
   xs->setConstant(false);
   if(!usePseudodata) {
-    fit=doFit(std::string("bsfit")+label, ws->pdf("model"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+    fit=doFit(std::string("bsfit")+label, ws->pdf("model"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
     std::cout << "B+S STATUS = " << fit->status() << std::endl;
   }
 
@@ -300,7 +303,7 @@ std::string DATASETFN="/uscms/physics_grp/lpcjj/Dijet/7TeV/Sep3rd2010_2p875pbm1/
   // do a final fit (with a fixed lumi nuisance parameter, since it is always anti-correlated to the POI)
   bool isLumiFixed = ws->var("lumi")->isConstant();
   ws->var("lumi")->setConstant(true);
-  fit=doFit(std::string("finalfit")+label, ws->pdf("model"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES);
+  fit=doFit(std::string("finalfit")+label, ws->pdf("model"), binnedData, invmass, ws->function("nsig"), ws->var("nbkg"), NBINS-1, BOUNDARIES, "FULL");
   ws->var("lumi")->setConstant(isLumiFixed);
   ws->writeToFile("ws.root");
 
