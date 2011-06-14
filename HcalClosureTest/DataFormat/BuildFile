@@ -1,9 +1,0 @@
-<use name=DataFormats/CaloTowers>
-<use name=root>
-<use name=rootminuit>
-<export>
-  <use name=DataFormats/CaloTowers>
-  <use name=root>
-  <use name=rootminuit>
-  <lib name=HcalClosureTestDataFormat>
-</export>
