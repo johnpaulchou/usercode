@@ -4,9 +4,6 @@ import FWCore.ParameterSet.Config as cms
 
 dataset = '/Jet/Run2010B-PromptReco-v2/RECO'
 
-## global tag
-globaltag = cms.string('GR_R_38X_V13A::All')
-
 ## is MC
 isMC = False
 

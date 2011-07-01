@@ -96,7 +96,7 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
     const edm::TriggerNames &triggerNames = iEvent.triggerNames(*triggerResults_h);
     std::vector<std::string> names=triggerNames.triggerNames();
     
-    bool foundJet50U=false, foundJet100U=false, foundJet140Uv1=false, foundJet140Uv3=false;
+    bool foundJet50U=false, foundJet100U=false, foundJet140Uv1=false, foundJet140Uv3=false, foundJet240v1=false;
     for(unsigned int i=0; i<names.size(); i++) {
       
       // this is a jet trigger that was fired
@@ -116,12 +116,14 @@ bool DijetEventSelector::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
 	if(names[i]=="HLT_Jet100U") foundJet100U=true;
 	if(names[i]=="HLT_Jet140U_v1") foundJet140Uv1=true;
 	if(names[i]=="HLT_Jet140U_v3") foundJet140Uv3=true;
+	if(names[i]=="HLT_Jet240_v1") foundJet240v1=true;
       }
     }
     if(b_nrun<=144114 && !foundJet50U) b_eventSelectionBitSet |= 0x1;
     if(b_nrun>144114 && b_nrun<=147116 && !foundJet100U) b_eventSelectionBitSet |= 0x1;
     if(b_nrun>147116 && b_nrun<=148058 && !foundJet140Uv1) b_eventSelectionBitSet |= 0x1;
-    if(b_nrun>148058 && !foundJet140Uv3) b_eventSelectionBitSet |= 0x1;
+    if(b_nrun>148058 && b_nrun<=149711 && !foundJet140Uv3) b_eventSelectionBitSet |= 0x1;
+    if(b_nrun>149711 && !foundJet240v1) b_eventSelectionBitSet |= 0x1;
   }
 
   ////////////////////////////////////////////

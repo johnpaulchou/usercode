@@ -35,7 +35,8 @@
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 
-const std::string jetcoll="selectedPatJetsAK7Calo";
+//const std::string jetcoll="selectedPatJetsAK7Calo";
+const std::string jetcoll="selectedPatJetsAK7PF";
 const std::string metcoll="patMETs";
 const std::string muoncoll="selectedPatMuons";
 const double jetptcut=30.0;
@@ -64,23 +65,26 @@ int main(int argc, char* argv[])
     return 0;
   }
   int anatype=std::atoi(argv[1]);
-  if(anatype<0 || anatype>=NANATYPES) {
+  if(anatype<-1 || anatype>=NANATYPES) {
     std::cout << "Invalid anatype" << std::endl;
     return 0;
   }
 
   int nsplits=1, split=0;
-  if(argc>=2) nsplits=std::atoi(argv[2]);
-  if(argc>=3) split=std::atoi(argv[3]);
+  if(anatype>=0) {
+    if(argc>=2) nsplits=std::atoi(argv[2]);
+    if(argc>=3) split=std::atoi(argv[3]);
+  }
 
   ////////////////////////////////////////////////////////////////////////////////
   // setup the tree and histograms
   ////////////////////////////////////////////////////////////////////////////////
 
   TString rootfn;
+  if(anatype==-1) rootfn="temp.root";
   if(anatype==ANA_DATA) rootfn="data";
   if(anatype==ANA_JETMC) rootfn="jetMC";
-  rootfn+="_"+TString(argv[2])+"_"+TString(argv[3])+".root";
+  if(anatype>=0) rootfn+="_"+TString(argv[2])+"_"+TString(argv[3])+".root";
   TFile* rootfile = new TFile(rootfn, "RECREATE");
   rootfile->cd();
 
@@ -170,7 +174,12 @@ int main(int argc, char* argv[])
 
   // get the files we are going to run over (this is determined by the anatype)
   std::vector<std::string> filenames;
-  datasetConts[anatype].getFiles(filenames, nsplits, split);
+  if(anatype>=0) datasetConts[anatype].getFiles(filenames, nsplits, split);
+  else {
+    for(int j=2; j<argc; j++) {
+      filenames.push_back(argv[j]);
+    }
+  }
   std::cout << "We are going to run over " << filenames.size() << " files for anatype=" << anatype << std::endl;
   for(unsigned int i=0; i<filenames.size(); i++) {
     std::cout << filenames[i] << std::endl;
@@ -202,13 +211,16 @@ int main(int argc, char* argv[])
     b_nevent=ev.id().event();
 
     // determine the event weight by looking up the dataset through the filename
-    std::string theFileName=ev.getTFile()->GetName();
-    const dataset theDataset=datasetConts[anatype].findDatasetByFile(theFileName);
     b_eventWeight=1.0;
-    if(theDataset.getIsMC()) b_eventWeight = b_lumi*theDataset.getXSection()/theDataset.getNumEvents();
-    b_datasetID=theDataset.getDatasetId();
-    strcpy(b_datasetName, theDataset.getName().substr(0,maxstrsize-1).c_str());
-
+    b_datasetID=-1;
+    if(anatype>=0) {
+      std::string theFileName=ev.getTFile()->GetName();
+      const dataset theDataset=datasetConts[anatype].findDatasetByFile(theFileName);
+      if(theDataset.getIsMC()) b_eventWeight = b_lumi*theDataset.getXSection()/theDataset.getNumEvents();
+      b_datasetID=theDataset.getDatasetId();
+      strcpy(b_datasetName, theDataset.getName().substr(0,maxstrsize-1).c_str());
+    }
+    
     // get the MET
     edm::Handle<std::vector<pat::MET> > met_h;
     event.getByLabel(edm::InputTag(metcoll), met_h);
@@ -236,17 +248,18 @@ int main(int argc, char* argv[])
       double corrpt = jet->pt();
       if(corrpt<jetptcut) continue;
 
-      b_jetRawPt[b_nJets] = jet->correctedP4("raw").Pt();
+      b_jetRawPt[b_nJets] = jet->correctedP4("Uncorrected").Pt();
       b_jetCorrPt[b_nJets] = corrpt;
       b_jetEta[b_nJets] = jet->eta();
       b_jetPhi[b_nJets] = jet->phi();
-      b_jetEMF[b_nJets] = jet->emEnergyFraction();
-      b_jetIDEMF[b_nJets] = jet->jetID().restrictedEMF;
-      b_jetFHPD[b_nJets] = jet->jetID().fHPD;
-      b_jetN90Hits[b_nJets] = jet->jetID().n90Hits;
+      if(jet->isCaloJet()) {
+	b_jetEMF[b_nJets] = jet->emEnergyFraction();
+	b_jetIDEMF[b_nJets] = jet->jetID().restrictedEMF;
+	b_jetFHPD[b_nJets] = jet->jetID().fHPD;
+	b_jetN90Hits[b_nJets] = jet->jetID().n90Hits;
+      }
       b_jetNTrkVtx[b_nJets] = jet->associatedTracks().size();
-      b_jetNTrkVtx[b_nJets] = 0;
-      b_jetPassJetID[b_nJets] = (b_jetIDEMF[b_nJets]>0.01 && b_jetFHPD[b_nJets]<0.98 && b_jetN90Hits[b_nJets]>1);
+      b_jetPassJetID[b_nJets] = (jet->isCaloJet() && b_jetIDEMF[b_nJets]>0.01 && b_jetFHPD[b_nJets]<0.98 && b_jetN90Hits[b_nJets]>1);
       b_jetFlavor[b_nJets] = jet->partonFlavour();
 
       b_jetSecVtxTagLooseDisc[b_nJets] = jet->bDiscriminator("simpleSecondaryVertexHighEffBJetTags");
@@ -278,7 +291,7 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////
     // muon selection
     ////////////////////////////////////////////
-
+    
     // get the muons
     edm::Handle<std::vector<pat::MyPATMuon> > muons_h;
     event.getByLabel(edm::InputTag(muoncoll), muons_h);
@@ -317,15 +330,16 @@ int main(int argc, char* argv[])
 
       ++b_nMuons;
     }
-
-
+    
+    
     mytree->Fill();
     
   }
-
+  
   rootfile->cd();
   mytree->Write();
   rootfile->Close();
-
+  
   return 0;
 }
+  
