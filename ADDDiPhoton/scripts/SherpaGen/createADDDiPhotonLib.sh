@@ -18,8 +18,8 @@ mkdir -p ${LIBPATH}/python
 mkdir -p ${LIBPATH}/test
 
 # copy files to the library path
-cp *SherpaLibs.sh ${LIBPATH}/test
-cat ${LIBNAME} | sed -e s/NEVENTS/${NEVENTS}/ | sed -e s/NED/$NED/ | sed -e s/MSSCALE/$MSSCALE/ | sed -e s/KKCONVENTION/$KKCONVENTION/ > ${LIBPATH}/test/Run.dat
+cp *SherpaLibs.sh ${LIBPATH}/test/
+cat ${LIBNAME} | sed -e s/NED/$NED/ | sed -e s/MSSCALE/$MSSCALE/ | sed -e s/KKCONVENTION/$KKCONVENTION/ > ${LIBPATH}/test/Run.dat
 
 # make and prepare the libraries
 cd ${LIBPATH}/test

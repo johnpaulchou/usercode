@@ -1,5 +1,5 @@
 (run){
- EVENTS = NEVENTS
+ EVENTS = 5
  EVENT_MODE = HepMC
 ! HEPMC2_GENEVENT_OUTPUT = hepmc2_genevent_out
 # avoid comix re-init after runcard modification
