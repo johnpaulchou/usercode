@@ -8,8 +8,8 @@
 #  author:      Markus Merschmeyer, RWTH Aachen
 #  date:        2009/12/09
 #  version:     2.8
-#  changed: 	Martin Niegel, KIT, 2009/02/24
-#		Fix for CMSSW_3X
+#  changed: 	Martin Niegel, KIT, 2011/06/07
+#		Fix for Sherpa 1.3.0
 
 
 # +-----------------------------------------------------------------------------------------------+
@@ -50,6 +50,7 @@ function build_python_cfi() {
   touch ${shpacfifile}
 
   echo "import FWCore.ParameterSet.Config as cms"             >> ${shpacfifile}
+  echo "import os"                                            >> ${shpacfifile} 
   echo ""                                                     >> ${shpacfifile}
   echo "source = cms.Source(\"EmptySource\")"                 >> ${shpacfifile}
   echo ""                                                     >> ${shpacfifile}
@@ -57,7 +58,7 @@ function build_python_cfi() {
   echo "  maxEventsToPrint = cms.untracked.int32(0),"           >> ${shpacfifile}
   echo "  filterEfficiency = cms.untracked.double(1.0),"        >> ${shpacfifile}
   echo "  crossSection = cms.untracked.double(-1),"             >> ${shpacfifile}
-  echo "  libDir    = cms.untracked.string('"${MYLIBDIR}"')," >> ${shpacfifile}
+  echo "  libDir    = cms.untracked.string(os.getcwd()+'/"${MYLIBDIR}"')," >> ${shpacfifile}
   echo "  resultDir = cms.untracked.string('Result'),"        >> ${shpacfifile}
   echo "  SherpaParameters = cms.PSet(parameterSets = cms.vstring(" >> ${shpacfifile}
   fcnt=0
@@ -85,6 +86,10 @@ function build_python_cfi() {
     mv ${file}.tmp2 ${file}.tmp1
     sed -e 's/^/ /g;s/ (/(/;s/ }/}/' < ${file}.tmp1 > ${file}.tmp2 # add single space in front of parameters
     mv ${file}.tmp2 ${file}.tmp1
+###
+    sed -e 's/\"/\\"/g' < ${file}.tmp1 > ${file}.tmp2              # protect existing '"' by '\"'
+    mv ${file}.tmp2 ${file}.tmp1
+###
     sed -e 's/^/\t\t\t\t"/;s/$/\",/' < ${file}.tmp1 > ${file}.tmp2 # add ([]") and ("') around parameters
     mv ${file}.tmp2 ${file}.tmp1
     sed -e '$s/\",/\"/' < ${file}.tmp1 > ${file}.tmp2              # fix last line
@@ -100,7 +105,7 @@ function build_python_cfi() {
   echo "ProductionFilterSequence = cms.Sequence(generator)"   >> ${shpacfifile}
   echo ""                                                     >> ${shpacfifile}
 
-  cat > sherpa_custom.py << EOF
+  cat > sherpa_custom_cff.py << EOF
 import FWCore.ParameterSet.Config as cms
 
 def customise(process):
@@ -512,7 +517,7 @@ if [ "${imode}" = "LOCAL" ] || [ "${imode}" = "CRAB" ]; then
   build_python_cfi ${shpacfifile}
  rm *.dat
   mv ${shpacfifile}   ${MYCMSSWPYTH}
-  mv sherpa_custom.py ${MYCMSSWPYTH}
+  mv sherpa_custom_cff.py ${MYCMSSWPYTH}
   cd ${MYCMSSWTEST}
   shpacfgfile="sherpa_cfg.py"
   shpaoutfile="sherpa_out.root"
@@ -529,10 +534,12 @@ if [ "${imode}" = "PROD" ]; then
   build_python_cfi ${shpacfffile}
  rm *.dat
   mv ${shpacfffile}   ${HDIR}
-  mv sherpa_custom.py ${HDIR}
+  mv sherpa_custom_cff.py ${HDIR}
   cd ${HDIR}
-  tar -czf sherpa_${dataset}_MASTER.tgz ${shpacfffile} sherpa_custom.py ${MYLIBDIR}
-#  rm -rf ${shpacfffile} sherpa_custom.py
+  tar -czf sherpa_${dataset}_MASTER.tgz ${shpacfffile} sherpa_custom_cff.py ${MYLIBDIR}
+#
+  rm -rf ${shpacfffile} sherpa_custom_cff.py
+#
   rm -rf ${MYLIBDIR}
 fi
 
@@ -541,7 +548,7 @@ if [ "${imode}" = "VAL" ]; then
   shpacfffile="sherpa_"${dataset}"_cff.py"
   build_python_cfi ${shpacfffile}
   mv ${shpacfffile}   ${CMSSWDIR}/src/${MYANADIR2}/python/
-  mv sherpa_custom.py ${CMSSWDIR}/src/${MYANADIR2}/python/
+  mv sherpa_custom_cff.py ${CMSSWDIR}/src/${MYANADIR2}/python/
   cd ${HDIR}
   scramv1 b
 
@@ -549,7 +556,7 @@ if [ "${imode}" = "VAL" ]; then
                      -s GEN --eventcontent RAWSIM --datatier GEN \
                      --conditions FrontierConditions_GlobalTag,${MYCONDITIONS}::All \
                      -n 1000 --no_exec \
-                     --customise ${MYANADIR2}/sherpa_custom.py"
+                     --customise ${MYANADIR2}/sherpa_custom_cff.py"
   echo " VAL command 1: "${cmd1}
   ${cmd1}
 
@@ -560,13 +567,13 @@ if [ "${imode}" = "VAL" ]; then
 #               --conditions FrontierConditions_GlobalTag,${MYCONDITIONS}::All \
 #               -n 1000 \
 #               --no_exec \
-#               --customise ${MYANADIR2}/sherpa_custom.py
+#               --customise ${MYANADIR2}/sherpa_custom_cff.py
 
   cmd2="cmsDriver.py ${MYANADIR2}/python/${shpacfffile} \
                      -s GEN,SIM,DIGI,L1,DIGI2RAW,HLT --eventcontent RAWSIM --datatier GEN-SIM-RAW \
                      --conditions FrontierConditions_GlobalTag,${MYCONDITIONS}::All \
                      -n 10 --no_exec \
-                     --customise ${MYANADIR2}/sherpa_custom.py"
+                     --customise ${MYANADIR2}/sherpa_custom_cff.py"
   echo " VAL command 2: "${cmd2}
   ${cmd2}
 
@@ -577,7 +584,7 @@ if [ "${imode}" = "VAL" ]; then
 #               --conditions FrontierConditions_GlobalTag,${MYCONDITIONS}::All \
 #               -n 10 \
 #               --no_exec \
-#               --customise ${MYANADIR2}/sherpa_custom.py
+#               --customise ${MYANADIR2}/sherpa_custom_cff.py
 
 ## --filein file:sherpa_out.root
 ## --fileout HLT.root
@@ -600,7 +607,7 @@ if [ "${imode}" = "VAL" ]; then
                      -s GEN,FASTSIM --eventcontent AODSIM --datatier GEN-SIM-DIGI-RECO \
                      --conditions FrontierConditions_GlobalTag,${MYCONDITIONS}::All \
                      -n 1000 --pileup=NoPileUp --beamspot=Early10TeVCollision --no_exec \
-                     --customise ${MYANADIR2}/sherpa_custom.py"
+                     --customise ${MYANADIR2}/sherpa_custom_cff.py"
   echo " VAL command 3: "${cmd3}
   ${cmd3}
 
@@ -612,7 +619,7 @@ if [ "${imode}" = "VAL" ]; then
 # --conditions FrontierConditions_GlobalTag,MC_31X_V3::All \
 # -n 1000 --pileup=NoPileUp --beamspot=Early10TeVCollision --magField 3.8T \
 # --no_exec \
-# --customise A/B/sherpa_custom.py
+# --customise A/B/sherpa_custom_cff.py
 
 ##cmsDriver.py reco --filein file:HLT.root --fileout RECO.root -s RAW2DIGI,RECO --eventcontent RECOSIM --conditions FrontierConditions_GlobalTag,MC_31X_V3::All -n -1 --magField 3.8T --no_exec
 
@@ -643,7 +650,7 @@ if [ "${imode}" = "CRAB" ]; then
                 --eventcontent ${cmsdrvevtcnt1} --fileout ${cmsdrvoutfil1} \
                 --conditions FrontierConditions_GlobalTag,${MYCONDITIONS}::All \
                 -n ${nevts} --python_filename ${cmsdrvpyfile1} --no_exec \
-                --customise ${MYANADIR}/sherpa_custom.py"
+                --customise ${MYANADIR}/sherpa_custom_cff.py"
   echo "command: "${CMD}
   ${CMD}
 

@@ -1,6 +1,9 @@
 (run){
- EVENTS = EVENTNUM
+ EVENTS = NEVENTS
  EVENT_MODE = HepMC
+! HEPMC2_GENEVENT_OUTPUT = hepmc2_genevent_out
+# avoid comix re-init after runcard modification
+ WRITE_MAPPING_FILE 3;
 }(run)
 
 (beam){
@@ -18,21 +21,21 @@
 }(model)
 
 (processes){
- Process 93 93 -> 22 22 
- End process;
+ Process 93 93 -> 22 22
+ Print_Graphs : Process
+ End process
 }(processes)
 
 (selector){
  JetFinder   sqr(20/E_CMS) 1.
- ET 22 25 E_CMS
- Mass 22 22 LOWMASSCUT E_CMS
+ Mass 22 22 200 E_CMS
 }(selector)
 
 (isr){
-  PDF_LIBRARY     = LHAPDFSherpa
-  PDF_SET         = cteq6ll.LHpdf
-  PDF_SET_VERSION = 1
-  PDF_GRID_PATH   = PDFsets
+ PDF_LIBRARY     = LHAPDFSherpa
+ PDF_SET         = cteq6ll.LHpdf
+ PDF_SET_VERSION = 1
+ PDF_GRID_PATH   = PDFsets
 }(isr)
 
 (me){
@@ -40,6 +43,5 @@
 }(me)
 
 (mi){
- MI_HANDLER = Amisic  # None or Amisic
+ MI_HANDLER = None  # None or Amisic
 }(mi)
-

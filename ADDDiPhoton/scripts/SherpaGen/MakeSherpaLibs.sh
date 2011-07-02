@@ -6,8 +6,10 @@
 #  uses:        the required SHERPA data cards (+ libraries) [see below]
 #
 #  author:      Markus Merschmeyer, RWTH Aachen
-#  date:        2009/07/20
-#  version:     2.8
+#  date:        28th April 2011
+#  version:     3.3
+#  changed: 	Martin Niegel, KIT, 2011/06/07
+#		Fix for Sherpa 1.3.0
 #
 
 
@@ -18,7 +20,7 @@
 
 print_help() {
     echo "" && \
-    echo "MakeSherpaLibs version 2.8" && echo && \
+    echo "MakeSherpaLibs version 3.0" && echo && \
     echo "options: -d  path       (optional) path to your SHERPA installation (otherwise the SHERPA" && \
     echo "                         package belonging to the release under '\$CMSSW_BASE' is used)" && \
     echo "                         -> ( "${shr}" )" && \
@@ -185,6 +187,7 @@ do
   esac
 done
 
+
 # make sure to use absolute path names...
 cd ${shr} && shr=`pwd`; cd ${HDIR}
 cd ${inc} && inc=`pwd`; cd ${HDIR}
@@ -213,6 +216,7 @@ if [ "${SHERPA_LIBRARY_PATH}" = "" ]; then export SHERPA_LIBRARY_PATH=${shr}/lib
 # find 'Run' directory
 shrun=${HDIR}/SHERPATMP
 mkdir -p ${shrun}
+pth=${shrun}/${pth} #SHERPA 1.3.0 needs full path, MN 070611
 
 echo "  -> SHERPA path: '"${shr}"'"
 echo "  -> SHERPA run path: '"${shrun}"'"
@@ -317,6 +321,22 @@ else
 fi
 
 
+### find out whether COMIX or AMEGIC is being used
+runfile="Run.dat"
+if [ -e ${runfile} ]; then
+  iamegic=`cat ${runfile} | grep -i "ME_SIGNAL_GENERATOR" | grep -i -c "AMEGIC"`
+  if [ ${iamegic} -gt 0 ]; then
+    FLGCOMIX="FALSE"                   # use AMEGIC
+    echo " <I> using AMEGIC ME generator"
+  else
+    FLGCOMIX="TRUE"                    # use COMIX
+    echo " <I> using COMIX ME generator"
+    lbo="LBCR"
+  fi
+fi
+###exit
+
+
 ### check required subdirectories
 ## generate/clean 'Process' subdirectory
 if [ ! -e ${dir1} ]; then
@@ -377,42 +397,53 @@ echo " <I> Sherpa executable is "${sherpaexe}
 cd ${shrun}
 if [ "${lbo}" = "LIBS" ] || [ "${lbo}" = "LBCR" ]; then
   echo " <I> creating library code..."
-  ${sherpaexe} "PATH="${pth} "RESULT_DIRECTORY="${pth}/${dir2} 1>${shrun}/${outflbs}_pass1.out 2>${shrun}/${outflbs}_pass1.err
+  ${sherpaexe} "PATH="${pth} "PATH_PIECE="${pth} "RESULT_DIRECTORY="${dir2} 1>${shrun}/${outflbs}_pass1.out 2>${shrun}/${outflbs}_pass1.err #Sherpa 1.3.0 needs full path MN 070611
   cd ${pth}
+  if [ "${FLGCOMIX}" == "FALSE" ]; then
+  testfile=`find ${shr} -type f -name libSherpaMain.so.0.0.0`
+  echo "testfile: "${testfile}
+  testbit=`echo ${testfile} | grep -i -c "ELF 32"`
+  echo "testbit: "${testbit}
+  if [ ${testbit} -ge 1 ]; then
 ##  cp ${shr}/share/SHERPA-MC/makelibs .
-  fix_makelibs
-  echo " <I> compiling libraries..."
-  ./makelibs 1>${shrun}/${outflbs}_mklib.out 2>${shrun}/${outflbs}_mklib.err
-  nf=`du -sh | grep -o "\." | grep -c "\."`
-  lsize=`du -sh  | cut -f 1-${nf} -d "."`
-  echo " <I>  -> raw size: "${lsize}
-  echo " <I> cleaning libraries..."
-  clean_libs 1>${shrun}/${outflbs}_cllib.out 2>${shrun}/${outflbs}_cllib.err
+    fix_makelibs
+    fi
+    echo " <I> compiling libraries..."
+    ./makelibs 1>${shrun}/${outflbs}_mklib.out 2>${shrun}/${outflbs}_mklib.err
+    nf=`du -sh | grep -o "\." | grep -c "\."`
+    lsize=`du -sh  | cut -f 1-${nf} -d "."`
+    echo " <I>  -> raw size: "${lsize}
+    echo " <I> cleaning libraries..."
+    clean_libs 1>${shrun}/${outflbs}_cllib.out 2>${shrun}/${outflbs}_cllib.err
+  fi
   nf=`du -sh | grep -o "\." | grep -c "\."`
   lsize=`du -sh  | cut -f 1-${nf} -d "."`
   echo " <I>  -> clean size: "${lsize}
   cd ${shrun}
 fi
+
+if [ "${FLGCOMIX}" == "FALSE" ]; then
 ## second pass (save integration results)
-if [ "${lbo}" = "LBCR" ] || [ "${lbo}" = "CRSS" ]; then
-  echo " <I> calculating cross sections..."
-  ${sherpaexe} "PATH="${pth} "RESULT_DIRECTORY="${dir2} 1>${shrun}/${outflbs}_pass2.out 2>${shrun}/${outflbs}_pass2.err
-#  ${sherpaexe} -p ${pth} -g -r ${pth}/${dir2} 1>${shrun}/${outflbs}_pass2.out 2>${shrun}/${outflbs}_pass2.err
-  if [ -d ${dir3} ]; then
-    mv ${dir3} ${pth}/
-  else
-    mkdir ${pth}/${dir3}
+  if [ "${lbo}" = "LBCR" ] || [ "${lbo}" = "CRSS" ]; then
+    echo " <I> calculating cross sections..."
+    ${sherpaexe} "PATH="${pth} "PATH_PIECE="${pth} "RESULT_DIRECTORY="${dir2} 1>${shrun}/${outflbs}_pass2.out 2>${shrun}/${outflbs}_pass2.err #Sherpa 1.3.0 needs full path MN 070611
+#    ${sherpaexe} -p ${pth} -g -r ${pth}/${dir2} 1>${shrun}/${outflbs}_pass2.out 2>${shrun}/${outflbs}_pass2.err
+    if [ -d ${dir3} ]; then
+      mv ${dir3} ${pth}/
+    else
+      mkdir ${pth}/${dir3}
+    fi
   fi
-fi
 ## third pass (event generation)
-if [ "${lbo}" = "EVTS" ]; then
-  echo " <I> generating events..."
-  ${sherpaexe} "PATH="${pth} "RESULT_DIRECTORY="${pth}/${dir2} 1>${shrun}/${outflbs}_pass3.out 2>${shrun}/${outflbs}_pass3.err
+  if [ "${lbo}" = "EVTS" ]; then
+    echo " <I> generating events..."
+    ${sherpaexe} "PATH="${pth} "PATH_PIECE="${pth} "RESULT_DIRECTORY="${dir2} 1>${shrun}/${outflbs}_pass3.out 2>${shrun}/${outflbs}_pass3.err #Sherpa 1.3.0 needs full path MN 070611
+  fi
 fi
 
 
 ## generate tar balls with data cards, libraries, cross sections, events
-cd ${shrun}/${pth}
+cd ${pth} ##Sherpa 1.3.0 needs full path MN 070611
 #MM() cd ${pth}
 
 #if [ "${lbo}" = "LBCR" ] || [ "${lbo}" = "CRSS" ]; then
@@ -421,51 +452,41 @@ cd ${shrun}/${pth}
 #fi
 
 ## libraries & cross sections
-if [ "${lbo}" = "LIBS" ]; then
-  find ./${dir1}/lib/ -name '*.*' -exec md5sum {} \; > ${libsmd5s}
+if [ "${lbo}" = "LIBS" ] || [ "${lbo}" = "LBCR" ]; then
+  find ./${dir1}/ -type f -name '*' -exec md5sum {} \; > ${libsmd5s}
   touch ${libsfile}.tmp
-  find ./         -name '*.md5' > tmp.lst && tar --no-recursion -rf ${libsfile}.tmp -T tmp.lst; rm tmp.lst
+  find ./         -type f -name '*.md5' > tmp.lst && tar --no-recursion -rf ${libsfile}.tmp -T tmp.lst; rm tmp.lst
+##  find ./${dir1}/ -type f -name '*'     > tmp.lst && tar --no-recursion -rf ${libsfile}.tmp -T tmp.lst; rm tmp.lst
   find ./${dir1}/ -name '*'     > tmp.lst && tar --no-recursion -rf ${libsfile}.tmp -T tmp.lst; rm tmp.lst
   gzip -9 ${libsfile}.tmp && mv ${libsfile}.tmp.gz ${libsfile}
   md5sum ${libsfile} > ${libfmd5s}
   mv ${libsfile} ${shrun}/
-elif [ "${lbo}" = "LBCR" ]; then
-  find ./${dir1}/lib/ -name '*.*' -exec md5sum {} \; > ${libsmd5s}
-  touch ${libsfile}.tmp
-  find ./         -name '*.md5' > tmp.lst && tar --no-recursion -rf ${libsfile}.tmp -T tmp.lst; rm tmp.lst
-  find ./${dir1}/ -name '*'     > tmp.lst && tar --no-recursion -rf ${libsfile}.tmp -T tmp.lst; rm tmp.lst
-  gzip -9 ${libsfile}.tmp && mv ${libsfile}.tmp.gz ${libsfile}
-  md5sum ${libsfile} > ${libfmd5s}
-  find ./${dir2}/ -name '*.*' -exec md5sum {} \; > ${crssmd5s}
-  touch ${crssfile}.tmp
-  find ./         -name '*.md5' > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
-  find ./${dir2}/ -name '*'     > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
-  if [ -e ${dir3} ]; then
-  find ./${dir3}/ -name '*'     > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
+fi
+
+if [ "${lbo}" = "LBCR" ] || [ "${lbo}" = "CRSS" ]; then
+  if [ -e ${libsfile} ]; then
+    find ./${dir1}/ -type f -name '*' -exec md5sum {} \; > ${libsmd5s}
+    md5sum ${libsfile} > ${libfmd5s}
   fi
-  gzip -9 ${crssfile}.tmp && mv ${crssfile}.tmp.gz ${crssfile}
-  md5sum ${crssfile} > ${crsfmd5s}
-  mv ${libsfile} ${shrun}/
-  mv ${crssfile} ${shrun}/
-elif [ "${lbo}" = "CRSS" ]; then
-  find ./${dir1}/lib/ -name '*.*' -exec md5sum {} \; > ${libsmd5s}
-  md5sum ${libsfile} > ${libfmd5s}
-  rm ${libsfile}
-  find ${dir2}/ -name '*.*' -exec md5sum {} \; > ${crssmd5s}
+  find ./${dir2}/ -type f -name '*' -exec md5sum {} \; > ${crssmd5s}
   touch ${crssfile}.tmp
-  find ./         -name '*.md5' > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
+  find ./         -type f -name '*.md5' > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
+##  find ./${dir2}/ -type f -name '*'     > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
   find ./${dir2}/ -name '*'     > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
   if [ -e ${dir3} ]; then
+##  find ./${dir3}/ -type f -name '*'     > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
   find ./${dir3}/ -name '*'     > tmp.lst && tar --no-recursion -rf ${crssfile}.tmp -T tmp.lst; rm tmp.lst
   fi
   gzip -9 ${crssfile}.tmp && mv ${crssfile}.tmp.gz ${crssfile}
   md5sum ${crssfile} > ${crsfmd5s}
   mv ${crssfile} ${shrun}/
-elif [ "${lbo}" = "EVTS" ]; then
-  find ./${dir1}/lib/ -name '*.*' -exec md5sum {} \; > ${libsmd5s}
+fi
+
+if [ "${lbo}" = "EVTS" ]; then
+  find ./${dir1}/ -type f -name '*' -exec md5sum {} \; > ${libsmd5s}
   md5sum ${libsfile} > ${libfmd5s}
   rm ${libsfile}
-  find ./${dir2}/ -name '*.*' -exec md5sum {} \; > ${crssmd5s}
+  find ./${dir2}/ -type f -name '*' -exec md5sum {} \; > ${crssmd5s}
   md5sum ${crssfile} > ${crsfmd5s}
   rm ${crssfile}
   md5sum *.*         > ${evtsmd5s}
@@ -493,16 +514,16 @@ if [ "${lbo}" = "LIBS" ]; then
 elif [ "${lbo}" = "LBCR" ]; then
 #  tar -czf ${crdlfile} ${FILES}
 #  md5sum ${crdlfile} > ${crdfmd5s}
-  sed -e 's:MI_HANDLER.*:MI_HANDLER   = Amisic                ! Amisic / None:' < Run.dat > Run.dat.tmp
-  mv Run.dat.tmp Run.dat
+#  sed -e 's:MI_HANDLER.*:MI_HANDLER   = Amisic                ! Amisic / None:' < Run.dat > Run.dat.tmp
+#  mv Run.dat.tmp Run.dat
   tar -czf ${crdefile} ${FILES}
   md5sum ${crdefile} > ${evtfmd5s}
   mv ${crdefile} ${shrun}/
 elif [ "${lbo}" = "CRSS" ]; then
 #  tar -czf ${crdcfile} ${FILES}
 #  md5sum ${crdcfile} > ${crdfmd5s}
-  sed -e 's:MI_HANDLER.*:MI_HANDLER   = Amisic                ! Amisic / None:' < Run.dat > Run.dat.tmp
-  mv Run.dat.tmp Run.dat
+#  sed -e 's:MI_HANDLER.*:MI_HANDLER   = Amisic                ! Amisic / None:' < Run.dat > Run.dat.tmp
+#  mv Run.dat.tmp Run.dat
   tar -czf ${crdefile} ${FILES}
   md5sum ${crdefile} > ${evtfmd5s}
   mv ${crdefile} ${shrun}/
