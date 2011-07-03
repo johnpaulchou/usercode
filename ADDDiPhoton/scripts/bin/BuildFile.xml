@@ -1,0 +1,11 @@
+<use   name="DataFormats/FWLite"/>
+<use   name="FWCore/Framework"/>
+<use   name="FWCore/FWLite"/>
+<use   name="FWCore/PythonParameterSet"/>
+<use   name="rootcintex"/>
+<use   name="root"/>
+<use   name="boost"/>
+<use   name="PhysicsTools/FWLite"/>
+<environment>
+  <bin   file="MakeADDGenTree.cc"></bin>
+</environment>
