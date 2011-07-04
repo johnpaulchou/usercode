@@ -43,3 +43,17 @@
 ./createADDDiPhotonLib.sh 100000 5000 5 1
 ./createADDDiPhotonLib.sh 100000 5000 6 1
 ./createADDDiPhotonLib.sh 100000 5000 7 1
+
+./createADDDiPhotonLib.sh 100000 2500 4 3
+./createADDDiPhotonLib.sh 100000 3000 4 3
+./createADDDiPhotonLib.sh 100000 3500 4 3
+./createADDDiPhotonLib.sh 100000 4000 4 3
+./createADDDiPhotonLib.sh 100000 4500 4 3
+./createADDDiPhotonLib.sh 100000 5000 4 3
+
+./createADDDiPhotonLib.sh 100000 2500 4 4
+./createADDDiPhotonLib.sh 100000 3000 4 4
+./createADDDiPhotonLib.sh 100000 3500 4 4
+./createADDDiPhotonLib.sh 100000 4000 4 4
+./createADDDiPhotonLib.sh 100000 4500 4 4
+./createADDDiPhotonLib.sh 100000 5000 4 4

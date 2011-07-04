@@ -54,45 +54,58 @@ int main(int argc, char* argv[])
   int anatype=std::atoi(argv[1]);
   std::string inname, outname;
   double MS;
+  double xs;
   int NED;
   int KK;
-  if(anatype==1)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS100000_NED4_KK1.root"; MS=100000.; NED=4; KK=1; }
-  if(anatype==2)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED2_KK1.root"; MS=2500.; NED=2; KK=1; }
-  if(anatype==3)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED3_KK1.root"; MS=2500.; NED=3; KK=1; }
-  if(anatype==4)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED4_KK1.root"; MS=2500.; NED=4; KK=1; }
-  if(anatype==5)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED5_KK1.root"; MS=2500.; NED=5; KK=1; }
-  if(anatype==6)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED6_KK1.root"; MS=2500.; NED=6; KK=1; }
-  if(anatype==7)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED7_KK1.root"; MS=2500.; NED=7; KK=1; }
-  if(anatype==8)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED2_KK1.root"; MS=3000.; NED=2; KK=1; }
-  if(anatype==9)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED3_KK1.root"; MS=3000.; NED=3; KK=1; }
-  if(anatype==10) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED4_KK1.root"; MS=3000.; NED=4; KK=1; }
-  if(anatype==11) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED5_KK1.root"; MS=3000.; NED=5; KK=1; }
-  if(anatype==12) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED6_KK1.root"; MS=3000.; NED=6; KK=1; }
-  if(anatype==13) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED7_KK1.root"; MS=3000.; NED=7; KK=1; }
-  if(anatype==14) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED2_KK1.root"; MS=3500.; NED=2; KK=1; }
-  if(anatype==15) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED3_KK1.root"; MS=3500.; NED=3; KK=1; }
-  if(anatype==16) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED4_KK1.root"; MS=3500.; NED=4; KK=1; }
-  if(anatype==17) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED5_KK1.root"; MS=3500.; NED=5; KK=1; }
-  if(anatype==18) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED6_KK1.root"; MS=3500.; NED=6; KK=1; }
-  if(anatype==19) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED7_KK1.root"; MS=3500.; NED=7; KK=1; }
-  if(anatype==20) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED2_KK1.root"; MS=4000.; NED=2; KK=1; }
-  if(anatype==21) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED3_KK1.root"; MS=4000.; NED=3; KK=1; }
-  if(anatype==22) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED4_KK1.root"; MS=4000.; NED=4; KK=1; }
-  if(anatype==23) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED5_KK1.root"; MS=4000.; NED=5; KK=1; }
-  if(anatype==24) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED6_KK1.root"; MS=4000.; NED=6; KK=1; }
-  if(anatype==25) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED7_KK1.root"; MS=4000.; NED=7; KK=1; }
-  if(anatype==26) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED2_KK1.root"; MS=4500.; NED=2; KK=1; }
-  if(anatype==27) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED3_KK1.root"; MS=4500.; NED=3; KK=1; }
-  if(anatype==28) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED4_KK1.root"; MS=4500.; NED=4; KK=1; }
-  if(anatype==29) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED5_KK1.root"; MS=4500.; NED=5; KK=1; }
-  if(anatype==30) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED6_KK1.root"; MS=4500.; NED=6; KK=1; }
-  if(anatype==31) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED7_KK1.root"; MS=4500.; NED=7; KK=1; }
-  if(anatype==32) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED2_KK1.root"; MS=5000.; NED=2; KK=1; }
-  if(anatype==33) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED3_KK1.root"; MS=5000.; NED=3; KK=1; }
-  if(anatype==34) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED4_KK1.root"; MS=5000.; NED=4; KK=1; }
-  if(anatype==35) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED5_KK1.root"; MS=5000.; NED=5; KK=1; }
-  if(anatype==36) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED6_KK1.root"; MS=5000.; NED=6; KK=1; }
-  if(anatype==37) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED7_KK1.root"; MS=5000.; NED=7; KK=1; }
+  if(anatype==1)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS100000_NED4_KK1.root"; MS=100000.; NED=4; KK=1; xs=2.64583; }
+  if(anatype==2)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED2_KK1.root"; MS=2500.; NED=2; KK=1; xs=2.71261; }
+  if(anatype==3)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED3_KK1.root"; MS=2500.; NED=3; KK=1; xs=2.72516; }
+  if(anatype==4)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED4_KK1.root"; MS=2500.; NED=4; KK=1; xs=2.67353; }
+  if(anatype==5)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED5_KK1.root"; MS=2500.; NED=5; KK=1; xs=2.66219; }
+  if(anatype==6)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED6_KK1.root"; MS=2500.; NED=6; KK=1; xs=2.65839; }
+  if(anatype==7)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED7_KK1.root"; MS=2500.; NED=7; KK=1; xs=2.65477; }
+  if(anatype==8)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED2_KK1.root"; MS=3000.; NED=2; KK=1; xs=2.67602; }
+  if(anatype==9)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED3_KK1.root"; MS=3000.; NED=3; KK=1; xs=2.67279; }
+  if(anatype==10) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED4_KK1.root"; MS=3000.; NED=4; KK=1; xs=2.65698; }
+  if(anatype==11) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED5_KK1.root"; MS=3000.; NED=5; KK=1; xs=2.65339; }
+  if(anatype==12) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED6_KK1.root"; MS=3000.; NED=6; KK=1; xs=2.65153; }
+  if(anatype==13) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED7_KK1.root"; MS=3000.; NED=7; KK=1; xs=2.65055; }
+  if(anatype==14) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED2_KK1.root"; MS=3500.; NED=2; KK=1; xs=2.66209; }
+  if(anatype==15) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED3_KK1.root"; MS=3500.; NED=3; KK=1; xs=2.65815; }
+  if(anatype==16) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED4_KK1.root"; MS=3500.; NED=4; KK=1; xs=2.64997; }
+  if(anatype==17) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED5_KK1.root"; MS=3500.; NED=5; KK=1; xs=2.64974; }
+  if(anatype==18) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED6_KK1.root"; MS=3500.; NED=6; KK=1; xs=2.64894; }
+  if(anatype==19) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED7_KK1.root"; MS=3500.; NED=7; KK=1; xs=2.64721; }
+  if(anatype==20) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED2_KK1.root"; MS=4000.; NED=2; KK=1; xs=2.65868; }
+  if(anatype==21) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED3_KK1.root"; MS=4000.; NED=3; KK=1; xs=2.65352; }
+  if(anatype==22) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED4_KK1.root"; MS=4000.; NED=4; KK=1; xs=2.64834; }
+  if(anatype==23) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED5_KK1.root"; MS=4000.; NED=5; KK=1; xs=2.64856; }
+  if(anatype==24) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED6_KK1.root"; MS=4000.; NED=6; KK=1; xs=2.64688; }
+  if(anatype==25) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED7_KK1.root"; MS=4000.; NED=7; KK=1; xs=2.64659; }
+  if(anatype==26) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED2_KK1.root"; MS=4500.; NED=2; KK=1; xs=2.65321; }
+  if(anatype==27) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED3_KK1.root"; MS=4500.; NED=3; KK=1; xs=2.64946; }
+  if(anatype==28) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED4_KK1.root"; MS=4500.; NED=4; KK=1; xs=2.64917; }
+  if(anatype==29) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED5_KK1.root"; MS=4500.; NED=5; KK=1; xs=2.64729; }
+  if(anatype==30) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED6_KK1.root"; MS=4500.; NED=6; KK=1; xs=2.64605; }
+  if(anatype==31) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED7_KK1.root"; MS=4500.; NED=7; KK=1; xs=2.64760; }
+  if(anatype==32) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED2_KK1.root"; MS=5000.; NED=2; KK=1; xs=2.65058; }
+  if(anatype==33) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED3_KK1.root"; MS=5000.; NED=3; KK=1; xs=2.64959; }
+  if(anatype==34) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED4_KK1.root"; MS=5000.; NED=4; KK=1; xs=2.64889; }
+  if(anatype==35) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED5_KK1.root"; MS=5000.; NED=5; KK=1; xs=2.64614; }
+  if(anatype==36) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED6_KK1.root"; MS=5000.; NED=6; KK=1; xs=2.64604; }
+  if(anatype==37) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED7_KK1.root"; MS=5000.; NED=7; KK=1; xs=2.64622; }
+  if(anatype==38) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED4_KK3.root"; MS=2500.; NED=4; KK=3; xs=2.66292; }
+  if(anatype==39) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED4_KK3.root"; MS=3000.; NED=4; KK=3; xs=2.65312; }
+  if(anatype==40) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED4_KK3.root"; MS=3500.; NED=4; KK=3; xs=2.65048; }
+  if(anatype==41) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED4_KK3.root"; MS=4000.; NED=4; KK=3; xs=2.64820; }
+  if(anatype==42) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED4_KK3.root"; MS=4500.; NED=4; KK=3; xs=2.64676; }
+  if(anatype==43) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED4_KK3.root"; MS=5000.; NED=4; KK=3; xs=2.64629; }
+  if(anatype==44) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED4_KK4.root"; MS=2500.; NED=4; KK=4; xs=2.64376; }
+  if(anatype==45) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3000_NED4_KK4.root"; MS=3000.; NED=4; KK=4; xs=2.64364; }
+  if(anatype==46) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS3500_NED4_KK4.root"; MS=3500.; NED=4; KK=4; xs=2.64531; }
+  if(anatype==47) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4000_NED4_KK4.root"; MS=4000.; NED=4; KK=4; xs=2.64570; }
+  if(anatype==48) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS4500_NED4_KK4.root"; MS=4500.; NED=4; KK=4; xs=2.64506; }
+  if(anatype==49) { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS5000_NED4_KK4.root"; MS=5000.; NED=4; KK=4; xs=2.64696; }
   ostringstream oss;
   oss << "ADDGenTree_MS" << MS << "_NED" << NED << "_KK" << KK << ".root";
   outname=oss.str();
@@ -104,10 +117,12 @@ int main(int argc, char* argv[])
   double et1, eta1, phi1;
   double et2, eta2, phi2;
   double invmass;
+  double weight;
 
   mytree->Branch("MS",&MS,"MS/D");
   mytree->Branch("NED",&NED,"NED/I");
   mytree->Branch("KK",&KK,"KK/I");
+  mytree->Branch("weight",&weight,"weight/D");
   mytree->Branch("et1",&et1,"et1/D");
   mytree->Branch("eta1",&eta1,"eta1/D");
   mytree->Branch("phi1",&phi1,"phi1/D");
@@ -123,6 +138,7 @@ int main(int argc, char* argv[])
   filenames.push_back(inname);
   fwlite::ChainEvent ev(filenames);
   int numevents=ev.size();
+  weight=xs/numevents;
   for(ev.toBegin(); !ev.atEnd(); ++ev, ++iEvent){
     edm::EventBase const & event = ev;
 
@@ -170,7 +186,7 @@ int main(int argc, char* argv[])
     v2.SetPtEtaPhiM(et2, eta2, phi2, 0.0);
     v1+=v2;
     invmass=v1.Mag();
-    
+
     mytree->Fill();
   }
 
