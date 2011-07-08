@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
   double xs;
   int NED;
   int KK;
-  if(anatype==1)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS100000_NED4_KK1.root"; MS=100000.; NED=4; KK=1; xs=2.64583; }
+  if(anatype==1)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS100000_NED4_KK1.root"; MS=100000.; NED=4; KK=1; xs=0.0302342; }
   if(anatype==2)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED2_KK1.root"; MS=2500.; NED=2; KK=1; xs=2.71261; }
   if(anatype==3)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED3_KK1.root"; MS=2500.; NED=3; KK=1; xs=2.72516; }
   if(anatype==4)  { inname="/uscms/home/johnpaul/nobackup/ADD/Sherpa_GEN_MS2500_NED4_KK1.root"; MS=2500.; NED=4; KK=1; xs=2.67353; }
